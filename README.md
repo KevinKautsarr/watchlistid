@@ -1,50 +1,92 @@
-# Welcome to your Expo app 👋
+# 🎬 WatchListID
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+![WatchListID Hero](https://via.placeholder.com/1200x400/112D4E/FFFFFF?text=WatchListID)
 
-## Get started
+> Aplikasi basis data sinematik premium bergaya IMDb, dibuat dengan React Native dan Expo.
 
-1. Install dependencies
+[![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 
+**WatchListID** adalah aplikasi *mobile* profesional yang berfungsi sebagai pangkalan data film komprehensif. Terinspirasi oleh kepadatan informasi dan arsitektur UI dari IMDb, aplikasi ini dirancang khusus untuk memanjakan penggemar film dengan estetika desain kustom (Warna `#3F72AF` & `#112D4E`), performa mutakhir, dan UX yang mulus tanpa celah.
+
+---
+
+## ✨ Fitur Utama
+
+*   **Pangkalan Data Film & Aktor (TMDB)**: Ditenagai oleh TMDB API, menampilkan ribuan metadata film (Trailer, Cast, Kru, Skor Popularitas, Budget, dan Box Office) secara terperinci.
+*   **Video Trailer Bawaan**: Memutar YouTube Trailer (Teaser, Featurette) secara langsung dan mulus dari *Movie Detail Screen*.
+*   **Smart Watchlist & Persistent Cache**: Manajemen daftar tontonan canggih dengan filter sortir, ter-enkripsi dan tersimpan aman secara *offline* menggunakan `AsyncStorage`.
+*   **Cloud Sync Ready**: Terkonfigurasi penuh dengan **Supabase** (`@supabase/supabase-js`) & Skema *Row Level Security (RLS)* untuk integrasi akun *user* di masa depan.
+*   **Micro-Interactions & Haptics**: Dilengkapi efek getar haptik (*impact* & *notification*) pada setiap sentuhan krusial untuk memberikan pengalaman setara aplikasi premium.
+*   **Arsitektur Layout Canggih**: Penguncian ukuran font, optimasi animasi gulir (*scroll*), kompresi gambar (*Expo Image*), dan sistem navigasi *Floating Bottom Tab* dengan *Custom Unicode Icons*.
+
+## 🛠 Teknologi yang Digunakan
+
+*   **Framework**: [React Native](https://reactnative.dev/) & [Expo](https://expo.dev/) (SDK 50+)
+*   **Routing**: Expo Router (`app/` directory)
+*   **State Management**: React Context API (`WatchlistContext.jsx`)
+*   **Storage (Local)**: `@react-native-async-storage/async-storage`
+*   **Storage (Cloud)**: [Supabase](https://supabase.com/)
+*   **API Pihak Ketiga**: [The Movie Database (TMDB) API v3](https://developer.themoviedb.org/docs)
+*   **Modul Ekstra**: `expo-image`, `expo-haptics`, `expo-web-browser`
+
+## 🚀 Cara Menjalankan Aplikasi Secara Lokal
+
+### Prasyarat
+*   [Node.js](https://nodejs.org/) (versi LTS direkomendasikan)
+*   Aplikasi **Expo Go** (terinstal di iOS / Android Anda)
+*   [TMDB API Key](https://www.themoviedb.org/settings/api)
+
+### Instalasi
+
+1. **Clone repository ini**
+   ```bash
+   git clone https://github.com/username/WatchListID.git
+   cd WatchListID
+   ```
+
+2. **Install dependensi**
    ```bash
    npm install
    ```
 
-2. Start the app
-
-   ```bash
-   npx expo start
+3. **Konfigurasi API Key**
+   Buka file `config.js` di dalam folder utama dan masukkan TMDB API Key Anda:
+   ```javascript
+   export const TMDB_API_KEY = 'MASUKKAN_KUNCI_API_ANDA_DI_SINI';
    ```
 
-In the output, you'll find options to open the app in a
+4. **Jalankan Aplikasi**
+   ```bash
+   npx expo start --clear
+   ```
+   > Akan muncul *QR Code* di terminal Anda. *Scan QR Code* tersebut menggunakan aplikasi **Expo Go** di HP Anda.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📂 Struktur Proyek Utama
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+WatchListID/
+├── app/                  # Expo Router navigation (tabs, layout, modals)
+├── components/           # Komponen UI yang dapat digunakan kembali (Toast, dll)
+├── context/              # Manajemen State Global (WatchlistContext)
+├── screens/              # Halaman Aplikasi Inti
+│   ├── HomeScreen.jsx
+│   ├── SearchScreen.jsx
+│   ├── MovieDetailScreen.jsx
+│   ├── PersonDetailScreen.jsx
+│   ├── WatchlistScreen.jsx
+│   └── ProfileScreen.jsx
+├── config.js             # Konfigurasi konstanta & kredensial API
+├── supabase.js           # Konfigurasi Klien Supabase
+└── supabase_schema.sql   # Blueprint untuk setup database Supabase
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🏗 Roadmap Pengembangan
 
-## Learn more
+Silakan tinjau file `IMPLEMENTATION_PLAN.md` untuk mengetahui tahapan eksekusi dan peta jalan (*roadmap*) pengembangan yang lebih mendetail (mulai dari Fondasi UI hingga Produksi).
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+*Dibuat dengan ❤️ untuk kemajuan Ekosistem Digital Indonesia.*
