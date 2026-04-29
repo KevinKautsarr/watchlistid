@@ -84,9 +84,5 @@ WatchListID/
 └── supabase_schema.sql   # Blueprint untuk setup database Supabase
 ```
 
-## 🏗 Roadmap Pengembangan
-
-Silakan tinjau file `IMPLEMENTATION_PLAN.md` untuk mengetahui tahapan eksekusi dan peta jalan (*roadmap*) pengembangan yang lebih mendetail (mulai dari Fondasi UI hingga Produksi).
-
 ---
 *Dibuat dengan ❤️ untuk kemajuan Ekosistem Digital Indonesia.*
