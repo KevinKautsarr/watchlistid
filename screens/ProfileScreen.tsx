@@ -1,16 +1,88 @@
 import React from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Platform,
+  StyleSheet, Platform, TextInput, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '../supabase';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, Moon, Upload, Info, ChevronRight, Star, Film, Eye } from 'lucide-react-native';
+import { Bell, Moon, Upload, Info, ChevronRight, Star, Film, Eye, LogOut, Edit2, Camera, Check, X } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
+import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'expo-router';
 
 const ProfileScreen: React.FC = () => {
+  const router = useRouter();
   const { watchlist } = useWatchlist();
+  const { user, profile, signOut } = useAuth();
+
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editName, setEditName] = React.useState('');
+  const [editAvatar, setEditAvatar] = React.useState('');
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // Derive display info from Supabase user and realtime profile
+  const displayName = profile?.username
+    ?? user?.user_metadata?.username
+    ?? user?.email?.split('@')[0]
+    ?? 'Movie Fan';
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+  const memberYear   = user?.created_at
+    ? new Date(user.created_at).getFullYear()
+    : 2024;
+
+  React.useEffect(() => {
+    setEditName(displayName);
+    setEditAvatar(avatarUrl || '');
+  }, [displayName, avatarUrl]);
+
+  const handleCancelEdit = () => {
+    setEditName(displayName);
+    setEditAvatar(avatarUrl || '');
+    setIsEditing(false);
+  };
+
+  const handlePickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.1, // compress heavily for base64
+      base64: true,
+    });
+    if (!result.canceled && result.assets?.[0]?.base64) {
+      const b64 = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      setEditAvatar(b64);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      await supabase.auth.updateUser({
+        data: { username: editName, avatar_url: editAvatar }
+      });
+      await supabase.from('profiles').update({
+        username: editName,
+        avatar_url: editAvatar
+      }).eq('id', user.id);
+      setIsEditing(false);
+    } catch (e) {
+      console.log('Error saving profile:', e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/auth/login' as any);
+  };
 
   const watched = watchlist.filter(m => m.watched).length;
   const total   = watchlist.length;
@@ -25,19 +97,11 @@ const ProfileScreen: React.FC = () => {
     { value: toWatch,   label: 'To Watch', Icon: Star },
   ];
 
-  const BADGES = [
-    { emoji: '🎬', name: 'First Film',     unlocked: total >= 1 },
-    { emoji: '📋', name: 'Collector',      unlocked: total >= 5 },
-    { emoji: '✅', name: 'Completionist',  unlocked: watched >= 3 },
-    { emoji: '⭐', name: 'Critic',         unlocked: watchlist.some(m => (m.vote_average || 0) >= 9) },
-    { emoji: '🌍', name: 'Explorer',       unlocked: total >= 10 },
-  ];
-
   const MENU = [
-    { Icon: Bell,   label: 'Notifications',       sub: undefined,       arrow: true },
-    { Icon: Moon,   label: 'Dark Mode',            sub: 'Coming soon',   arrow: false },
-    { Icon: Upload, label: 'Export Watchlist',     sub: undefined,       arrow: true },
-    { Icon: Info,   label: 'About WatchListID',    sub: 'v1.0.0',        arrow: true },
+    { Icon: Bell,   label: 'Notifications',    sub: undefined,     arrow: true,  onPress: undefined },
+    { Icon: Upload, label: 'Export Watchlist',  sub: undefined,     arrow: true,  onPress: undefined },
+    { Icon: Info,   label: 'About WatchListID', sub: 'v1.0.0',      arrow: true,  onPress: undefined },
+    { Icon: LogOut, label: 'Sign Out',          sub: undefined,     arrow: false, onPress: handleSignOut },
   ];
 
   return (
@@ -48,22 +112,62 @@ const ProfileScreen: React.FC = () => {
       >
         {/* ── Hero gradient card ── */}
         <LinearGradient
-          colors={['#112D4E', '#3F72AF']}
+          colors={['#8A050C', '#141414']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
-          {/* Bell */}
-          <TouchableOpacity style={styles.heroBell} activeOpacity={0.75}>
-            <Bell size={20} color="rgba(255,255,255,0.85)" strokeWidth={2} />
-          </TouchableOpacity>
+          {/* Edit / Save Button */}
+          {isEditing ? (
+            <>
+              <TouchableOpacity style={styles.heroCancel} onPress={handleCancelEdit} disabled={isSaving}>
+                <X size={20} color="#fff" strokeWidth={2.5} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.heroBell} onPress={handleSaveProfile} disabled={isSaving}>
+                {isSaving ? <ActivityIndicator color="#fff" size="small" /> : <Check size={20} color="#fff" strokeWidth={2.5} />}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.heroBell} onPress={() => setIsEditing(true)}>
+              <Edit2 size={18} color="rgba(255,255,255,0.9)" strokeWidth={2} />
+            </TouchableOpacity>
+          )}
 
           {/* Avatar */}
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText} allowFontScaling={false}>M</Text>
-          </View>
-          <Text style={styles.heroName} allowFontScaling={false}>Movie Fan</Text>
-          <Text style={styles.heroMember} allowFontScaling={false}>Member since 2024</Text>
+          <TouchableOpacity 
+            style={styles.avatar} 
+            activeOpacity={isEditing ? 0.7 : 1}
+            onPress={isEditing ? handlePickImage : undefined}
+          >
+            {isEditing && editAvatar ? (
+              <Image source={{ uri: editAvatar }} style={styles.avatarImg} contentFit="cover" />
+            ) : !isEditing && avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImg} contentFit="cover" />
+            ) : (
+              <Text style={styles.avatarText} allowFontScaling={false}>{avatarLetter}</Text>
+            )}
+            
+            {isEditing && (
+              <View style={styles.cameraOverlay}>
+                <Camera size={20} color="#fff" strokeWidth={2} />
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {isEditing ? (
+            <TextInput
+              style={styles.heroNameInput}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Your Name"
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              autoCorrect={false}
+            />
+          ) : (
+            <Text style={styles.heroName} allowFontScaling={false}>{displayName}</Text>
+          )}
+          
+          <Text style={styles.heroMember} allowFontScaling={false}>Member since {memberYear}</Text>
 
           {/* Avg rating chip */}
           <View style={styles.avgRatingChip}>
@@ -83,40 +187,25 @@ const ProfileScreen: React.FC = () => {
           ))}
         </View>
 
-        {/* ── Achievements ── */}
-        <Text style={styles.sectionTitle} allowFontScaling={false}>Achievements</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesRow}>
-          {BADGES.map((b, i) => (
-            <View key={i} style={[styles.badgeCard, !b.unlocked && styles.badgeCardLocked]}>
-              <Text style={[styles.badgeEmoji, !b.unlocked && { opacity: 0.25 }]} allowFontScaling={false}>
-                {b.emoji}
-              </Text>
-              {b.unlocked && (
-                <View style={styles.badgeTick}>
-                  <Text style={styles.badgeTickText} allowFontScaling={false}>✓</Text>
-                </View>
-              )}
-              <Text style={[styles.badgeName, !b.unlocked && { opacity: 0.3 }]} allowFontScaling={false} numberOfLines={2}>
-                {b.name}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-
         {/* ── Settings menu ── */}
         <Text style={styles.sectionTitle} allowFontScaling={false}>Settings</Text>
         <View style={styles.menuCard}>
-          {MENU.map(({ Icon, label, sub, arrow }, i) => (
+          {MENU.map(({ Icon, label, sub, arrow, onPress }, i) => (
             <TouchableOpacity
               key={i}
               activeOpacity={0.7}
-              style={[styles.menuRow, i < MENU.length - 1 && styles.menuRowBorder]}
+              onPress={onPress}
+              style={[
+                styles.menuRow,
+                i < MENU.length - 1 && styles.menuRowBorder,
+                label === 'Sign Out' && { opacity: 0.85 },
+              ]}
             >
-              <View style={styles.menuIconBox}>
-                <Icon size={18} color={Colors.primary} strokeWidth={2} />
+              <View style={[styles.menuIconBox, label === 'Sign Out' && { backgroundColor: 'rgba(220,53,69,0.10)' }]}>
+                <Icon size={18} color={label === 'Sign Out' ? '#DC3545' : Colors.primary} strokeWidth={2} />
               </View>
               <View style={styles.menuContent}>
-                <Text style={styles.menuLabel} allowFontScaling={false}>{label}</Text>
+                <Text style={[styles.menuLabel, label === 'Sign Out' && { color: '#DC3545' }]} allowFontScaling={false}>{label}</Text>
                 {sub && <Text style={styles.menuSub} allowFontScaling={false}>{sub}</Text>}
               </View>
               {arrow && <ChevronRight size={17} color={Colors.text.secondary} strokeWidth={2} />}
@@ -154,21 +243,56 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
+  },
+  heroCancel: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 86,
+    height: 86,
+    borderRadius: 43,
     backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2.5,
+    borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.35)',
     marginBottom: 14,
+    overflow: 'hidden',
   },
-  avatarText: { fontSize: 28, fontWeight: FontWeight.black, color: Colors.white },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  cameraOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontSize: 32, fontWeight: FontWeight.black, color: Colors.white },
   heroName:   { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white, letterSpacing: 0.2 },
-  heroMember: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
+  heroNameInput: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.white,
+    letterSpacing: 0.2,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.5)',
+    paddingBottom: 4,
+    minWidth: 150,
+    textAlign: 'center',
+  },
+  heroMember: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.7)', marginTop: 8 },
   avgRatingChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -191,68 +315,29 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     paddingVertical: 16,
     alignItems: 'center',
     gap: 4,
     ...Shadow.sm,
   },
-  statValue: { fontSize: FontSize.xxxl, fontWeight: FontWeight.black, color: Colors.dark, marginTop: 4 },
+  statValue: { fontSize: FontSize.xxxl, fontWeight: FontWeight.black, color: Colors.text.primary, marginTop: 4 },
   statLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: Colors.primary, letterSpacing: 0.5 },
 
   /* Section title */
   sectionTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    color: Colors.dark,
+    color: Colors.text.primary,
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing.md,
-  },
-
-  /* Badges */
-  badgesRow: {
-    paddingHorizontal: Spacing.xl,
-    gap: 12,
-    marginBottom: Spacing.xxl,
-  },
-  badgeCard: {
-    width: 76,
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-    position: 'relative',
-    ...Shadow.sm,
-  },
-  badgeCardLocked: { opacity: 0.6 },
-  badgeEmoji: { fontSize: 34 },
-  badgeTick: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeTickText: { fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold },
-  badgeName: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-    color: Colors.dark,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 14,
   },
 
   /* Menu */
   menuCard: {
     marginHorizontal: Spacing.xl,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
     marginBottom: Spacing.xxl,
     overflow: 'hidden',
@@ -278,7 +363,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   menuContent: { flex: 1 },
-  menuLabel:   { fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: Colors.dark },
+  menuLabel:   { fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: Colors.text.primary },
   menuSub:     { fontSize: FontSize.xs, color: Colors.primary, marginTop: 2, opacity: 0.75 },
 
   version: {

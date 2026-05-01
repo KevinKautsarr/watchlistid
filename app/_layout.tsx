@@ -6,6 +6,7 @@ import { Text } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AuthProvider } from '../context/AuthContext';
 import { WatchlistProvider } from '../context/WatchlistContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -22,28 +23,24 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [appReady, setAppReady] = useState(false);
-
-  useEffect(() => {
-    // Simulate asset/data preloading
-    const timer = setTimeout(() => setAppReady(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <ErrorBoundary>
-      <WatchlistProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="movie/[id]" />
-            <Stack.Screen name="person/[id]" />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
-          <StatusBar style="dark" backgroundColor="#F9F7F7" />
-        </ThemeProvider>
-      </WatchlistProvider>
+      <AuthProvider>
+        <WatchlistProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="movie/[id]" />
+              <Stack.Screen name="person/[id]" />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
+            <StatusBar style="dark" backgroundColor="#F9F7F7" />
+          </ThemeProvider>
+        </WatchlistProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

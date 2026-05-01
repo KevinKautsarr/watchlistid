@@ -4,23 +4,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 
 import { ArrowUpDown, Film, Check, Trash2 } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
 import { WatchlistMovie } from '../types';
 import MovieListItem from '../components/movie/MovieListItem';
-
-interface WatchlistScreenProps {
-  navigation: NativeStackNavigationProp<any>;
-}
+import { useBreakpoint } from '../hooks/useBreakpoint';
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
 
-const WatchlistScreen: React.FC<WatchlistScreenProps> = ({ navigation }) => {
+const WatchlistScreen: React.FC = () => {
+  const router = useRouter();
   const { watchlist, toggleWatched, removeFromWatchlist } = useWatchlist();
   const [activeSort, setActiveSort] = useState('Added');
+  const bp = useBreakpoint();
 
   const sortedWatchlist = useMemo(() => {
     const list = [...watchlist];
@@ -37,7 +36,7 @@ const WatchlistScreen: React.FC<WatchlistScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* ── Header ── */}
       <View style={styles.header}>
@@ -69,10 +68,13 @@ const WatchlistScreen: React.FC<WatchlistScreenProps> = ({ navigation }) => {
       <FlatList
         data={sortedWatchlist}
         keyExtractor={item => item.id.toString()}
+        numColumns={bp.isDesktop ? 3 : bp.isTablet ? 2 : 1}
+        key={bp.breakpoint}
+        columnWrapperStyle={bp.isLarge ? { gap: 12, paddingHorizontal: bp.contentPadding } : undefined}
         renderItem={({ item, index }) => (
           <MovieListItem
             movie={item}
-            onPress={() => navigation.navigate('MovieDetail', { id: item.id, title: item.title })}
+            onPress={() => router.push(`/movie/${item.id}` as any)}
             showWatched
             watched={item.watched}
             onToggleWatched={() => {
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 30,
     fontWeight: FontWeight.black,
-    color: Colors.dark,
+    color: Colors.text.primary,
     letterSpacing: -0.5,
   },
   headerSub: {
@@ -175,7 +177,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
-    color: Colors.dark,
+    color: Colors.text.primary,
     marginBottom: Spacing.sm,
   },
   emptySub: {

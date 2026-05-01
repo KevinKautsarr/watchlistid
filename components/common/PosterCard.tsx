@@ -11,6 +11,7 @@ interface PosterCardProps {
   showRank?:   boolean;
   rank?:       number;
   showBorder?: boolean;
+  textColor?:  string;
   onPress?:    () => void;
 }
 
@@ -20,6 +21,7 @@ const PosterCard: React.FC<PosterCardProps> = ({
   showRank, 
   rank, 
   showBorder, 
+  textColor,
   onPress 
 }) => {
   return (
@@ -47,14 +49,14 @@ const PosterCard: React.FC<PosterCardProps> = ({
       </View>
       <View style={styles.infoRow}>
         <Star size={12} color="#F5C518" fill="#F5C518" strokeWidth={0} />
-        <Text style={styles.ratingText} allowFontScaling={false}>
+        <Text style={[styles.ratingText, textColor ? { color: textColor } : {}]} allowFontScaling={false}>
           {movie.vote_average?.toFixed(1)}
         </Text>
       </View>
-      <Text style={styles.title} numberOfLines={2} allowFontScaling={false}>
+      <Text style={[styles.title, textColor ? { color: textColor } : {}]} numberOfLines={2} allowFontScaling={false}>
         {movie.title}
       </Text>
-      <Text style={styles.year} allowFontScaling={false}>
+      <Text style={[styles.year, textColor ? { color: textColor, opacity: 0.7 } : {}]} allowFontScaling={false}>
         {movie.release_date?.split('-')[0]}
       </Text>
     </TouchableOpacity>

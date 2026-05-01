@@ -5,13 +5,15 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
+import { router } from 'expo-router';
 
 import { 
-  ChevronLeft, BookmarkPlus, BookmarkCheck, Share2, Star, TrendingUp, Calendar, Clock, Globe, Info
+  ChevronLeft, BookmarkPlus, BookmarkCheck, Share2, Star, TrendingUp, Calendar, Clock, Globe, Info, Play
 } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES, Shadow } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
@@ -29,9 +31,11 @@ interface MovieDetailScreenProps {
   navigation: NativeStackNavigationProp<any>;
 }
 
+import { useLocalSearchParams } from 'expo-router';
+
 const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation }): React.JSX.Element => {
-  const { id, movieId } = route.params;
-  const actualId = id || movieId;
+  const params = useLocalSearchParams();
+  const actualId = params.id || params.movieId;
   const insets = useSafeAreaInsets();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, setRating, addToRecentlyViewed } = useWatchlist();
   
@@ -141,7 +145,11 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             style={styles.backdrop} 
             contentFit="cover" 
           />
-          <View style={styles.backdropOverlay} />
+          <LinearGradient
+            colors={['transparent', 'transparent', Colors.background]}
+            locations={[0, 0.4, 1]}
+            style={styles.backdropOverlay}
+          />
         </View>
 
         <View style={styles.titleBlock}>
@@ -195,8 +203,19 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
         </View>
 
         <View style={styles.actionRow}>
-          <TouchableOpacity 
-            style={[styles.btnWatchlist, inWatchlist && styles.btnWatchlistActive]}
+          {featuredTrailer && (
+            <TouchableOpacity 
+              style={styles.btnPlay}
+              onPress={() => openTrailer(featuredTrailer.key)}
+              activeOpacity={0.8}
+            >
+              <Play size={22} color={Colors.white} fill={Colors.white} strokeWidth={0} />
+              <Text style={styles.btnPlayText} allowFontScaling={false}>Play Trailer</Text>
+            </TouchableOpacity>
+          )}
+          <View style={styles.actionSubRow}>
+            <TouchableOpacity 
+              style={[styles.btnWatchlist, inWatchlist && styles.btnWatchlistActive]}
             onPress={handleWatchlist}
           >
             {inWatchlist ? (
@@ -218,6 +237,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             <Star size={16} color={Colors.primary} strokeWidth={2} />
             <Text style={styles.btnRateText} allowFontScaling={false}>Rate</Text>
           </TouchableOpacity>
+          </View>
         </View>
 
         {videos.length > 0 && (
@@ -283,7 +303,10 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
                 <CastCard 
                   key={actor.id} 
                   cast={actor} 
-                  onPress={() => navigation.navigate('PersonDetail', { id: actor.id, name: actor.name })} 
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push({ pathname: '/person/[id]', params: { id: actor.id, name: actor.name } });
+                  }}
                 />
               ))}
             </ScrollView>
@@ -403,69 +426,72 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.overlay.dark,
     justifyContent: 'center', alignItems: 'center'
   },
-  heroWrap: { width: '100%', height: 240, position: 'relative' },
+  heroWrap: { width: '100%', height: 400, position: 'relative' },
   backdrop: { width: '100%', height: '100%' },
-  backdropOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,45,78,0.3)' },
-  titleBlock: { backgroundColor: Colors.background, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg },
-  movieTitle: { fontSize: FontSize.h2, fontWeight: FontWeight.black, color: Colors.dark, letterSpacing: -0.5 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.sm, marginTop: 6 },
-  metaText: { fontSize: FontSize.md, color: Colors.text.secondary },
-  agePill: { backgroundColor: Colors.surface, borderRadius: Radius.sm, paddingHorizontal: 6, paddingVertical: 2 },
-  agePillText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.dark },
-  tagline: { marginTop: Spacing.sm, fontSize: FontSize.md, color: Colors.primary, fontStyle: 'italic' },
+  backdropOverlay: { ...StyleSheet.absoluteFillObject },
+  titleBlock: { backgroundColor: Colors.background, paddingHorizontal: Spacing.xl, paddingTop: Spacing.sm, paddingBottom: Spacing.md },
+  movieTitle: { fontSize: 32, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: -0.5 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.sm, marginTop: 8 },
+  metaText: { fontSize: FontSize.md, color: 'rgba(255,255,255,0.7)' },
+  agePill: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: Radius.sm, paddingHorizontal: 6, paddingVertical: 2 },
+  agePillText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.white },
+  tagline: { marginTop: Spacing.md, fontSize: FontSize.md, color: Colors.primary, fontStyle: 'italic' },
   ratingBlock: {
-    backgroundColor: Colors.white, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg,
-    flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: Colors.overlay.light
+    backgroundColor: Colors.background, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg,
+    flexDirection: 'row', borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
   },
   ratingCol: { flex: 1, alignItems: 'center' },
-  ratingLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: Colors.text.secondary, letterSpacing: 1, marginBottom: 4 },
+  ratingLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginBottom: 4 },
   scoreRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
-  scoreVal: { fontSize: FontSize.xxxl + 4, fontWeight: FontWeight.extrabold, color: Colors.dark },
-  scoreMax: { fontSize: FontSize.md, color: Colors.text.secondary, marginBottom: 4 },
-  voteCount: { fontSize: FontSize.sm, color: Colors.text.secondary, marginTop: 4 },
-  vDivider: { width: 1, height: 60, backgroundColor: Colors.overlay.light },
-  popScore: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.dark },
+  scoreVal: { fontSize: FontSize.xxxl + 4, fontWeight: FontWeight.extrabold, color: Colors.white },
+  scoreMax: { fontSize: FontSize.md, color: 'rgba(255,255,255,0.5)', marginBottom: 4 },
+  voteCount: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  vDivider: { width: 1, height: 60, backgroundColor: 'rgba(255,255,255,0.1)' },
+  popScore: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white },
   userRateScore: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.bold, marginTop: 4 },
   rateTextAction: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.bold, marginTop: 4 },
-  actionRow: { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md, flexDirection: 'row', gap: Spacing.sm, borderBottomWidth: 1, borderColor: Colors.overlay.light },
-  btnWatchlist: { flex: 2, height: 44, borderRadius: Radius.md, backgroundColor: Colors.dark, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
+  actionRow: { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', gap: Spacing.md },
+  actionSubRow: { flexDirection: 'row', gap: Spacing.sm },
+  btnPlay: { height: 48, borderRadius: Radius.md, backgroundColor: Colors.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
+  btnPlayText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
+  btnWatchlist: { flex: 2, height: 44, borderRadius: Radius.md, backgroundColor: Colors.surface, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
   btnWatchlistActive: { backgroundColor: Colors.primary },
   btnWatchlistText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
   btnWatchlistTextActive: { color: Colors.white },
-  btnRate: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: Colors.surface, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
-  btnRateText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.primary },
-  trailerSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: Colors.overlay.light },
+  btnRate: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  btnRateText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
+  trailerSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   sectionHeader: { paddingHorizontal: Spacing.xl, marginBottom: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.dark },
-  sectionSubtitle: { fontSize: FontSize.sm, color: Colors.text.secondary, marginTop: 2 },
+  sectionTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white },
+  sectionSubtitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
   hScroll: { paddingHorizontal: Spacing.xl, gap: Spacing.md },
-  storySection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: Colors.overlay.light },
-  overviewText: { fontSize: FontSize.base, color: Colors.dark, lineHeight: 22, opacity: 0.85 },
+  storySection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  overviewText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.85)', lineHeight: 24 },
   readMore: { color: Colors.primary, fontSize: FontSize.md, fontWeight: FontWeight.semibold, marginTop: Spacing.sm },
   keywordsRow: { marginTop: Spacing.lg, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  keywordPill: { backgroundColor: Colors.surface, borderRadius: Radius.sm, paddingHorizontal: Spacing.md, paddingVertical: 6 },
-  keywordText: { fontSize: FontSize.md, color: Colors.dark, fontWeight: FontWeight.medium },
-  castSection: { paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: Colors.overlay.light, paddingBottom: Spacing.xl },
-  detailsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: Colors.overlay.light, paddingBottom: Spacing.lg },
-  reviewsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: Colors.overlay.light, paddingBottom: Spacing.lg },
-  reviewCard: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, marginBottom: Spacing.md, ...Shadow.sm },
+  keywordPill: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: Radius.sm, paddingHorizontal: Spacing.md, paddingVertical: 6 },
+  keywordText: { fontSize: FontSize.md, color: Colors.white, fontWeight: FontWeight.medium },
+  castSection: { paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: Spacing.xl },
+  detailsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: Spacing.lg },
+  reviewsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: Spacing.lg },
+  reviewCard: { backgroundColor: Colors.surface, borderRadius: Radius.lg, padding: Spacing.lg, marginBottom: Spacing.md, ...Shadow.md },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  reviewAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surface, justifyContent: 'center', alignItems: 'center' },
+  reviewAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
   reviewAvatarText: { fontSize: FontSize.lg, color: Colors.primary, fontWeight: FontWeight.bold },
-  reviewAuthor: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.dark },
-  reviewDate: { fontSize: FontSize.sm, color: Colors.text.secondary, marginTop: 2 },
-  reviewText: { marginTop: Spacing.md, fontSize: FontSize.md, color: Colors.dark, lineHeight: 20, opacity: 0.8 },
+  reviewAuthor: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
+  reviewDate: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
+  reviewText: { marginTop: Spacing.md, fontSize: FontSize.md, color: 'rgba(255,255,255,0.85)', lineHeight: 22 },
   similarSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.xl },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalSheet: { width: width - 48, backgroundColor: Colors.white, borderRadius: Radius.xxl, padding: 28 },
-  modalTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.dark, textAlign: 'center', marginBottom: Spacing.sm },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
+  modalSheet: { width: 340, backgroundColor: Colors.surface, borderRadius: Radius.xxl, padding: 28, ...Shadow.lg },
+  modalTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white, textAlign: 'center', marginBottom: Spacing.sm },
   modalSub: { fontSize: FontSize.base, color: Colors.primary, textAlign: 'center', marginBottom: Spacing.xl },
   starRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
-  ratingLabelText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.dark, textAlign: 'center', marginTop: Spacing.lg },
+  ratingLabelText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white, textAlign: 'center', marginTop: Spacing.lg },
   confirmBtn: { marginTop: Spacing.xxl, backgroundColor: Colors.primary, height: 50, borderRadius: Radius.lg, justifyContent: 'center', alignItems: 'center' },
-  confirmBtnText: { fontSize: FontSize.lg, color: Colors.background, fontWeight: FontWeight.bold },
+  confirmBtnText: { fontSize: FontSize.lg, color: Colors.white, fontWeight: FontWeight.bold },
   cancelBtn: { marginTop: Spacing.md, justifyContent: 'center', alignItems: 'center', height: 40 },
-  cancelBtnText: { fontSize: FontSize.base, color: Colors.text.secondary }
+  cancelBtnText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.6)' }
 });
 
 export default MovieDetailScreen;

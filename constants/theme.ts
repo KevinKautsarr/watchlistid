@@ -1,25 +1,25 @@
 export const Colors = {
-  background:   '#F9F7F7',
-  surface:      '#DBE2EF',
-  primary:      '#3F72AF',
-  dark:         '#112D4E',
+  background:   '#141414',
+  surface:      '#202020',
+  primary:      '#E50914',
+  dark:         '#000000',
   white:        '#FFFFFF',
   ratingGold:   '#F5C518',
 
   // Semantic aliases
   text: {
-    primary:    '#112D4E',
-    secondary:  'rgba(17,45,78,0.45)',
-    inverse:    '#F9F7F7',
-    accent:     '#3F72AF',
+    primary:    '#FFFFFF',
+    secondary:  'rgba(255,255,255,0.6)',
+    inverse:    '#141414',
+    accent:     '#E50914',
   },
   overlay: {
-    dark:       'rgba(17,45,78,0.7)',
-    medium:     'rgba(17,45,78,0.45)',
-    light:      'rgba(17,45,78,0.08)',
+    dark:       'rgba(0,0,0,0.8)',
+    medium:     'rgba(0,0,0,0.5)',
+    light:      'rgba(255,255,255,0.1)',
   },
   shadow: {
-    color:      '#112D4E',
+    color:      '#000000',
   },
 } as const;
 
@@ -66,30 +66,30 @@ export const FontWeight = {
 
 export const Shadow = {
   sm: {
-    shadowColor:   '#112D4E',
+    shadowColor:   '#000000',
     shadowOffset:  { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.3,
     shadowRadius:  6,
     elevation:     2,
   },
   md: {
-    shadowColor:   '#112D4E',
+    shadowColor:   '#000000',
     shadowOffset:  { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.4,
     shadowRadius:  10,
     elevation:     4,
   },
   lg: {
-    shadowColor:   '#112D4E',
+    shadowColor:   '#000000',
     shadowOffset:  { width: 0, height: 6 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.5,
     shadowRadius:  16,
     elevation:     8,
   },
   primary: {
-    shadowColor:   '#3F72AF',
+    shadowColor:   '#E50914',
     shadowOffset:  { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.4,
     shadowRadius:  10,
     elevation:     6,
   },

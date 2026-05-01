@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -16,9 +18,12 @@ interface PersonDetailScreenProps {
   navigation: NativeStackNavigationProp<any>;
 }
 
+import { useLocalSearchParams } from 'expo-router';
+
 const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigation }): React.JSX.Element => {
-  const { id } = route.params;
-  const { data, isLoading: loading } = usePersonDetails(id);
+  const params = useLocalSearchParams();
+  const id = params.id || params.personId;
+  const { data, isLoading: loading } = usePersonDetails(Number(id));
   const person = data?.person;
   const credits = data?.credits?.cast || [];
   
@@ -67,7 +72,11 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.dark }]} />
           )}
-          <View style={styles.backdropOverlay} />
+          <LinearGradient
+            colors={['transparent', 'transparent', Colors.background]}
+            locations={[0, 0.4, 1]}
+            style={styles.backdropOverlay}
+          />
           <View style={styles.profileFloat}>
             <Image 
               source={{ uri: `${TMDB_IMAGE_SIZES.medium}${person.profile_path}` }} 
@@ -121,7 +130,10 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
                   <PosterCard 
                     key={item.id} 
                     movie={item} 
-                    onPress={() => navigation.push('MovieDetail', { id: item.id, title: item.title })} 
+                  onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title } });
+                    }} 
                   />
                 ))}
               </ScrollView>
@@ -135,12 +147,15 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
                 <TouchableOpacity 
                   key={`${item.id}-${index}`} 
                   style={styles.filmRow}
-                  onPress={() => navigation.push('MovieDetail', { id: item.id, title: item.title })}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title } });
+                  }}
                 >
                   <Text style={styles.filmYear} allowFontScaling={false}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
                   <View style={styles.filmMeta}>
                     <Text style={styles.filmTitle} allowFontScaling={false}>{item.title}</Text>
-                    {item.character ? <Text style={styles.filmRole} allowFontScaling={false}>{item.character}</Text> : null}
+                    {(item as any).character ? <Text style={styles.filmRole} allowFontScaling={false}>{(item as any).character}</Text> : null}
                   </View>
                 </TouchableOpacity>
               ))}
@@ -162,8 +177,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.overlay.dark,
     justifyContent: 'center', alignItems: 'center'
   },
-  heroWrap: { width: '100%', height: 200, position: 'relative' },
-  backdropOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,45,78,0.4)' },
+  heroWrap: { width: '100%', height: 280, position: 'relative' },
+  backdropOverlay: { ...StyleSheet.absoluteFillObject },
   profileFloat: {
     position: 'absolute', bottom: -50, left: 20,
     width: 100, height: 100, borderRadius: 50,
@@ -172,23 +187,23 @@ const styles = StyleSheet.create({
   },
   profileImg: { width: '100%', height: '100%' },
   contentWrap: { paddingTop: 66 },
-  nameText: { paddingHorizontal: Spacing.xl, fontSize: FontSize.h2, fontWeight: FontWeight.black, color: Colors.dark },
+  nameText: { paddingHorizontal: Spacing.xl, fontSize: 32, fontWeight: FontWeight.black, color: Colors.white },
   departmentText: { paddingHorizontal: Spacing.xl, fontSize: FontSize.sm, color: Colors.primary, marginTop: 4 },
   statsRow: { flexDirection: 'row', paddingHorizontal: Spacing.xl, marginTop: Spacing.lg, gap: 10 },
-  statCard: { flex: 1, backgroundColor: Colors.white, borderRadius: Radius.md, paddingVertical: 12, alignItems: 'center', ...Shadow.sm },
-  statValue: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.dark },
+  statCard: { flex: 1, backgroundColor: Colors.surface, borderRadius: Radius.md, paddingVertical: 12, alignItems: 'center', ...Shadow.md },
+  statValue: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
   statLabel: { fontSize: FontSize.xs, color: Colors.primary, marginTop: 2, fontWeight: FontWeight.bold },
-  section: { paddingHorizontal: Spacing.xl, paddingTop: 24, borderBottomWidth: 1, borderColor: Colors.overlay.light, paddingBottom: 24 },
-  sectionNoPadding: { paddingTop: 24, borderBottomWidth: 1, borderColor: Colors.overlay.light, paddingBottom: 24 },
-  sectionTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.dark, marginBottom: 12 },
-  bioText: { fontSize: FontSize.base, color: Colors.dark, lineHeight: 22, opacity: 0.85 },
+  section: { paddingHorizontal: Spacing.xl, paddingTop: 24, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: 24 },
+  sectionNoPadding: { paddingTop: 24, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: 24 },
+  sectionTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white, marginBottom: 12 },
+  bioText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.85)', lineHeight: 24 },
   readMore: { color: Colors.primary, fontSize: FontSize.md, fontWeight: FontWeight.semibold, marginTop: 8 },
   hScroll: { paddingHorizontal: Spacing.xl, gap: Spacing.md },
-  filmRow: { flexDirection: 'row', paddingVertical: 12, borderBottomWidth: 1, borderColor: Colors.overlay.light },
-  filmYear: { width: 50, fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.dark },
+  filmRow: { flexDirection: 'row', paddingVertical: 12, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  filmYear: { width: 50, fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
   filmMeta: { flex: 1 },
-  filmTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.dark },
-  filmRole: { fontSize: FontSize.sm, color: Colors.text.secondary, marginTop: 2 },
+  filmTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
+  filmRole: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
 });
 
 export default PersonDetailScreen;

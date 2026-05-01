@@ -15,5 +15,5 @@ export default function PersonDetailRoute() {
     }
   };
 
-  return <PersonDetailScreen route={route} navigation={navigation} />;
+  return <PersonDetailScreen route={route as any} navigation={navigation as any} />;
 }

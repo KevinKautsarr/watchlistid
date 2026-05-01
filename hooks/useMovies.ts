@@ -44,6 +44,12 @@ export const usePopular = () =>
 export const useTopRated = () =>
   useAsync(() => api.getTopRatedMovies().then(r => r.results));
 
+export const useTrendingTV = () =>
+  useAsync(() => api.getTrendingTV().then(r => r.results));
+
+export const useTopRatedTV = () =>
+  useAsync(() => api.getTopRatedTV().then(r => r.results));
+
 export const useMovieDetails = (id: number) =>
   useAsync(() => api.getFullMovieDetails(id), [id]);
 
