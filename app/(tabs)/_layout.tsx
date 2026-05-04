@@ -1,26 +1,28 @@
 import React from 'react';
 import { View, Text, Platform, useWindowDimensions, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Tabs, useRouter, useSegments } from 'expo-router';
-import { Home, Compass, Bookmark, User, Film, Bell } from 'lucide-react-native';
+import { Home, Compass, Bookmark, User, Film } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomMobileTabBar from '../../components/navigation/CustomMobileTabBar';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PRIMARY  = '#E50914';
 const INACTIVE = 'rgba(255,255,255,0.45)';
 const BAR_BG   = '#0F0F0F';
 
-// ─── Nav items ───────────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { name: 'index',     label: 'Home',      Icon: Home     },
-  { name: 'search',    label: 'Discover',  Icon: Compass  },
-  { name: 'watchlist', label: 'Watchlist', Icon: Bookmark },
-  { name: 'profile',   label: 'Profile',   Icon: User     },
+// ─── Nav items keys ──────────────────────────────────────────────────────────
+const NAV_KEYS = [
+  { name: 'index',     key: 'tabHome',      Icon: Home     },
+  { name: 'search',    key: 'tabDiscover',  Icon: Compass  },
+  { name: 'watchlist', key: 'tabWatchlist', Icon: Bookmark },
+  { name: 'profile',   key: 'tabProfile',   Icon: User     },
 ];
 
 // ─── Sidebar for tablet/desktop ──────────────────────────────────────────────
 const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
   const router   = useRouter();
   const segments = useSegments();
+  const { t } = useLanguage();
   const activeTab = segments[1] || 'index';
 
   return (
@@ -51,7 +53,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
           {!collapsed && (
             <Text style={styles.navSection} allowFontScaling={false}>MENU</Text>
           )}
-          {NAV_ITEMS.map(({ name, label, Icon }) => {
+          {NAV_KEYS.map(({ name, key, Icon }) => {
             const active = activeTab === name;
             return (
               <TouchableOpacity
@@ -70,7 +72,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     style={[styles.navLabel, active && styles.navLabelActive]}
                     allowFontScaling={false}
                   >
-                    {label}
+                    {t(key as any)}
                   </Text>
                 )}
                 {active && !collapsed && <View style={styles.activePip} />}
@@ -196,6 +198,18 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: PRIMARY,
+  },
+  sideBadge: {
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 'auto',
+  },
+  sideBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 
   // Footer

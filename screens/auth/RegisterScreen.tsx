@@ -9,13 +9,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Mail, Lock, Eye, EyeOff, User, UserPlus } from 'lucide-react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import CaptchaModal from '../../components/auth/CaptchaModal';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
+  const { t } = useLanguage();
 
   const [username,  setUsername]  = useState('');
   const [email,     setEmail]     = useState('');
@@ -23,27 +27,47 @@ export default function RegisterScreen() {
   const [confirm,   setConfirm]   = useState('');
   const [showPass,  setShowPass]  = useState(false);
   const [loading,   setLoading]   = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [showCaptcha, setShowCaptcha] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
   const [success,   setSuccess]   = useState(false);
 
   const handleRegister = async () => {
     setError(null);
     if (!username.trim() || !email.trim() || !password || !confirm) {
-      setError('Semua field wajib diisi.');
+      setError(t('allFieldsRequired'));
       return;
     }
     if (password !== confirm) {
-      setError('Password dan konfirmasi tidak cocok.');
+      setError(t('passwordsDontMatch'));
       return;
     }
     if (password.length < 6) {
-      setError('Password minimal 6 karakter.');
+      setError(t('passwordTooShort'));
       return;
     }
+
+    // Username protection
+    const forbiddenNames = ['admin', 'administrator', 'owner', 'official', 'support', 'staff', 'mod', 'moderator'];
+    const lowerName = username.trim().toLowerCase();
+    if (forbiddenNames.some(name => lowerName.includes(name))) {
+      setError('Nama ini tidak diizinkan untuk alasan keamanan.');
+      return;
+    }
+    
+    // Step 1: Show Captcha before final sign up
+    setShowCaptcha(true);
+  };
+
+  const handleCaptchaVerify = async (token: string) => {
+    setShowCaptcha(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    const err = await signUp(email.trim().toLowerCase(), password, username.trim());
+    
+    // Step 2: Call signUp with the captcha token
+    const err = await signUp(email.trim().toLowerCase(), password, username.trim(), token);
     setLoading(false);
+    
     if (err) {
       setError(err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -53,18 +77,34 @@ export default function RegisterScreen() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setGoogleLoading(true);
+    setError(null);
+    const err = await signInWithGoogle();
+    setGoogleLoading(false);
+    
+    if (err) {
+      setError(err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Redirect handled by AuthContext listener
+    }
+  };
+
   if (success) {
     return (
       <SafeAreaView style={s.root} edges={['top', 'bottom']}>
         <LinearGradient colors={['#7E050B', '#141414', '#141414']} style={StyleSheet.absoluteFill} />
         <View style={s.successWrap}>
           <Text style={s.successEmoji}>🎉</Text>
-          <Text style={s.successTitle} allowFontScaling={false}>Akun Berhasil Dibuat!</Text>
+          <Text style={s.successTitle} allowFontScaling={false}>{t('accountCreated')}</Text>
           <Text style={s.successSub} allowFontScaling={false}>
-            Cek email kamu untuk verifikasi, lalu masuk ke aplikasi.
+            {t('checkEmailVerification')}
           </Text>
           <TouchableOpacity style={s.btn} onPress={() => router.replace('/auth/login' as any)}>
-            <Text style={s.btnText} allowFontScaling={false}>Masuk Sekarang</Text>
+            <Text style={s.btnText} allowFontScaling={false}>{t('backToLogin')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -91,21 +131,21 @@ export default function RegisterScreen() {
               WatchList<Text style={s.logoAccent}>ID</Text>
             </Text>
             <Text style={s.logoSub} allowFontScaling={false}>
-              Bergabung dan mulai track filmmu
+              {t('joinCommunity')}
             </Text>
           </View>
 
           {/* Card */}
           <View style={s.card}>
-            <Text style={s.cardTitle} allowFontScaling={false}>Daftar</Text>
+            <Text style={s.cardTitle} allowFontScaling={false}>{t('signUp')}</Text>
             <Text style={s.cardSub} allowFontScaling={false}>
-              Buat akun gratis sekarang ✨
+              {t('createAccount')} ✨
             </Text>
 
             {/* Username */}
             <View style={s.fieldLabel}>
               <User size={15} color={Colors.primary} strokeWidth={2} />
-              <Text style={s.label} allowFontScaling={false}>Username</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('username')}</Text>
             </View>
             <TextInput
               style={s.input}
@@ -121,7 +161,7 @@ export default function RegisterScreen() {
             {/* Email */}
             <View style={s.fieldLabel}>
               <Mail size={15} color={Colors.primary} strokeWidth={2} />
-              <Text style={s.label} allowFontScaling={false}>Email</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('email')}</Text>
             </View>
             <TextInput
               style={s.input}
@@ -138,7 +178,7 @@ export default function RegisterScreen() {
             {/* Password */}
             <View style={s.fieldLabel}>
               <Lock size={15} color={Colors.primary} strokeWidth={2} />
-              <Text style={s.label} allowFontScaling={false}>Password</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('password')}</Text>
             </View>
             <View style={s.inputRow}>
               <TextInput
@@ -164,7 +204,7 @@ export default function RegisterScreen() {
             {/* Confirm */}
             <View style={[s.fieldLabel, { marginTop: Spacing.lg }]}>
               <Lock size={15} color={Colors.primary} strokeWidth={2} />
-              <Text style={s.label} allowFontScaling={false}>Konfirmasi Password</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('confirmPassword')}</Text>
             </View>
             <TextInput
               style={s.input}
@@ -185,9 +225,9 @@ export default function RegisterScreen() {
 
             {/* Submit */}
             <TouchableOpacity
-              style={[s.btn, loading && { opacity: 0.7 }]}
+              style={[s.btn, (loading || googleLoading) && { opacity: 0.7 }]}
               onPress={handleRegister}
-              disabled={loading}
+              disabled={loading || googleLoading}
               activeOpacity={0.85}
             >
               {loading
@@ -195,10 +235,36 @@ export default function RegisterScreen() {
                 : (
                   <>
                     <UserPlus size={18} color={Colors.white} strokeWidth={2.5} />
-                    <Text style={s.btnText} allowFontScaling={false}>Buat Akun</Text>
+                    <Text style={s.btnText} allowFontScaling={false}>{t('signUp')}</Text>
                   </>
                 )}
             </TouchableOpacity>
+
+            {/* Google Signup Button */}
+            <TouchableOpacity
+              style={[s.googleBtn, (loading || googleLoading) && { opacity: 0.7 }]}
+              onPress={handleGoogleLogin}
+              disabled={loading || googleLoading}
+              activeOpacity={0.85}
+            >
+              {googleLoading
+                ? <ActivityIndicator color={Colors.text.primary} />
+                : (
+                  <>
+                    <View style={s.googleIconBg}>
+                      <FontAwesome name="google" size={16} color="#4285F4" />
+                    </View>
+                    <Text style={s.googleBtnText} allowFontScaling={false}>{t('orSignUpWith')} {t('google')}</Text>
+                  </>
+                )}
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={s.divider}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText} allowFontScaling={false}>{t('or')}</Text>
+              <View style={s.dividerLine} />
+            </View>
 
             {/* Back to login */}
             <TouchableOpacity
@@ -207,12 +273,18 @@ export default function RegisterScreen() {
               activeOpacity={0.7}
             >
               <Text style={s.backText} allowFontScaling={false}>
-                Sudah punya akun? Masuk
+                {t('alreadyHaveAccount')} {t('signIn')}
               </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CaptchaModal
+        visible={showCaptcha}
+        onCancel={() => setShowCaptcha(false)}
+        onVerify={handleCaptchaVerify}
+      />
     </SafeAreaView>
   );
 }
@@ -290,9 +362,38 @@ const s = StyleSheet.create({
     justifyContent:  'center',
     gap:             Spacing.sm,
     ...Shadow.primary,
-    marginBottom:    Spacing.lg,
+    marginBottom:    Spacing.md,
   },
   btnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
+
+  googleBtn: {
+    height:         54,
+    backgroundColor: Colors.white,
+    borderRadius:   Radius.lg,
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'center',
+    gap:            Spacing.md,
+    ...Shadow.sm,
+  },
+  googleIconBg: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#fff',
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleBtnText: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    color: '#000',
+    letterSpacing: 0.2,
+  },
+
+  divider:     { flexDirection: 'row', alignItems: 'center', marginVertical: Spacing.xl, gap: 10 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
+  dividerText: { fontSize: FontSize.sm, color: Colors.text.secondary },
 
   backBtn:  { alignItems: 'center' },
   backText: { fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.semibold },

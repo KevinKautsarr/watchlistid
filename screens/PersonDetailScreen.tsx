@@ -12,6 +12,7 @@ import { ChevronLeft, Calendar, Globe, TrendingUp } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '../constants/theme';
 import { usePersonDetails } from '../hooks/useMovies';
 import PosterCard from '../components/common/PosterCard';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PersonDetailScreenProps {
   route: RouteProp<any, any>;
@@ -23,6 +24,7 @@ import { useLocalSearchParams } from 'expo-router';
 const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigation }): React.JSX.Element => {
   const params = useLocalSearchParams();
   const id = params.id || params.personId;
+  const { t } = useLanguage();
   const { data, isLoading: loading } = usePersonDetails(Number(id));
   const person = data?.person;
   const credits = data?.credits?.cast || [];
@@ -32,7 +34,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
   if (loading || !person) {
     return (
       <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: Colors.dark }} allowFontScaling={false}>Loading...</Text>
+        <Text style={{ color: Colors.dark }} allowFontScaling={false}>{t('loading')}</Text>
       </View>
     );
   }
@@ -94,29 +96,29 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
             <View style={styles.statCard}>
               <Calendar size={18} color={Colors.primary} strokeWidth={2} style={{ marginBottom: 4 }} />
               <Text style={styles.statValue} allowFontScaling={false}>{person.birthday ? person.birthday.substring(0,4) : 'N/A'}</Text>
-              <Text style={styles.statLabel} allowFontScaling={false}>Born</Text>
+              <Text style={styles.statLabel} allowFontScaling={false}>{t('born')}</Text>
             </View>
             <View style={styles.statCard}>
               <Globe size={18} color={Colors.primary} strokeWidth={2} style={{ marginBottom: 4 }} />
               <Text style={styles.statValue} numberOfLines={1} allowFontScaling={false}>{person.place_of_birth?.split(',').pop()?.trim() ?? 'N/A'}</Text>
-              <Text style={styles.statLabel} allowFontScaling={false}>Birthplace</Text>
+              <Text style={styles.statLabel} allowFontScaling={false}>{t('birthplace')}</Text>
             </View>
             <View style={styles.statCard}>
               <TrendingUp size={18} color={Colors.primary} strokeWidth={2} style={{ marginBottom: 4 }} />
               <Text style={styles.statValue} allowFontScaling={false}>{person.popularity?.toFixed(0)}</Text>
-              <Text style={styles.statLabel} allowFontScaling={false}>Popularity</Text>
+              <Text style={styles.statLabel} allowFontScaling={false}>{t('popularity')}</Text>
             </View>
           </View>
 
           {person.biography ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle} allowFontScaling={false}>Biography</Text>
+              <Text style={styles.sectionTitle} allowFontScaling={false}>{t('biography')}</Text>
               <Text style={styles.bioText} numberOfLines={expandedBio ? undefined : 3} allowFontScaling={false}>
                 {person.biography}
               </Text>
               {person.biography.length > 150 && (
                 <TouchableOpacity onPress={() => setExpandedBio(!expandedBio)}>
-                  <Text style={styles.readMore} allowFontScaling={false}>{expandedBio ? "Read less" : "Read more"}</Text>
+                  <Text style={styles.readMore} allowFontScaling={false}>{expandedBio ? t('less') : t('readMore')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -124,7 +126,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
 
           {knownFor.length > 0 && (
             <View style={styles.sectionNoPadding}>
-              <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>Known For</Text>
+              <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('knownFor')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
                 {knownFor.map(item => (
                   <PosterCard 
@@ -132,7 +134,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
                     movie={item} 
                   onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title } });
+                      router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title || (item as any).name, type: item.media_type || 'movie' } });
                     }} 
                   />
                 ))}
@@ -142,19 +144,19 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
 
           {filmography.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>Filmography</Text>
+              <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('filmography')}</Text>
               {filmography.map((item, index) => (
                 <TouchableOpacity 
                   key={`${item.id}-${index}`} 
                   style={styles.filmRow}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title } });
+                    router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title || (item as any).name, type: item.media_type || 'movie' } });
                   }}
                 >
                   <Text style={styles.filmYear} allowFontScaling={false}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
                   <View style={styles.filmMeta}>
-                    <Text style={styles.filmTitle} allowFontScaling={false}>{item.title}</Text>
+                    <Text style={styles.filmTitle} allowFontScaling={false}>{item.title || (item as any).name}</Text>
                     {(item as any).character ? <Text style={styles.filmRole} allowFontScaling={false}>{(item as any).character}</Text> : null}
                   </View>
                 </TouchableOpacity>

@@ -38,7 +38,7 @@ const SplashScreen: React.FC = () => {
         <Film size={64} color={Colors.primary} strokeWidth={1.5} style={styles.icon} />
         
         <Text style={styles.appName} allowFontScaling={false}>
-          WatchList<Text style={styles.appAccent}>ID</Text>
+          WATCHLISTID
         </Text>
         
         <Text style={styles.tagline} allowFontScaling={false}>

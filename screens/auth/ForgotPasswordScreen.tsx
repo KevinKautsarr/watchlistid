@@ -12,9 +12,11 @@ import { Mail, ArrowLeft, Send } from 'lucide-react-native';
 
 import { supabase } from '../../supabase';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [email,   setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,7 @@ export default function ForgotPasswordScreen() {
   const handleReset = async () => {
     setError(null);
     if (!email.trim()) {
-      setError('Email wajib diisi.');
+      setError(t('emailRequired'));
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -72,34 +74,30 @@ export default function ForgotPasswordScreen() {
               <View style={s.sentWrap}>
                 <Text style={s.sentEmoji}>📬</Text>
                 <Text style={s.sentTitle} allowFontScaling={false}>
-                  Email Terkirim!
+                  {t('emailSent')}
                 </Text>
                 <Text style={s.sentSub} allowFontScaling={false}>
-                  Cek inbox kamu di{' '}
-                  <Text style={{ fontWeight: FontWeight.bold, color: Colors.primary }}>
-                    {email}
-                  </Text>
-                  {' '}untuk link reset password.
+                  {t('checkInboxForReset').replace('{email}', email)}
                 </Text>
                 <TouchableOpacity
                   style={s.btn}
                   onPress={() => router.replace('/auth/login' as any)}
                   activeOpacity={0.85}
                 >
-                  <Text style={s.btnText} allowFontScaling={false}>Kembali ke Login</Text>
+                  <Text style={s.btnText} allowFontScaling={false}>{t('backToLogin')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               // ── Form ───────────────────────────────────────────────────
               <>
-                <Text style={s.cardTitle} allowFontScaling={false}>Lupa Password?</Text>
+                <Text style={s.cardTitle} allowFontScaling={false}>{t('forgotPasswordTitle')}</Text>
                 <Text style={s.cardSub} allowFontScaling={false}>
-                  Masukkan email akun kamu. Kami akan kirimkan link untuk reset password.
+                  {t('forgotPasswordDesc')}
                 </Text>
 
                 <View style={s.fieldLabel}>
                   <Mail size={15} color={Colors.primary} strokeWidth={2} />
-                  <Text style={s.label} allowFontScaling={false}>Email</Text>
+                  <Text style={s.label} allowFontScaling={false}>{t('email')}</Text>
                 </View>
                 <TextInput
                   style={s.input}

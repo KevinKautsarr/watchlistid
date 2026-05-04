@@ -16,6 +16,7 @@ import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useTrending, usePopular, useTopRated, useTrendingTV, useTopRatedTV } from '../hooks/useMovies';
 import { useBreakpoint } from '../hooks/useBreakpoint';
+import { useLanguage } from '../context/LanguageContext';
 import { Movie } from '../types';
 
 // ─── Sidebar widths (must match _layout.tsx) ─────────────────────────────────
@@ -24,14 +25,14 @@ const SIDEBAR_ICON = 72;
 
 // ─── Genre data ──────────────────────────────────────────────────────────────
 const GENRES = [
-  { id: 28,    name: 'Action',    image: '/ff2ti5DkA9UYLzyqhQfI2kZqEuh.jpg' },
-  { id: 35,    name: 'Comedy',    image: '/rHTAgPq6ZGoj5CqxFAh04Q3hJWH.jpg' },
-  { id: 18,    name: 'Drama',     image: '/tSPT36ZKlP2WVHJLM4cQPLSzv3b.jpg' },
-  { id: 27,    name: 'Horror',    image: '/ecKQlAEG95k62SMGhvX83oEqANK.jpg' },
-  { id: 878,   name: 'Sci-Fi',    image: '/2ssWTSVklAEc98frZUQhgtGHx7s.jpg' },
-  { id: 10749, name: 'Romance',   image: '/qBChUbS8ksbJoPTfZpogsnxG5tY.jpg' },
-  { id: 12,    name: 'Adventure', image: '/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg' },
-  { id: 80,    name: 'Crime',     image: '/cfT29Im5VDvjE0RpyKOSdCKZal7.jpg' },
+  { id: 28,    nameKey: 'genreAction',    image: '/ff2ti5DkA9UYLzyqhQfI2kZqEuh.jpg' },
+  { id: 35,    nameKey: 'genreComedy',    image: '/rHTAgPq6ZGoj5CqxFAh04Q3hJWH.jpg' },
+  { id: 18,    nameKey: 'genreDrama',     image: '/tSPT36ZKlP2WVHJLM4cQPLSzv3b.jpg' },
+  { id: 27,    nameKey: 'genreHorror',    image: '/ecKQlAEG95k62SMGhvX83oEqANK.jpg' },
+  { id: 878,   nameKey: 'genreSciFi',    image: '/2ssWTSVklAEc98frZUQhgtGHx7s.jpg' },
+  { id: 10749, nameKey: 'genreRomance',   image: '/qBChUbS8ksbJoPTfZpogsnxG5tY.jpg' },
+  { id: 12,    nameKey: 'genreAdventure', image: '/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg' },
+  { id: 80,    nameKey: 'genreCrime',     image: '/cfT29Im5VDvjE0RpyKOSdCKZal7.jpg' },
 ] as const;
 
 // ─── Skeleton shimmer ─────────────────────────────────────────────────────────
@@ -292,6 +293,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const bp = useBreakpoint();
+  const { t } = useLanguage();
 
   const { data: trendingData,   isLoading: lt,   refetch: rt   } = useTrending();
   const { data: popularData,    isLoading: lp,   refetch: rp   } = usePopular();
@@ -299,11 +301,11 @@ export default function HomeScreen() {
   const { data: trendingTVData, isLoading: ltv,  refetch: rtv  } = useTrendingTV();
   const { data: topRatedTVData, isLoading: lrtv, refetch: rrtv } = useTopRatedTV();
 
-  const trending   = (trendingData   as any[] | null) ?? [];
-  const popular    = (popularData    as any[] | null) ?? [];
-  const topRated   = (topRatedData   as any[] | null) ?? [];
-  const trendingTV = (trendingTVData as any[] | null) ?? [];
-  const topRatedTV = (topRatedTVData as any[] | null) ?? [];
+  const trending   = ((trendingData   as any[] | null) ?? []).filter(m => !m.adult);
+  const popular    = ((popularData    as any[] | null) ?? []).filter(m => !m.adult);
+  const topRated   = ((topRatedData   as any[] | null) ?? []).filter(m => !m.adult);
+  const trendingTV = ((trendingTVData as any[] | null) ?? []).filter(m => !m.adult);
+  const topRatedTV = ((topRatedTVData as any[] | null) ?? []).filter(m => !m.adult);
   const loading    = lt || lp || ltr;
 
   const onRefresh = async () => {
@@ -315,18 +317,23 @@ export default function HomeScreen() {
 
   const goToMovie = (movie: any) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/movie/${movie.id}` as any);
+    const type = movie.media_type || (movie.first_air_date ? 'tv' : 'movie');
+    router.push(`/movie/${movie.id}?type=${type}` as any);
   };
   const toggleWL = (movie: any) => {
+    if (!user) {
+      router.push('/auth/login' as any);
+      return;
+    }
     const has = isInWatchlist(movie.id);
     Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
     has ? removeFromWatchlist(movie.id) : addToWatchlist(movie);
   };
 
   const recentMovies = useMemo(() => {
-    const all = [...trending, ...popular, ...topRated];
+    const all = [...trending, ...popular, ...topRated, ...trendingTV, ...topRatedTV];
     return recentlyViewed.map(id => all.find((m: any) => m.id === id)).filter((m): m is Movie => m != null).slice(0, 10);
-  }, [recentlyViewed, trending, popular, topRated]);
+  }, [recentlyViewed, trending, popular, topRated, trendingTV, topRatedTV]);
 
   const headerBg = scrollY.interpolate({
     inputRange: [0, 100],
@@ -364,11 +371,8 @@ export default function HomeScreen() {
       {/* ── Mobile floating header only ── */}
       {bp.isMobile && (
         <Animated.View style={[s.header, { backgroundColor: headerBg, paddingTop: Math.max(insets.top, 20), paddingBottom: 14 }]}>
-          <Text style={s.logo} allowFontScaling={false}>WATCHLIST</Text>
+          <Text style={s.logo} allowFontScaling={false}>WATCHLISTID</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity style={s.iconBtn}>
-              <Bell size={20} color="#fff" strokeWidth={2.5} />
-            </TouchableOpacity>
             <TouchableOpacity style={s.avatar} onPress={() => router.push('/(tabs)/profile')}>
               {avatarUrl
                 ? <Image source={{ uri: avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} />
@@ -402,35 +406,35 @@ export default function HomeScreen() {
           {/* Desktop "Browse" page header */}
           {bp.isLarge && (
             <View style={{ paddingHorizontal: PAD, paddingTop: 28, paddingBottom: 4 }}>
-              <Text style={s.browseTitle} allowFontScaling={false}>Browse</Text>
-              <Text style={s.browseSub}   allowFontScaling={false}>Discover the latest and greatest in film &amp; TV</Text>
+              <Text style={s.browseTitle} allowFontScaling={false}>{t('browse')}</Text>
+              <Text style={s.browseSub}   allowFontScaling={false}>{t('browseSub')}</Text>
             </View>
           )}
 
           {/* Trending Movies */}
-          <SectionHeader title="Trending Movies"      Icon={Flame} iconColor="#E50914" textColor="#fff" actionLabel="See all" onAction={() => router.push('/(tabs)/search?category=trending-movies' as any)} />
+          <SectionHeader title={t('trendingMovies')}      Icon={Flame} iconColor="#E50914" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=trending-movies' as any)} />
           {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trending.slice(0, N)} />}
 
           {/* Trending Shows */}
-          <SectionHeader title="Trending Shows"       Icon={Flame} iconColor="#FF6B35" textColor="#fff" actionLabel="See all" onAction={() => router.push('/(tabs)/search?category=trending-tv' as any)} />
-          {ltv    ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trendingTV.slice(0, N)} onPress={() => {}} />}
+          <SectionHeader title={t('trendingShows')}       Icon={Flame} iconColor="#FF6B35" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=trending-tv' as any)} />
+          {ltv    ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trendingTV.slice(0, N)} />}
 
           {/* Popular */}
-          <SectionHeader title="Popular on WatchList" Icon={Star}  iconColor="#F5C518" textColor="#fff" actionLabel="See all" onAction={() => router.push('/(tabs)/search?category=popular' as any)} />
+          <SectionHeader title={t('popular')} Icon={Star}  iconColor="#F5C518" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=popular' as any)} />
           {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={popular.slice(0, N)} />}
 
           {/* Top Rated Movies */}
-          <SectionHeader title="Top Rated Movies"     Icon={Award} iconColor="#4CAF50" textColor="#fff" actionLabel="See all" onAction={() => router.push('/(tabs)/search?category=top-rated-movies' as any)} />
+          <SectionHeader title={t('topRatedMovies')}     Icon={Award} iconColor="#4CAF50" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=top-rated-movies' as any)} />
           {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={topRated.slice(0, N)} />}
 
           {/* Top Rated Shows */}
-          <SectionHeader title="Top Rated Shows"      Icon={Award} iconColor="#2196F3" textColor="#fff" actionLabel="See all" onAction={() => router.push('/(tabs)/search?category=top-rated-tv' as any)} />
-          {lrtv   ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={topRatedTV.slice(0, N)} onPress={() => {}} />}
+          <SectionHeader title={t('topRatedShows')}      Icon={Award} iconColor="#2196F3" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=top-rated-tv' as any)} />
+          {lrtv   ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={topRatedTV.slice(0, N)} />}
 
 
 
           {/* Browse by Genre */}
-          <SectionHeader title="Browse by Genre"     Icon={Flame} iconColor="#6C5CE7" textColor="#fff" actionLabel="See all" onAction={() => router.push('/(tabs)/search')} />
+          <SectionHeader title={t('browseByGenre')}     Icon={Flame} iconColor="#6C5CE7" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search' as any)} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: PAD, paddingRight: PAD, paddingBottom: 4, gap: 10 }}>
             {GENRES.map(g => {
               const gW = bp.isDesktop ? 160 : bp.isTablet ? 140 : 120;
@@ -439,7 +443,7 @@ export default function HomeScreen() {
                 <TouchableOpacity key={g.id} style={{ width: gW, height: gH, borderRadius: Radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }} activeOpacity={0.82} onPress={() => router.push(`/(tabs)/search?genre=${g.id}` as any)}>
                   <Image source={{ uri: `${TMDB_IMAGE_SIZES.small}${g.image}` }} style={StyleSheet.absoluteFill} contentFit="cover" />
                   <LinearGradient colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.82)']} style={StyleSheet.absoluteFill} />
-                  <Text style={s.genreName} allowFontScaling={false}>{g.name}</Text>
+                  <Text style={s.genreName} allowFontScaling={false}>{t(g.nameKey as any)}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -448,7 +452,7 @@ export default function HomeScreen() {
           {/* Recently Viewed */}
           {recentMovies.length > 0 && (
             <>
-              <SectionHeader title="Recently Viewed" Icon={Clock} iconColor="#E50914" textColor="#fff" />
+              <SectionHeader title={t('recentlyViewed')} Icon={Clock} iconColor="#E50914" textColor="#fff" />
               <MediaRow {...rowProps} data={recentMovies} />
             </>
           )}
@@ -475,7 +479,25 @@ const s = StyleSheet.create({
     }),
   },
   logo:    { fontSize: 20, fontWeight: '900', color: '#E50914', letterSpacing: 2 },
-  iconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  badge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: '#E50914',
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#141414',
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#fff',
+  },
   avatar:  { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
   avatarTxt: { fontSize: 16, color: '#fff', fontWeight: '700' },
 

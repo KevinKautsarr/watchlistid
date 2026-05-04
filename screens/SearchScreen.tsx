@@ -14,22 +14,28 @@ import {
 import MovieListItem from "../components/movie/MovieListItem";
 import { Colors, FontSize, FontWeight, Radius, Shadow, Spacing, TMDB_IMAGE_SIZES } from "../constants/theme";
 import { useWatchlist } from "../context/WatchlistContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useDebounce } from "../hooks/useDebounce";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import {
   discoverMovies, getPopularMovies, getPopularPeople,
   getTopRatedMovies, getTopRatedTV, getTrendingMovies,
-  getTrendingTV, searchMovies, searchPeople, searchTV,
+  getTrendingTV, getTrendingAll, searchMovies, searchPeople, searchTV, searchMulti,
+  discoverAnime, discoverAnimation,
 } from "../services/api";
 import { Movie } from "../types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const norm = (i: any): Movie => ({
-  ...i,
-  title: i.title ?? i.name ?? "Unknown",
-  release_date: i.release_date ?? i.first_air_date ?? "",
-  poster_path: i.poster_path ?? null,
-});
+const norm = (i: any, defaultType?: string): Movie | null => {
+  if (i.media_type === "person") return null;
+  return {
+    ...i,
+    media_type: i.media_type ?? defaultType ?? "movie",
+    title: i.title ?? i.name ?? "Unknown",
+    release_date: i.release_date ?? i.first_air_date ?? "",
+    poster_path: i.poster_path ?? null,
+  };
+};
 
 // ─── Category definitions ─────────────────────────────────────────────────────
 type CatKey = "trending-movies"|"trending-tv"|"popular"|"top-rated-movies"|"top-rated-tv";
@@ -40,23 +46,33 @@ interface CatDef {
   normalize?: boolean;
 }
 const CATS: Record<CatKey, CatDef> = {
-  "trending-movies": { label:"Trending Movies",      subtitle:"What the world is watching right now", Icon:Flame, iconColor:"#E50914", fetchFn: getTrendingMovies },
-  "trending-tv":     { label:"Trending Shows",        subtitle:"Most-watched series this week",        Icon:Flame, iconColor:"#FF6B35", fetchFn: getTrendingTV,     normalize:true },
-  "popular":         { label:"Popular on WatchList",  subtitle:"Most-loved by our community",          Icon:Star,  iconColor:"#F5C518", fetchFn: getPopularMovies },
-  "top-rated-movies":{ label:"Top Rated Movies",      subtitle:"Critically acclaimed films of all time",Icon:Award, iconColor:"#4CAF50", fetchFn: getTopRatedMovies },
-  "top-rated-tv":    { label:"Top Rated Shows",        subtitle:"The finest TV series ever made",       Icon:Award, iconColor:"#2196F3", fetchFn: getTopRatedTV,    normalize:true },
+  "trending-movies": { label: "trendingMovies",      subtitle: "catTrendingMoviesSub", Icon: Flame, iconColor: "#E50914", fetchFn: getTrendingMovies },
+  "trending-tv":     { label: "trendingShows",       subtitle: "catTrendingTVSub",     Icon: Flame, iconColor: "#FF6B35", fetchFn: getTrendingTV,     normalize: true },
+  "popular":         { label: "catPopularOn",        subtitle: "catPopularSub",        Icon: Star,  iconColor: "#F5C518", fetchFn: getPopularMovies },
+  "top-rated-movies":{ label: "topRatedMovies",      subtitle: "catTopRatedMoviesSub", Icon: Award, iconColor: "#4CAF50", fetchFn: getTopRatedMovies },
+  "top-rated-tv":    { label: "topRatedShows",       subtitle: "catTopRatedTVSub",     Icon: Award, iconColor: "#2196F3", fetchFn: getTopRatedTV,    normalize: true },
 };
 
 const FILTER_CHIPS = [
-  {id:"movies",label:"Movies"},{id:"tv",label:"TV Shows"},
-  {id:"28",label:"Action"},{id:"35",label:"Comedy"},{id:"18",label:"Drama"},
-  {id:"27",label:"Horror"},{id:"878",label:"Sci-Fi"},{id:"10749",label:"Romance"},
-  {id:"12",label:"Adventure"},{id:"80",label:"Crime"},{id:"people",label:"People"},
+  { id: "all", labelKey: "filterAll" },
+  { id: "movies", labelKey: "filterMovies" },
+  { id: "tv", labelKey: "filterTV" },
+  { id: "anime", labelKey: "filterAnime" },
+  { id: "animation", labelKey: "filterAnimation" },
+  { id: "28", labelKey: "genreAction" },
+  { id: "35", labelKey: "genreComedy" },
+  { id: "18", labelKey: "genreDrama" },
+  { id: "27", labelKey: "genreHorror" },
+  { id: "878", labelKey: "genreSciFi" },
+  { id: "10749", labelKey: "genreRomance" },
+  { id: "12", labelKey: "genreAdventure" },
+  { id: "80", labelKey: "genreCrime" },
 ];
-const HOT = ["Dune Part 3","Mission Impossible 8","Avatar 3","Deadpool 4","The Batman 2","John Wick 5"];
+const HOT_PLACEHOLDER = ["Dune", "Civil War", "Batman"]; // For internal logic if needed, but not used in UI
 
 // ─── Load More Button ─────────────────────────────────────────────────────────
 function LoadMoreBtn({ onPress, loading, page, total }: { onPress:()=>void; loading:boolean; page:number; total:number }) {
+  const { t } = useLanguage();
   if (page >= total) return null;
   return (
     <TouchableOpacity style={s.loadMore} onPress={onPress} activeOpacity={0.8} disabled={loading}>
@@ -64,8 +80,10 @@ function LoadMoreBtn({ onPress, loading, page, total }: { onPress:()=>void; load
         ? <ActivityIndicator size="small" color="#E50914" />
         : <>
             <ChevronDown size={18} color="#fff" strokeWidth={2.5} />
-            <Text style={s.loadMoreTxt} allowFontScaling={false}>Load More</Text>
-            <Text style={s.loadMorePage} allowFontScaling={false}>Page {page} of {total}</Text>
+            <Text style={s.loadMoreTxt} allowFontScaling={false}>{t('loadMore')}</Text>
+            <Text style={s.loadMorePage} allowFontScaling={false}>
+              {t('pageOf').replace('{page}', page.toString()).replace('{total}', total.toString())}
+            </Text>
           </>
       }
     </TouchableOpacity>
@@ -74,6 +92,7 @@ function LoadMoreBtn({ onPress, loading, page, total }: { onPress:()=>void; load
 
 // ─── Person row ───────────────────────────────────────────────────────────────
 function PersonCard({ person, onPress }: { person:any; onPress:()=>void }) {
+  const { t } = useLanguage();
   const uri = person.profile_path ? `${TMDB_IMAGE_SIZES.small}${person.profile_path}` : null;
   return (
     <TouchableOpacity style={s.personRow} onPress={onPress} activeOpacity={0.75}>
@@ -82,7 +101,7 @@ function PersonCard({ person, onPress }: { person:any; onPress:()=>void }) {
       <View style={{flex:1}}>
         <Text style={s.personName} numberOfLines={1} allowFontScaling={false}>{person.name}</Text>
         <Text style={s.personDept} numberOfLines={1} allowFontScaling={false}>
-          {person.known_for_department ?? "Actor"}
+          {person.known_for_department === 'Acting' ? t('actor') : (person.known_for_department ?? t('actor'))}
           {person.known_for?.[0] ? ` · ${person.known_for[0]?.title ?? person.known_for[0]?.name ?? ""}` : ""}
         </Text>
       </View>
@@ -94,12 +113,13 @@ function PersonCard({ person, onPress }: { person:any; onPress:()=>void }) {
 export default function SearchScreen() {
   const router = useRouter();
   const bp     = useBreakpoint();
+  const { t }  = useLanguage();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const params = useLocalSearchParams<{ genre?:string; category?:string }>();
 
   // ── mode state ──────────────────────────────────────────────────────────────
   const [activeCat,    setActiveCat]    = useState<CatKey|null>((params.category as CatKey) ?? null);
-  const [activeFilter, setActiveFilter] = useState(params.genre || "movies");
+  const [activeFilter, setActiveFilter] = useState(params.genre || "all");
   const [searchText,   setSearchText]   = useState("");
   const debouncedQ = useDebounce(searchText, 450);
 
@@ -122,6 +142,21 @@ export default function SearchScreen() {
     if (c) { setActiveCat(c); setSearchText(""); setItems([]); setPage(1); }
   }, [params.category]);
 
+  const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const data = await getTrendingMovies(1);
+        const titles = (data.results ?? []).slice(0, 6).map((m: any) => m.title);
+        setTrendingKeywords(titles);
+      } catch (e) {
+        setTrendingKeywords(["Dune", "Oppenheimer", "Spider-Man", "Batman", "Civil War"]);
+      }
+    };
+    fetchTrending();
+  }, []);
+
   useEffect(() => {
     if (params.genre) { setActiveCat(null); setActiveFilter(params.genre); setSearchText(""); }
   }, [params.genre]);
@@ -133,35 +168,42 @@ export default function SearchScreen() {
       let raw: any[]  = [];
       let tp = 1, tr = 0;
 
-      if (filter === "people") {
-        const d = query.trim() ? await searchPeople(query, p) : await getPopularPeople(p);
-        raw = d.results ?? []; tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
-        setPersonItems(append ? prev => [...prev, ...raw] : raw);
-        if (!append) setItems([]);
+      if (filter === "all") {
+        const d = query.trim() ? await searchMulti(query, p) : await getTrendingAll(p);
+        raw = (d.results ?? []).map(i => norm(i)).filter((i): i is Movie => i !== null);
+        tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
+      } else if (filter === "anime") {
+        const d = query.trim() ? await searchTV(query, p) : await discoverAnime(p);
+        raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is Movie => i !== null);
+        tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
+      } else if (filter === "animation") {
+        const d = query.trim() ? await searchMovies(query, p) : await discoverAnimation(p);
+        raw = (d.results ?? []).map(i => norm(i, "movie")).filter((i): i is Movie => i !== null);
+        tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
+      } else if (filter === "movies") {
+        const d = query.trim() ? await searchMovies(query, p) : await getTrendingMovies(p);
+        raw = (d.results ?? []).map(i => norm(i, "movie")).filter((i): i is Movie => i !== null);
+        tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
+      } else if (filter === "tv") {
+        const d = query.trim() ? await searchTV(query, p) : await getTrendingTV(p);
+        raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is Movie => i !== null);
+        tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       } else {
-        if (filter === "movies") {
-          const d = query.trim() ? await searchMovies(query, p) : await getTrendingMovies(p);
-          raw = d.results ?? []; tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
-        } else if (filter === "tv") {
-          const d = query.trim() ? await searchTV(query, p) : await getTrendingTV(p);
-          raw = (d.results ?? []).map(norm); tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
-        } else {
-          const d = query.trim() ? await searchMovies(query, p) : await discoverMovies(Number(filter), p);
-          raw = query.trim()
-            ? (d.results ?? []).filter((m:any) => m.genre_ids?.includes(Number(filter)))
-            : (d.results ?? []);
-          tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
-        }
-        setItems(append ? prev => [...prev, ...raw] : raw);
-        if (!append) setPersonItems([]);
+        const d = query.trim() ? await searchMovies(query, p) : await discoverMovies(Number(filter), p);
+        const results = query.trim()
+          ? (d.results ?? []).filter((m:any) => m.genre_ids?.includes(Number(filter)))
+          : (d.results ?? []);
+        raw = results.map(i => norm(i, "movie")).filter((i): i is Movie => i !== null);
+        tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       }
+      setItems(append ? prev => [...prev, ...raw] : raw);
       setTotalPages(tp);
       setTotalResults(tr);
     } catch(e) { console.error(e); }
     finally { setLoading(false); setLoadingMore(false); }
   }, []);
 
-  const numCols   = bp.isDesktop ? 3 : bp.isTablet ? 2 : 1;
+  const numCols   = 1;
 
   const filteredItems = useMemo(() => {
     return items.filter(m => !searchText.trim() || m.title?.toLowerCase().includes(searchText.toLowerCase()));
@@ -182,7 +224,8 @@ export default function SearchScreen() {
     try {
       const def = CATS[cat];
       const d   = await def.fetchFn(p);
-      const raw = def.normalize ? (d.results ?? []).map(norm) : (d.results ?? []);
+      const mediaType = def.normalize ? 'tv' : 'movie';
+      const raw = (d.results ?? []).map(i => norm(i, mediaType)).filter((i): i is Movie => i !== null);
       setItems(append ? prev => [...prev, ...raw] : raw);
       setTotalPages(d.total_pages ?? 1);
       setTotalResults(d.total_results ?? raw.length);
@@ -217,7 +260,10 @@ export default function SearchScreen() {
     Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
     has ? removeFromWatchlist(m.id) : addToWatchlist(m);
   };
-  const goToMovie  = (id:number) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/movie/${id}` as any); };
+  const goToMovie  = (id:number, type: string = 'movie') => { 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); 
+    router.push(`/movie/${id}?type=${type}` as any); 
+  };
   const goToPerson = (id:number) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/person/${id}` as any); };
   const hitSearch  = (t:string)  => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSearchText(t); };
   const onFocus = () => Animated.spring(inputScale,{toValue:1.015,useNativeDriver:true,speed:20}).start();
@@ -232,7 +278,7 @@ export default function SearchScreen() {
       <Search size={18} color={Colors.primary} strokeWidth={2} />
       <TextInput
         ref={inputRef} style={s.searchInput}
-        placeholder={activeCat ? `Search in ${CATS[activeCat]?.label}…` : "Movies, TV shows, people…"}
+        placeholder={activeCat ? t('searchIn').replace('{category}', t(CATS[activeCat]?.label as any)) : t('searchMoviesTVPeople')}
         placeholderTextColor={Colors.text.secondary}
         value={searchText} onChangeText={setSearchText}
         onSubmitEditing={() => { const t=searchText.trim(); if(t&&!recentSearches.includes(t)) setRecentSearches(p=>[t,...p].slice(0,5)); }}
@@ -252,7 +298,7 @@ export default function SearchScreen() {
     <View style={{alignItems:"center", paddingVertical: 16}}>
       {!loading && totalResults > 0 && (
         <Text style={s.resultCount} allowFontScaling={false}>
-          Showing {items.length} of {totalResults.toLocaleString()} results
+          {t('showingResults').replace('{count}', items.length.toString()).replace('{total}', totalResults.toLocaleString())}
         </Text>
       )}
       <LoadMoreBtn onPress={loadMore} loading={loadingMore} page={page} total={totalPages} />
@@ -273,15 +319,15 @@ export default function SearchScreen() {
           <View style={{flex:1}}>
             <View style={{flexDirection:"row", alignItems:"center", gap:8, marginBottom:3}}>
               <def.Icon size={18} color={def.iconColor} strokeWidth={2.5} />
-              <Text style={s.catTitle} allowFontScaling={false}>{def.label}</Text>
+              <Text style={s.catTitle} allowFontScaling={false}>{t(def.label as any)}</Text>
             </View>
-            <Text style={s.catSub} allowFontScaling={false}>{def.subtitle}</Text>
+            <Text style={s.catSub} allowFontScaling={false}>{t(def.subtitle as any)}</Text>
           </View>
         </View>
         {SearchBar}
         {!loading && items.length > 0 && (
           <Text style={[s.resultCount, {paddingHorizontal: bp.contentPadding, marginBottom: 8}]} allowFontScaling={false}>
-            {totalResults.toLocaleString()} titles
+            {t('titlesCount').replace('{count}', totalResults.toLocaleString())}
           </Text>
         )}
         <FlatList
@@ -290,7 +336,7 @@ export default function SearchScreen() {
           numColumns={numCols} key={bp.breakpoint}
           columnWrapperStyle={columnStyle}
           renderItem={({item}) => (
-            <MovieListItem movie={item} onPress={() => goToMovie(item.id)} onAdd={() => toggleWL(item)} inWatchlist={isInWatchlist(item.id)} />
+            <MovieListItem movie={item} onPress={() => goToMovie(item.id, item.media_type)} onAdd={() => toggleWL(item)} inWatchlist={isInWatchlist(item.id)} />
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={listContentStyle}
@@ -299,8 +345,8 @@ export default function SearchScreen() {
           ListEmptyComponent={!loading ? (
             <View style={s.empty}>
               <View style={s.emptyIcon}><SearchX size={36} color={Colors.primary} strokeWidth={1.5}/></View>
-              <Text style={s.emptyTitle} allowFontScaling={false}>No results</Text>
-              <Text style={s.emptySub}   allowFontScaling={false}>Try a different keyword.</Text>
+              <Text style={s.emptyTitle} allowFontScaling={false}>{t('noResults')}</Text>
+              <Text style={s.emptySub}   allowFontScaling={false}>{t('tryAnother')}</Text>
             </View>
           ) : null}
         />
@@ -313,8 +359,8 @@ export default function SearchScreen() {
     <SafeAreaView style={s.root} edges={["top"]}>
       <StatusBar barStyle="light-content" />
       <View style={[s.titleRow, {paddingHorizontal: bp.contentPadding}]}>
-        <Text style={s.pageTitle} allowFontScaling={false}>Discover</Text>
-        <Text style={s.pageSub}   allowFontScaling={false}>Search movies, shows, and people</Text>
+        <Text style={s.pageTitle} allowFontScaling={false}>{t('discoverTitle')}</Text>
+        <Text style={s.pageSub}   allowFontScaling={false}>{t('discoverSub')}</Text>
       </View>
       {SearchBar}
       {/* Filter chips */}
@@ -324,7 +370,7 @@ export default function SearchScreen() {
             <TouchableOpacity key={c.id} activeOpacity={0.75}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveFilter(c.id); }}
               style={[s.chip, activeFilter===c.id && s.chipActive]}>
-              <Text style={[s.chipTxt, activeFilter===c.id && s.chipTxtActive]} allowFontScaling={false}>{c.label}</Text>
+              <Text style={[s.chipTxt, activeFilter===c.id && s.chipTxtActive]} allowFontScaling={false}>{t(c.labelKey as any)}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -340,7 +386,7 @@ export default function SearchScreen() {
           ListEmptyComponent={!loading ? (
             <View style={s.empty}>
               <View style={s.emptyIcon}><SearchX size={36} color={Colors.primary} strokeWidth={1.5}/></View>
-              <Text style={s.emptyTitle} allowFontScaling={false}>{showDefault?"Search for people":"No results"}</Text>
+              <Text style={s.emptyTitle} allowFontScaling={false}>{showDefault ? t('searchPlaceholder') : t('noResults')}</Text>
             </View>
           ) : null}
         />
@@ -352,7 +398,7 @@ export default function SearchScreen() {
           numColumns={numCols} key={bp.breakpoint}
           columnWrapperStyle={columnStyle}
           renderItem={({item}) => (
-            <MovieListItem movie={item} onPress={() => goToMovie(item.id)} onAdd={() => toggleWL(item)} inWatchlist={isInWatchlist(item.id)} />
+            <MovieListItem movie={item} onPress={() => goToMovie(item.id, item.media_type)} onAdd={() => toggleWL(item)} inWatchlist={isInWatchlist(item.id)} />
           )}
           showsVerticalScrollIndicator={false} contentContainerStyle={listContentStyle}
           keyboardDismissMode="on-drag"
@@ -360,7 +406,7 @@ export default function SearchScreen() {
             <View style={{paddingBottom: Spacing.md}}>
               {recentSearches.length>0 && (
                 <View style={{marginBottom: Spacing.xl}}>
-                  <Text style={s.sectionLbl} allowFontScaling={false}>Recent</Text>
+                  <Text style={s.sectionLbl} allowFontScaling={false}>{t('recent')}</Text>
                   {recentSearches.map(t => (
                     <TouchableOpacity key={t} style={s.recentRow} onPress={() => hitSearch(t)}>
                       <Clock size={14} color={Colors.primary} strokeWidth={2}/>
@@ -369,19 +415,21 @@ export default function SearchScreen() {
                   ))}
                 </View>
               )}
-              <View style={{marginBottom: Spacing.xl}}>
-                <Text style={s.sectionLbl} allowFontScaling={false}>Trending Searches</Text>
-                <View style={s.pills}>
-                  {HOT.map(t => (
-                    <TouchableOpacity key={t} style={s.pill} onPress={() => hitSearch(t)}>
-                      <TrendingUp size={12} color={Colors.primary} strokeWidth={2.5}/>
-                      <Text style={s.pillTxt} allowFontScaling={false}>{t}</Text>
-                    </TouchableOpacity>
-                  ))}
+              {trendingKeywords.length > 0 && (
+                <View style={{marginBottom: Spacing.xl}}>
+                  <Text style={s.sectionLbl} allowFontScaling={false}>{t('trendingSearches')}</Text>
+                  <View style={s.pills}>
+                    {trendingKeywords.map(t => (
+                      <TouchableOpacity key={t} style={s.pill} onPress={() => hitSearch(t)}>
+                        <TrendingUp size={12} color={Colors.primary} strokeWidth={2.5}/>
+                        <Text style={s.pillTxt} allowFontScaling={false}>{t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              </View>
+              )}
               <Text style={s.sectionLbl} allowFontScaling={false}>
-                {activeFilter==="movies" ? "Trending Today" : activeFilter==="tv" ? "Trending TV" : "Popular"}
+                {activeFilter==="all" ? t('trendingNow') : activeFilter==="movies" ? t('trendingToday') : activeFilter==="tv" ? t('trendingTV') : t('popular')}
               </Text>
             </View>
           ) : null}
@@ -389,8 +437,8 @@ export default function SearchScreen() {
           ListEmptyComponent={!loading && !showDefault ? (
             <View style={s.empty}>
               <View style={s.emptyIcon}><SearchX size={36} color={Colors.primary} strokeWidth={1.5}/></View>
-              <Text style={s.emptyTitle} allowFontScaling={false}>No results</Text>
-              <Text style={s.emptySub}   allowFontScaling={false}>Try another keyword.</Text>
+              <Text style={s.emptyTitle} allowFontScaling={false}>{t('noResults')}</Text>
+              <Text style={s.emptySub}   allowFontScaling={false}>{t('tryAnother')}</Text>
             </View>
           ) : null}
         />
@@ -403,7 +451,7 @@ export default function SearchScreen() {
 const s = StyleSheet.create({
   root: { flex:1, backgroundColor: Colors.background },
   titleRow:  { paddingTop: Spacing.sm, paddingBottom: 4 },
-  pageTitle: { fontSize:30, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing:-0.5 },
+  pageTitle: { fontSize:20, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing:-0.5 },
   pageSub:   { fontSize:13, color: Colors.text.secondary, marginTop:3, marginBottom: Spacing.lg },
 
   catHeader: { flexDirection:"row", alignItems:"center", paddingTop: Spacing.md, paddingBottom: Spacing.lg, gap:14 },

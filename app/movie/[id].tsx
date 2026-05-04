@@ -13,6 +13,7 @@ export default function MovieDetailRoute() {
     params: {
       movieId,
       movieTitle,
+      type: params.type || 'movie',
     }
   };
 

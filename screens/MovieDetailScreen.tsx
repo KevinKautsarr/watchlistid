@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
-  Platform, StatusBar, Modal, Animated, Share
+  Platform, StatusBar, Modal, Animated, Share, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -10,47 +10,54 @@ import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 import { 
   ChevronLeft, BookmarkPlus, BookmarkCheck, Share2, Star, TrendingUp, Calendar, Clock, Globe, Info, Play
 } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES, Shadow } from '../constants/theme';
+import { Video, CastMember, Movie } from '../types';
 import { useWatchlist } from '../context/WatchlistContext';
-import { useMovieDetails } from '../hooks/useMovies';
+import { useAuth } from '../context/AuthContext';
+import { useContentDetails } from '../hooks/useMovies';
 import TrailerCard from '../components/movie/TrailerCard';
 import CastCard from '../components/movie/CastCard';
 import MovieDetailTable from '../components/movie/MovieDetailTable';
 import PosterCard from '../components/common/PosterCard';
 import RatingBadge from '../components/common/RatingBadge';
+import LogModal from '../components/movie/LogModal';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 interface MovieDetailScreenProps {
-  route: RouteProp<any, any>;
-  navigation: NativeStackNavigationProp<any>;
+  route: any;
+  navigation: any;
 }
 
-import { useLocalSearchParams } from 'expo-router';
+
 
 const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation }): React.JSX.Element => {
   const params = useLocalSearchParams();
   const actualId = params.id || params.movieId;
+  const rawType = Array.isArray(params.type) ? params.type[0] : params.type;
+  const type: 'movie' | 'tv' = rawType === 'tv' ? 'tv' : 'movie';
   const insets = useSafeAreaInsets();
+  const { session } = useAuth();
+  const { t } = useLanguage();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, setRating, addToRecentlyViewed } = useWatchlist();
   
-  const { data, isLoading: loading } = useMovieDetails(Number(actualId));
+  const { data, isLoading: loading, error } = useContentDetails(Number(actualId), type);
   const movie = data?.details;
   const credits = data?.credits?.cast?.slice(0, 15) || [];
-  const videos = data?.videos?.results?.filter(v => v.site === 'YouTube') || [];
+  const videos = data?.videos?.results?.filter((v: { site: string; type: string; id: string; key: string }) => v.site === 'YouTube') || [];
   const reviews = data?.reviews?.results?.slice(0, 2) || [];
   const similar = data?.similar?.results?.slice(0, 10) || [];
   const releaseDates = data?.releaseDates?.results || [];
   const keywords = data?.keywords?.keywords?.slice(0, 10) || [];
   
   const [expandedStory, setExpandedStory] = useState(false);
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [tempRating, setTempRating] = useState(0);
+  const [showLogModal, setShowLogModal] = useState(false);
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -60,10 +67,31 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
     }
   }, [actualId]);
 
-  if (loading || !movie) {
+  if (loading) {
     return (
       <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: Colors.dark }} allowFontScaling={false}>Loading...</Text>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={{ color: 'rgba(255,255,255,0.5)', marginTop: 12 }} allowFontScaling={false}>{t('preparingExperience')}</Text>
+      </View>
+    );
+  }
+
+  if (error || !movie) {
+    return (
+      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
+        <Info size={48} color={Colors.primary} strokeWidth={1.5} />
+        <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold', marginTop: 20, textAlign: 'center' }} allowFontScaling={false}>
+          {t('contentNotFound')}
+        </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 10, textAlign: 'center', lineHeight: 20 }} allowFontScaling={false}>
+          {t('contentNotFoundDesc')}
+        </Text>
+        <TouchableOpacity 
+          style={{ marginTop: 30, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: Colors.white, fontWeight: 'bold' }}>{t('goBack')}</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -74,14 +102,24 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
   let ageRating = 'NR';
   if (releaseDates) {
     const usRelease = releaseDates.find((r: any) => r.iso_3166_1 === 'US');
-    if (usRelease && usRelease.release_dates.length > 0) {
-      const rating = usRelease.release_dates.find((r: any) => r.certification !== '');
-      if (rating) ageRating = rating.certification;
+    if (usRelease) {
+      if (usRelease.rating) {
+        ageRating = usRelease.rating;
+      } else if (usRelease.release_dates?.length > 0) {
+        const rating = usRelease.release_dates.find((r: any) => r.certification !== '');
+        if (rating) ageRating = rating.certification;
+      }
     }
   }
 
   const handleWatchlist = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    if (!session) {
+      router.push('/auth/login' as any);
+      return;
+    }
+
     if (inWatchlist) removeFromWatchlist(movie.id);
     else addToWatchlist(movie);
   };
@@ -103,13 +141,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
     }
   };
 
-  const featuredTrailer = videos.find(v => v.type === "Trailer");
-
-  const submitRating = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setRating(movie.id, tempRating);
-    setShowRatingModal(false);
-  };
+  const featuredTrailer = videos.find((v: { type: string }) => v.type === "Trailer");
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -164,17 +196,17 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
 
         <View style={styles.ratingBlock}>
           <View style={styles.ratingCol}>
-            <Text style={styles.ratingLabel} allowFontScaling={false}>IMDB RATING</Text>
+            <Text style={styles.ratingLabel} allowFontScaling={false}>{t('imdbRating')}</Text>
             <View style={styles.scoreRow}>
               <Star size={28} color="#F5C518" fill="#F5C518" strokeWidth={0} />
               <Text style={styles.scoreVal} allowFontScaling={false}>{movie.vote_average?.toFixed(1)}</Text>
               <Text style={styles.scoreMax} allowFontScaling={false}>/10</Text>
             </View>
-            <Text style={styles.voteCount} allowFontScaling={false}>{movie.vote_count?.toLocaleString()} votes</Text>
+            <Text style={styles.voteCount} allowFontScaling={false}>{movie.vote_count?.toLocaleString()} {t('votes')}</Text>
           </View>
           <View style={styles.vDivider} />
           <View style={styles.ratingCol}>
-            <Text style={styles.ratingLabel} allowFontScaling={false}>POPULARITY</Text>
+            <Text style={styles.ratingLabel} allowFontScaling={false}>{t('popularity')}</Text>
             <TrendingUp size={24} color={Colors.primary} strokeWidth={2} />
             <Text style={styles.popScore} allowFontScaling={false}>{movie.popularity?.toFixed(0)}</Text>
           </View>
@@ -183,11 +215,14 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             style={styles.ratingCol} 
             activeOpacity={0.7}
             onPress={() => {
-              setTempRating(userRating || 0);
-              setShowRatingModal(true);
+              if (!session) {
+                router.push('/auth/login' as any);
+                return;
+              }
+              setShowLogModal(true);
             }}
           >
-            <Text style={styles.ratingLabel} allowFontScaling={false}>YOUR RATING</Text>
+            <Text style={styles.ratingLabel} allowFontScaling={false}>{t('yourRatingLabel')}</Text>
             {userRating ? (
               <>
                 <Star size={24} color={Colors.primary} fill={Colors.primary} strokeWidth={0} />
@@ -196,7 +231,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             ) : (
               <>
                 <Star size={24} color={Colors.surface} strokeWidth={1.5} />
-                <Text style={styles.rateTextAction} allowFontScaling={false}>Rate</Text>
+                <Text style={styles.rateTextAction} allowFontScaling={false}>{t('log')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -210,7 +245,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
               activeOpacity={0.8}
             >
               <Play size={22} color={Colors.white} fill={Colors.white} strokeWidth={0} />
-              <Text style={styles.btnPlayText} allowFontScaling={false}>Play Trailer</Text>
+              <Text style={styles.btnPlayText} allowFontScaling={false}>{t('playTrailer')}</Text>
             </TouchableOpacity>
           )}
           <View style={styles.actionSubRow}>
@@ -224,18 +259,21 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
               <BookmarkPlus size={22} color={Colors.white} strokeWidth={2} />
             )}
             <Text style={[styles.btnWatchlistText, inWatchlist && styles.btnWatchlistTextActive]} allowFontScaling={false}>
-              {inWatchlist ? "In Watchlist" : "Add to Watchlist"}
+              {inWatchlist ? t('inWatchlist') : t('addToWatchlist')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.btnRate}
             onPress={() => {
-              setTempRating(userRating || 0);
-              setShowRatingModal(true);
+              if (!session) {
+                router.push('/auth/login' as any);
+                return;
+              }
+              setShowLogModal(true);
             }}
           >
             <Star size={16} color={Colors.primary} strokeWidth={2} />
-            <Text style={styles.btnRateText} allowFontScaling={false}>Rate</Text>
+            <Text style={styles.btnRateText} allowFontScaling={false}>{t('log')}</Text>
           </TouchableOpacity>
           </View>
         </View>
@@ -244,8 +282,8 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           <View style={styles.trailerSection}>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionTitle} allowFontScaling={false}>Videos</Text>
-                <Text style={styles.sectionSubtitle} allowFontScaling={false}>{videos.length} videos</Text>
+                <Text style={styles.sectionTitle} allowFontScaling={false}>{t('videos')}</Text>
+                <Text style={styles.sectionSubtitle} allowFontScaling={false}>{t('videosCount').replace('{count}', videos.length.toString())}</Text>
               </View>
             </View>
 
@@ -258,7 +296,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             )}
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
-              {videos.filter(v => v.id !== featuredTrailer?.id).map(video => (
+              {(videos as Video[]).filter((v) => v.id !== featuredTrailer?.id).map((video) => (
                 <TrailerCard 
                   key={video.id} 
                   video={video} 
@@ -270,7 +308,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
         )}
 
         <View style={styles.storySection}>
-          <Text style={styles.sectionTitle} allowFontScaling={false}>Storyline</Text>
+          <Text style={styles.sectionTitle} allowFontScaling={false}>{t('storyline')}</Text>
           <Text 
             style={styles.overviewText} 
             numberOfLines={expandedStory ? undefined : 3}
@@ -280,13 +318,13 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           </Text>
           {movie.overview?.length > 100 && (
             <TouchableOpacity onPress={() => setExpandedStory(!expandedStory)}>
-              <Text style={styles.readMore} allowFontScaling={false}>{expandedStory ? "Less" : "Read more"}</Text>
+              <Text style={styles.readMore} allowFontScaling={false}>{expandedStory ? t('less') : t('readMore')}</Text>
             </TouchableOpacity>
           )}
 
           {keywords.length > 0 && (
             <View style={styles.keywordsRow}>
-              {keywords.map(k => (
+              {keywords.map((k: { id: number; name: string }) => (
                 <View key={k.id} style={styles.keywordPill}>
                   <Text style={styles.keywordText} allowFontScaling={false}>{k.name}</Text>
                 </View>
@@ -297,9 +335,9 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
 
         {credits.length > 0 && (
           <View style={styles.castSection}>
-            <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>Top Cast</Text>
+            <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('topCast')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
-              {credits.map(actor => (
+              {(credits as CastMember[]).map((actor) => (
                 <CastCard 
                   key={actor.id} 
                   cast={actor} 
@@ -314,14 +352,14 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
         )}
 
         <View style={styles.detailsSection}>
-          <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>Details</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('details')}</Text>
           <MovieDetailTable movie={movie} />
         </View>
 
         {reviews.length > 0 && (
           <View style={styles.reviewsSection}>
-            <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>User Reviews</Text>
-            {reviews.map(review => (
+            <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('userReviews')}</Text>
+            {reviews.map((review: { id: string; author: string; content: string; created_at: string; author_details?: { rating: number | null; avatar_path: string | null } }) => (
               <View key={review.id} style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>
                   <View style={styles.reviewAvatar}>
@@ -343,13 +381,16 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
 
         {similar.length > 0 && (
           <View style={styles.similarSection}>
-            <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>More Like This</Text>
+            <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('moreLikeThis')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
-              {similar.map(item => (
+              {(similar as Movie[]).map((item) => (
                 <PosterCard 
                   key={item.id} 
                   movie={item} 
-                  onPress={() => navigation.push('MovieDetail', { id: item.id, title: item.title })} 
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push(`/movie/${item.id}?type=${type}` as any);
+                  }} 
                 />
               ))}
             </ScrollView>
@@ -359,54 +400,11 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
         <View style={{ height: 100 }} />
       </Animated.ScrollView>
 
-      <Modal visible={showRatingModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>Rate This</Text>
-            <Text style={styles.modalSub} allowFontScaling={false}>{movie.title}</Text>
-            
-            <View style={styles.starRow}>
-              {[1,2,3,4,5,6,7,8,9,10].map(star => (
-                <TouchableOpacity 
-                  key={star} 
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setTempRating(star);
-                  }}
-                >
-                  <Star 
-                    size={24} 
-                    color="#F5C518" 
-                    fill={star <= tempRating ? Colors.ratingGold : "transparent"} 
-                    strokeWidth={1.5} 
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.ratingLabelText} allowFontScaling={false}>
-              {tempRating === 0 ? "Tap to rate" :
-               tempRating <= 2 ? "Awful" :
-               tempRating <= 4 ? "Bad" :
-               tempRating <= 6 ? "OK" :
-               tempRating <= 8 ? "Good" :
-               tempRating === 9 ? "Great" : "Masterpiece"}
-            </Text>
-
-            <TouchableOpacity 
-              style={[styles.confirmBtn, tempRating === 0 && { opacity: 0.5 }]} 
-              disabled={tempRating === 0}
-              onPress={submitRating}
-            >
-              <Text style={styles.confirmBtnText} allowFontScaling={false}>Rate {tempRating}/10</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowRatingModal(false)}>
-              <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <LogModal 
+        visible={showLogModal} 
+        movie={movie} 
+        onClose={() => setShowLogModal(false)} 
+      />
 
     </SafeAreaView>
   );

@@ -9,36 +9,63 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import CaptchaModal from '../../components/auth/CaptchaModal';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
+  const { t } = useLanguage();
 
   const [email,      setEmail]      = useState('');
   const [password,   setPassword]   = useState('');
   const [showPass,   setShowPass]   = useState(false);
   const [loading,    setLoading]    = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error,      setError]      = useState<string | null>(null);
+  const [showCaptcha, setShowCaptcha] = useState(false);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      setError('Email dan password wajib diisi.');
+      setError(t('emailPasswordRequired'));
       return;
     }
+    setError(null);
+    setShowCaptcha(true);
+  };
+
+  const onCaptchaVerified = async (token: string) => {
+    setShowCaptcha(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    setError(null);
-    const err = await signIn(email.trim().toLowerCase(), password);
+    const err = await signIn(email.trim().toLowerCase(), password, token);
     setLoading(false);
     if (err) {
       setError(err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } else {
+      // Auth state listener in _layout.tsx handles redirect automatically
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)' as any);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setGoogleLoading(true);
+    setError(null);
+    const err = await signInWithGoogle();
+    setGoogleLoading(false);
+    
+    if (err) {
+      setError(err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } else {
+      // Success is handled by the auth state listener in AuthContext
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   };
 
@@ -64,21 +91,21 @@ export default function LoginScreen() {
               WatchList<Text style={s.logoAccent}>ID</Text>
             </Text>
             <Text style={s.logoSub} allowFontScaling={false}>
-              Your personal movie universe
+              {t('authTagline')}
             </Text>
           </View>
 
           {/* Card */}
           <View style={s.card}>
-            <Text style={s.cardTitle} allowFontScaling={false}>Masuk</Text>
+            <Text style={s.cardTitle} allowFontScaling={false}>{t('signIn')}</Text>
             <Text style={s.cardSub} allowFontScaling={false}>
-              Selamat datang kembali 👋
+              {t('welcomeBack')}
             </Text>
 
             {/* Email */}
             <View style={s.fieldLabel}>
               <Mail size={15} color={Colors.primary} strokeWidth={2} />
-              <Text style={s.label} allowFontScaling={false}>Email</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('email')}</Text>
             </View>
             <TextInput
               style={s.input}
@@ -95,7 +122,7 @@ export default function LoginScreen() {
             {/* Password */}
             <View style={s.fieldLabel}>
               <Lock size={15} color={Colors.primary} strokeWidth={2} />
-              <Text style={s.label} allowFontScaling={false}>Password</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('password')}</Text>
             </View>
             <View style={s.inputRow}>
               <TextInput
@@ -124,7 +151,7 @@ export default function LoginScreen() {
               onPress={() => router.push('/auth/forgot' as any)}
               activeOpacity={0.7}
             >
-              <Text style={s.forgotText} allowFontScaling={false}>Lupa password?</Text>
+              <Text style={s.forgotText} allowFontScaling={false}>{t('forgotPassword')}</Text>
             </TouchableOpacity>
 
             {/* Error */}
@@ -138,7 +165,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[s.btn, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
-              disabled={loading}
+              disabled={loading || googleLoading}
               activeOpacity={0.85}
             >
               {loading
@@ -146,7 +173,26 @@ export default function LoginScreen() {
                 : (
                   <>
                     <LogIn size={18} color={Colors.white} strokeWidth={2.5} />
-                    <Text style={s.btnText} allowFontScaling={false}>Masuk</Text>
+                    <Text style={s.btnText} allowFontScaling={false}>{t('signIn')}</Text>
+                  </>
+                )}
+            </TouchableOpacity>
+
+            {/* Google Login Button */}
+            <TouchableOpacity
+              style={[s.googleBtn, googleLoading && { opacity: 0.7 }]}
+              onPress={handleGoogleLogin}
+              disabled={loading || googleLoading}
+              activeOpacity={0.85}
+            >
+              {googleLoading
+                ? <ActivityIndicator color={Colors.text.primary} />
+                : (
+                  <>
+                    <View style={s.googleIconBg}>
+                      <FontAwesome name="google" size={16} color="#4285F4" />
+                    </View>
+                    <Text style={s.googleBtnText} allowFontScaling={false}>{t('orContinueWith')} {t('google')}</Text>
                   </>
                 )}
             </TouchableOpacity>
@@ -154,7 +200,7 @@ export default function LoginScreen() {
             {/* Divider */}
             <View style={s.divider}>
               <View style={s.dividerLine} />
-              <Text style={s.dividerText} allowFontScaling={false}>atau</Text>
+              <Text style={s.dividerText} allowFontScaling={false}>{t('or')}</Text>
               <View style={s.dividerLine} />
             </View>
 
@@ -165,23 +211,29 @@ export default function LoginScreen() {
               activeOpacity={0.85}
             >
               <Text style={s.secondaryBtnText} allowFontScaling={false}>
-                Buat akun baru
+                {t('createNewAccount')}
               </Text>
             </TouchableOpacity>
 
-            {/* Guest */}
+            {/* Skip & Explore */}
             <TouchableOpacity
-              style={s.guestBtn}
+              style={s.skipBtn}
               onPress={() => router.replace('/(tabs)' as any)}
               activeOpacity={0.7}
             >
-              <Text style={s.guestText} allowFontScaling={false}>
-                Lanjut tanpa akun →
+              <Text style={s.skipText} allowFontScaling={false}>
+                {t('skipAndExplore')}
               </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CaptchaModal 
+        visible={showCaptcha} 
+        onVerify={onCaptchaVerified} 
+        onCancel={() => setShowCaptcha(false)} 
+      />
     </SafeAreaView>
   );
 }
@@ -262,8 +314,34 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap:            Spacing.sm,
     ...Shadow.primary,
+    marginBottom:   Spacing.md,
   },
   btnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
+
+  googleBtn: {
+    height:         54,
+    backgroundColor: Colors.white,
+    borderRadius:   Radius.lg,
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'center',
+    gap:            Spacing.md,
+    ...Shadow.sm,
+  },
+  googleIconBg: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#fff',
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleBtnText: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    color: '#000',
+    letterSpacing: 0.2,
+  },
 
   divider:     { flexDirection: 'row', alignItems: 'center', marginVertical: Spacing.xl, gap: 10 },
   dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
@@ -280,6 +358,6 @@ const s = StyleSheet.create({
   },
   secondaryBtnText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.text.primary },
 
-  guestBtn: { alignItems: 'center', marginTop: Spacing.lg },
-  guestText: { fontSize: FontSize.sm, color: Colors.text.secondary },
+  skipBtn: { alignItems: 'center', marginTop: Spacing.xl },
+  skipText: { fontSize: FontSize.sm, color: Colors.text.secondary, fontWeight: FontWeight.medium },
 });

@@ -35,12 +35,9 @@ export default function AppEntry() {
     );
   }
 
-  // After splash: redirect based on session
-  if (session) {
-    return <Redirect href="/(tabs)" />;
-  }
-
-  return <Redirect href="/auth/login" />;
+  // After splash: landing on tabs
+  // (RootLayout will handle protecting specific tabs)
+  return <Redirect href="/(tabs)" />;
 }
 
 const styles = StyleSheet.create({
