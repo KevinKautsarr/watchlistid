@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { Movie, WatchlistMovie } from '../types';
+import Toast from '../components/common/Toast';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface WatchlistContextType {
@@ -24,6 +26,7 @@ function toSupabaseRow(movie: WatchlistMovie, userId: string) {
   return {
     user_id:      userId,
     movie_id:     movie.id,
+    media_type:   movie.media_type ?? 'movie',
     title:        movie.title,
     poster_path:  movie.poster_path ?? null,
     release_date: movie.release_date ?? null,
@@ -39,6 +42,7 @@ function toSupabaseRow(movie: WatchlistMovie, userId: string) {
 function fromSupabaseRow(row: any): WatchlistMovie {
   return {
     id:            row.movie_id,
+    media_type:    row.media_type ?? 'movie',
     title:         row.title,
     overview:      row.overview ?? '',
     poster_path:   row.poster_path ?? null,
@@ -58,7 +62,12 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [watchlist,      setWatchlist]      = useState<WatchlistMovie[]>([]);
   const [userRatings,    setUserRatings]    = useState<Record<number, number>>({});
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
-  const [isLoaded,       setIsLoaded]       = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
+    visible: false,
+    message: '',
+    type: 'success',
+  });
   const [userId,         setUserId]         = useState<string | null>(null);
 
   // ── Track auth state (no dependency on AuthContext to avoid circular imports)
@@ -163,12 +172,14 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           .upsert(toSupabaseRow(newItem, userId))
           .then(({ error }) => { if (error) console.error('Supabase add error', error); });
       }
+      showToast('Added to Watchlist', 'success');
       return [...prev, newItem];
     });
   };
 
   const removeFromWatchlist = (movieId: number) => {
     setWatchlist(prev => prev.filter(m => m.id !== movieId));
+    showToast(`Removed from Watchlist`, 'info');
     if (userId) {
       supabase.from('watchlist')
         .delete()
@@ -216,6 +227,40 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
+  const clearData = async () => {
+    setWatchlist([]);
+    setUserRatings({});
+    setRecentlyViewed([]);
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem('@watchlist'),
+        AsyncStorage.removeItem('@userRatings'),
+        AsyncStorage.removeItem('@recentlyViewed'),
+      ]);
+    } catch (e) {
+      console.error('Failed to clear local data', e);
+    }
+  };
+
+  // Clear data when user logs out (userId becomes null AFTER being set)
+  const prevUserIdRef = React.useRef<string | null>(undefined as any);
+  useEffect(() => {
+    if (!isLoaded) return;
+    // Only clear if we previously HAD a userId (i.e., user logged out)
+    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== null && !userId) {
+      clearData();
+    }
+    prevUserIdRef.current = userId;
+  }, [userId, isLoaded]);
+
+  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
+    setToast({ visible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, visible: false }));
+  };
+
   return (
     <WatchlistContext.Provider value={{
       watchlist,
@@ -230,6 +275,12 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       addToRecentlyViewed,
     }}>
       {children}
+      <Toast 
+        visible={toast.visible} 
+        message={toast.message} 
+        type={toast.type} 
+        onHide={hideToast} 
+      />
     </WatchlistContext.Provider>
   );
 };

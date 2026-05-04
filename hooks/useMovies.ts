@@ -50,6 +50,9 @@ export const useTrendingTV = () =>
 export const useTopRatedTV = () =>
   useAsync(() => api.getTopRatedTV().then(r => r.results));
 
+export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') =>
+  useAsync(() => type === 'movie' ? api.getFullMovieDetails(id) : api.getFullTVDetails(id), [id, type]);
+
 export const useMovieDetails = (id: number) =>
   useAsync(() => api.getFullMovieDetails(id), [id]);
 
@@ -58,6 +61,12 @@ export const usePersonDetails = (id: number) =>
     () => Promise.all([
       api.getPersonDetails(id),
       api.getPersonCredits(id),
-    ]).then(([person, credits]) => ({ person, credits })),
+    ]).then(([person, credits]) => ({ 
+      person, 
+      credits: { 
+        cast: credits.cast || [], 
+        crew: credits.crew || [] 
+      } 
+    })),
     [id]
   );

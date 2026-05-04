@@ -1,5 +1,6 @@
 export interface Movie {
   id:             number;
+  media_type?:    'movie' | 'tv';
   title:          string;
   overview:       string;
   poster_path:    string | null;
@@ -103,4 +104,33 @@ export interface MovieDetails extends Movie {
   videos:       { results: Video[] };
   reviews:      { results: Review[] };
   similar:      { results: Movie[] };
+}
+
+export interface MovieLog {
+  id: string;
+  user_id: string;
+  movie_id: number;
+  media_type?: 'movie' | 'tv';
+  movie_title: string;
+  poster_path?: string;
+  watched_at: string;
+  rating?: number;
+  review_text?: string;
+  is_spoiler: boolean;
+  created_at: string;
+  user?: {
+    username: string;
+    avatar_url?: string;
+  };
+  likes_count?: number;
+  is_liked_by_me?: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url?: string;
+  followers_count?: number;
+  following_count?: number;
+  is_following?: boolean;
 }
