@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { Check, Circle, Trash2, Plus } from 'lucide-react-native';
+import { Check, Circle, Trash2, Plus, Eye } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '../../constants/theme';
 import { Movie, WatchlistMovie } from '../../types';
 import RatingBadge from '../common/RatingBadge';
@@ -31,11 +31,7 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {rank != null && (
-        <View style={styles.rankCol}>
-          <Text style={styles.rankNum} allowFontScaling={false}>{rank}</Text>
-        </View>
-      )}
+
       <TouchableOpacity 
         style={styles.posterWrap}
         activeOpacity={0.8}
@@ -46,11 +42,16 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
           style={StyleSheet.absoluteFill} 
           contentFit="cover" 
         />
+        {rank != null && (
+          <View style={styles.rankBadge}>
+            <Text style={styles.rankBadgeText} allowFontScaling={false}>#{rank}</Text>
+          </View>
+        )}
       </TouchableOpacity>
       <View style={styles.contentCol}>
-        <Text style={styles.title} numberOfLines={1} allowFontScaling={false}>{movie.title}</Text>
+        <Text style={styles.title} numberOfLines={1} allowFontScaling={false}>{movie.title || (movie as any).name}</Text>
         <View style={styles.metaRow}>
-          <Text style={styles.metaText} allowFontScaling={false}>{movie.release_date?.substring(0,4)}</Text>
+          <Text style={styles.metaText} allowFontScaling={false}>{(movie.release_date || (movie as any).first_air_date)?.substring(0,4)}</Text>
           {movie.runtime ? (
             <>
               <Text style={styles.metaDot} allowFontScaling={false}>·</Text>
@@ -76,7 +77,7 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
               {watched ? (
                 <Check size={18} color={Colors.primary} strokeWidth={3} />
               ) : (
-                <Circle size={18} color={Colors.white} strokeWidth={2} />
+                <Eye size={18} color={Colors.white} strokeWidth={2} />
               )}
             </TouchableOpacity>
             <TouchableOpacity 
@@ -114,15 +115,20 @@ const styles = StyleSheet.create({
     borderColor: Colors.overlay.light, 
     gap: Spacing.lg 
   },
-  rankCol: { 
-    width: 24, 
-    alignItems: 'center', 
-    paddingTop: Spacing.xs 
+  rankBadge: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    backgroundColor: 'rgba(229,9,20,0.95)', 
+    paddingHorizontal: 5, 
+    paddingVertical: 2, 
+    borderBottomRightRadius: Radius.sm,
+    zIndex: 10,
   },
-  rankNum: { 
-    fontSize: FontSize.lg, 
-    fontWeight: FontWeight.extrabold, 
-    color: Colors.text.secondary 
+  rankBadgeText: { 
+    fontSize: 10, 
+    fontWeight: FontWeight.black, 
+    color: Colors.white 
   },
   posterWrap: { 
     width: 60, 

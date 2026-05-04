@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Calendar, Clock, Globe, Info, DollarSign, Activity, Building2 } from 'lucide-react-native';
 import { Colors, Spacing, FontSize, FontWeight, Radius } from '../../constants/theme';
 import { Movie } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface MovieDetailTableProps {
   movie: Movie;
@@ -31,41 +32,42 @@ const DetailCard = ({
 };
 
 const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
+  const { t } = useLanguage();
   return (
     <View style={styles.grid}>
       <DetailCard 
-        label="Release Date" 
+        label={t('metaReleaseDate')} 
         value={movie.release_date ? new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} 
         Icon={Calendar}
       />
       <DetailCard 
-        label="Language" 
+        label={t('metaLanguage')} 
         value={movie.original_language?.toUpperCase()} 
         Icon={Globe}
       />
       <DetailCard 
-        label="Runtime" 
-        value={movie.runtime ? `${movie.runtime} min` : undefined} 
+        label={t('metaRuntime')} 
+        value={movie.runtime ? `${movie.runtime} ${t('minutes')}` : undefined} 
         Icon={Clock}
       />
       <DetailCard 
-        label="Status" 
+        label={t('metaStatus')} 
         value={movie.status} 
         Icon={Activity}
       />
       <DetailCard 
-        label="Budget" 
+        label={t('metaBudget')} 
         value={movie.budget ? `$${(movie.budget / 1000000).toFixed(1)}M` : undefined} 
         Icon={DollarSign}
       />
       <DetailCard 
-        label="Revenue" 
+        label={t('metaRevenue')} 
         value={movie.revenue ? `$${(movie.revenue / 1000000).toFixed(1)}M` : undefined} 
         Icon={DollarSign}
       />
       <View style={styles.fullWidthCard}>
         <DetailCard 
-          label="Production" 
+          label={t('metaProduction')} 
           value={movie.production_companies?.map(c => c.name).join(' • ')} 
           Icon={Building2}
         />
