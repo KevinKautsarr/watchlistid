@@ -57,6 +57,8 @@ const translations = {
     settings: 'Settings',
     diary: 'Diary',
     notifications: 'Notifications',
+    profile: 'Profile',
+    logs: 'Logs',
     exportWatchlist: 'Export Watchlist',
     about: 'WatchlistID',
     language: 'Language',
@@ -416,6 +418,8 @@ const translations = {
     
     // Notifications
     markAllRead: 'Tandai semua sudah dibaca',
+    profile: 'Profil',
+    logs: 'Log',
     allCaughtUp: 'Semuanya sudah beres!',
     noNotifications: 'Kamu tidak memiliki notifikasi baru saat ini.',
     

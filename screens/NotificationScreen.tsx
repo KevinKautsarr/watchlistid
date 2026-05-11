@@ -101,7 +101,7 @@ const NotificationScreen: React.FC = () => {
     
     // Smart navigation logic
     if (item.movie_id) {
-      router.push(`/movie/${item.movie_id}` as any);
+      router.push({ pathname: '/movie/[id]', params: { id: item.movie_id } } as any);
     } else if (item.message.toLowerCase().includes('follow')) {
       // If it's a follow notification, we'd ideally go to the user's profile
       // For now, since we don't have actor_id in the interface, we'll stay or go to search

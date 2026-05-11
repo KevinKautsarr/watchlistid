@@ -6,6 +6,8 @@ export const Colors = {
   dark:         '#000000',
   white:        '#FFFFFF',
   ratingGold:   '#F5C518',
+  secondary:    '#112D4E',
+  accentBlue:   '#3F72AF',
 
   // Semantic aliases
   text: {

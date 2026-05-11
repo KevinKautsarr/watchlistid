@@ -8,6 +8,8 @@ const memCache = new Map<string, CacheEntry<any>>();
 const inflight  = new Map<string, Promise<any>>();
 
 // ── Core fetcher with cache & deduplication ───────────────────────────────────
+const NSFW_KEYWORDS = '10423,155477,231015,190370,10222,9350,158588,2945,183952'; // hentai, erotica, ecchi, adult animation, sex, softcore, pornography, nudity, softcore porn
+
 async function tmdbGet<T>(
   endpoint: string,
   params: Record<string, string> = {}
@@ -50,13 +52,21 @@ export interface PagedResponse<T> {
 
 // ── Home ─────────────────────────────────────────────────────────────────────
 export const getTrendingMovies = (page = 1) =>
-  tmdbGet<PagedResponse<Movie>>('/trending/movie/week', { page: String(page) });
+  tmdbGet<PagedResponse<Movie>>('/discover/movie', { 
+    sort_by: 'popularity.desc', 
+    page: String(page),
+    without_keywords: NSFW_KEYWORDS
+  });
 
 export const getTrendingAll = (page = 1) =>
   tmdbGet<PagedResponse<any>>('/trending/all/week', { page: String(page) });
 
 export const getPopularMovies = (page = 1) =>
-  tmdbGet<PagedResponse<Movie>>('/movie/popular', { page: String(page) });
+  tmdbGet<PagedResponse<Movie>>('/discover/movie', { 
+    sort_by: 'popularity.desc', 
+    page: String(page),
+    without_keywords: NSFW_KEYWORDS
+  });
 
 export const getTopRatedMovies = (page = 1) =>
   tmdbGet<PagedResponse<Movie>>('/movie/top_rated', { page: String(page) });
@@ -67,6 +77,7 @@ export const getGenreList = () =>
 export const getMoviesByGenre = (genreId: number, page = 1) =>
   tmdbGet<PagedResponse<Movie>>('/discover/movie', {
     with_genres: String(genreId),
+    without_keywords: NSFW_KEYWORDS,
     sort_by: 'popularity.desc',
     page: String(page),
   });
@@ -76,19 +87,20 @@ export const searchMovies = (query: string, page = 1) =>
   tmdbGet<PagedResponse<Movie>>('/search/movie', { 
     query, 
     page: String(page),
-    include_adult: 'true' // Allow adult content ONLY in direct search
+    include_adult: 'false'
   });
 
 export const searchMulti = (query: string, page = 1) =>
   tmdbGet<PagedResponse<any>>('/search/multi', { 
     query, 
     page: String(page),
-    include_adult: 'true' // Allow adult content ONLY in direct search
+    include_adult: 'false'
   });
 
 export const discoverMovies = (genreId?: number, page = 1) =>
   tmdbGet<PagedResponse<Movie>>('/discover/movie', {
     sort_by: 'popularity.desc',
+    without_keywords: NSFW_KEYWORDS,
     page: String(page),
     ...(genreId ? { with_genres: String(genreId) } : {}),
   });
@@ -178,20 +190,28 @@ export const getPopularPeople = (page = 1) =>
 
 // ── TV Shows ──────────────────────────────────────────────────────────────────
 export const getTrendingTV = (page = 1) =>
-  tmdbGet<PagedResponse<any>>('/trending/tv/week', { page: String(page) });
+  tmdbGet<PagedResponse<any>>('/discover/tv', { 
+    sort_by: 'popularity.desc', 
+    page: String(page),
+    without_keywords: NSFW_KEYWORDS
+  });
 
 export const searchTV = (query: string, page = 1) =>
   tmdbGet<PagedResponse<any>>('/search/tv', { 
     query, 
     page: String(page),
-    include_adult: 'true' // Allow adult content ONLY in direct search
+    include_adult: 'false'
   });
 
 export const getTopRatedTV = (page = 1) =>
   tmdbGet<PagedResponse<any>>('/tv/top_rated', { page: String(page) });
 
 export const getPopularTV = (page = 1) =>
-  tmdbGet<PagedResponse<any>>('/tv/popular', { page: String(page) });
+  tmdbGet<PagedResponse<any>>('/discover/tv', { 
+    sort_by: 'popularity.desc', 
+    page: String(page),
+    without_keywords: NSFW_KEYWORDS
+  });
 
 export const getStudioMovies = (companyId: number, page = 1) =>
   tmdbGet<PagedResponse<any>>('/discover/movie', {
@@ -204,7 +224,7 @@ export const getStudioMovies = (companyId: number, page = 1) =>
 export const discoverAnime = (page = 1) =>
   tmdbGet<PagedResponse<any>>('/discover/tv', {
     with_genres: '16', with_origin_country: 'JP',
-    without_keywords: '10423,155477,231015,190370', // hentai, erotica, ecchi, adult animation
+    without_keywords: NSFW_KEYWORDS,
     'certification_country': 'US',
     'certification.lte': 'TV-14', // Strict filter for anime recommendations
     sort_by: 'popularity.desc', page: String(page),
@@ -213,5 +233,7 @@ export const discoverAnime = (page = 1) =>
 // ── Animation (animated movies) ───────────────────────────────────────────────
 export const discoverAnimation = (page = 1) =>
   tmdbGet<PagedResponse<any>>('/discover/movie', {
-    with_genres: '16', sort_by: 'popularity.desc', page: String(page),
+    with_genres: '16', 
+    without_keywords: NSFW_KEYWORDS,
+    sort_by: 'popularity.desc', page: String(page),
   });

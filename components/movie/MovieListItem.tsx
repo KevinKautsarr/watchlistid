@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Check, Circle, Trash2, Plus, Eye } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '../../constants/theme';
-import { Movie, WatchlistMovie } from '../../types';
+import { MediaItem } from '../../types/tmdb';
+import { WatchlistItem } from '../../types/watchlist';
 import RatingBadge from '../common/RatingBadge';
 
 interface MovieListItemProps {
-  movie:        Movie | WatchlistMovie;
+  movie:        MediaItem | WatchlistItem;
   onPress?:     () => void;
   onAdd?:       () => void;
   showWatched?: boolean;
@@ -29,6 +30,23 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
   rank,
   inWatchlist,
 }) => {
+  // Safe extraction without 'any'
+  const isMovie = ('mediaType' in movie && movie.mediaType === 'movie') || ('media_type' in movie && movie.media_type === 'movie');
+  
+  const title = 'title' in movie 
+    ? movie.title 
+    : 'name' in movie 
+      ? movie.name 
+      : 'Title';
+
+  const date = 'release_date' in movie 
+    ? movie.release_date 
+    : 'first_air_date' in movie 
+      ? movie.first_air_date 
+      : null;
+
+  const runtime = 'runtime' in movie ? movie.runtime : undefined;
+
   return (
     <View style={styles.container}>
 
@@ -41,7 +59,7 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
           source={{ uri: `https://image.tmdb.org/t/p/w154${movie.poster_path}` }} 
           style={StyleSheet.absoluteFill} 
           contentFit="cover"
-          accessibilityLabel={`${movie.title || (movie as any).name || 'Movie'} poster`}
+          accessibilityLabel={`${title} poster`}
         />
         {rank != null && (
           <View style={styles.rankBadge}>
@@ -50,14 +68,14 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
         )}
       </TouchableOpacity>
       <View style={styles.contentCol}>
-        <Text style={styles.title} numberOfLines={1} allowFontScaling={false}>{movie.title || (movie as any).name}</Text>
+        <Text style={styles.title} numberOfLines={1} allowFontScaling={false}>{title}</Text>
         <View style={styles.metaRow}>
-          <Text style={styles.metaText} allowFontScaling={false}>{(movie.release_date || (movie as any).first_air_date)?.substring(0,4)}</Text>
-          {movie.runtime ? (
+          <Text style={styles.metaText} allowFontScaling={false}>{date?.substring(0,4)}</Text>
+          {runtime ? (
             <>
               <Text style={styles.metaDot} allowFontScaling={false}>·</Text>
               <Text style={styles.metaText} allowFontScaling={false}>
-                {`${Math.floor(movie.runtime/60)}h ${movie.runtime%60}m`}
+                {`${Math.floor(runtime/60)}h ${runtime%60}m`}
               </Text>
             </>
           ) : null}

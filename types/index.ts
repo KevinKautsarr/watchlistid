@@ -20,6 +20,10 @@ export interface Movie {
   production_companies?: ProductionCompany[];
   production_countries?: ProductionCountry[];
   keywords?: { keywords: Keyword[] };
+  adult?: boolean;
+  original_title?: string;
+  name?: string; // For TV shows
+  first_air_date?: string; // For TV shows
 }
 
 export interface Genre {
@@ -133,4 +137,19 @@ export interface UserProfile {
   followers_count?: number;
   following_count?: number;
   is_following?: boolean;
+  bio?: string;
+}
+
+export type FetchStatus = 'idle' | 'loading' | 'success' | 'error';
+
+export interface FetchState<T> {
+  status: FetchStatus;
+  data: T | null;
+  error: string | null;
+}
+
+export interface IconProps {
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
 }

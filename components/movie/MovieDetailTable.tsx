@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Calendar, Clock, Globe, Info, DollarSign, Activity, Building2 } from 'lucide-react-native';
 import { Colors, Spacing, FontSize, FontWeight, Radius } from '../../constants/theme';
-import { Movie } from '../../types';
+import { Movie, IconProps } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface MovieDetailTableProps {
@@ -16,7 +16,7 @@ const DetailCard = ({
 }: { 
   label: string; 
   value: string | number | undefined;
-  Icon: React.FC<any>;
+  Icon: React.ComponentType<IconProps>;
 }) => {
   if (!value || value === 'N/A' || value === '$0') return null;
   

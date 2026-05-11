@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import { ArrowUpDown, Film, Check, Trash2, ArrowUp, ArrowDown } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
-import { WatchlistMovie } from '../types';
+import { WATCHLIST_STATUS } from '../types/watchlist';
 import MovieListItem from '../components/movie/MovieListItem';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { useLanguage } from '../context/LanguageContext';
@@ -47,10 +47,18 @@ const WatchlistScreen: React.FC = () => {
         list.sort((a, b) => modifier * ((a.vote_average || 0) - (b.vote_average || 0))); 
         break;
       case 'Release': 
-        list.sort((a, b) => modifier * (a.release_date || '').localeCompare(b.release_date || '')); 
+        list.sort((a, b) => {
+          const dateA = a.mediaType === 'movie' ? a.release_date : a.first_air_date;
+          const dateB = b.mediaType === 'movie' ? b.release_date : b.first_air_date;
+          return modifier * (dateA || '').localeCompare(dateB || '');
+        }); 
         break;
       case 'Title':   
-        list.sort((a, b) => modifier * a.title.localeCompare(b.title)); 
+        list.sort((a, b) => {
+          const titleA = a.mediaType === 'movie' ? a.title : a.name;
+          const titleB = b.mediaType === 'movie' ? b.title : b.name;
+          return modifier * titleA.localeCompare(titleB);
+        }); 
         break;
       case 'Added':   
         list.sort((a, b) => modifier * (new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime())); 
@@ -59,7 +67,7 @@ const WatchlistScreen: React.FC = () => {
     return list;
   }, [filteredList, activeSort, isAscending]);
 
-  const watched = watchlist.filter(m => m.watched).length;
+  const watched = watchlist.filter(m => m.status === WATCHLIST_STATUS.COMPLETED).length;
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -144,9 +152,9 @@ const WatchlistScreen: React.FC = () => {
         renderItem={({ item, index }) => (
           <MovieListItem
             movie={item}
-            onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}` as any)}
+            onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.id.toString(), type: item.mediaType } } as any)}
             showWatched={true}
-            watched={item.watched}
+            watched={item.status === WATCHLIST_STATUS.COMPLETED}
             inWatchlist={true}
             onToggleWatched={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

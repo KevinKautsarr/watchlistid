@@ -155,3 +155,39 @@ with check (auth.uid() = follower_id);
 
 create policy "Users can unfollow" on follows for delete 
 using (auth.uid() = follower_id);
+
+
+-- 6. Create Reviews Table
+create table public.reviews (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  movie_id integer not null,
+  media_type text default 'movie' not null,
+  content text not null, -- Markdown supported
+  rating integer check (rating >= 1 and rating <= 10),
+  is_spoiler boolean default false not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  -- One official review per user per movie
+  unique(user_id, movie_id)
+);
+
+alter table public.reviews enable row level security;
+
+create policy "Reviews are viewable by everyone" on reviews for select using (true);
+create policy "Users can manage their own reviews" on reviews for all using (auth.uid() = user_id);
+
+-- 7. Create Review Likes Table
+create table public.review_likes (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  review_id uuid references public.reviews(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  unique(user_id, review_id)
+);
+
+alter table public.review_likes enable row level security;
+
+create policy "Likes are viewable by everyone" on review_likes for select using (true);
+create policy "Users can manage their own likes" on review_likes for all using (auth.uid() = user_id);

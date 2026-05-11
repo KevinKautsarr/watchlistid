@@ -15,8 +15,8 @@ import PosterCard from '../components/common/PosterCard';
 import { useLanguage } from '../context/LanguageContext';
 
 interface PersonDetailScreenProps {
-  route: RouteProp<any, any>;
-  navigation: NativeStackNavigationProp<any>;
+  route: { params: { id: string, name?: string } };
+  navigation: { goBack: () => void };
 }
 
 import { useLocalSearchParams } from 'expo-router';
@@ -132,9 +132,12 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
                   <PosterCard 
                     key={item.id} 
                     movie={item} 
-                  onPress={() => {
+                    onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title || (item as any).name, type: item.media_type || 'movie' } });
+                      router.push({ 
+                        pathname: '/movie/[id]', 
+                        params: { id: item.id.toString(), type: item.media_type || 'movie' } 
+                      } as any);
                     }} 
                   />
                 ))}
@@ -145,22 +148,29 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
           {filmography.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('filmography')}</Text>
-              {filmography.map((item, index) => (
-                <TouchableOpacity 
-                  key={`${item.id}-${index}`} 
-                  style={styles.filmRow}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push({ pathname: '/movie/[id]', params: { id: item.id, title: item.title || (item as any).name, type: item.media_type || 'movie' } });
-                  }}
-                >
-                  <Text style={styles.filmYear} allowFontScaling={false}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
-                  <View style={styles.filmMeta}>
-                    <Text style={styles.filmTitle} allowFontScaling={false}>{item.title || (item as any).name}</Text>
-                    {(item as any).character ? <Text style={styles.filmRole} allowFontScaling={false}>{(item as any).character}</Text> : null}
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {filmography.map((item, index) => {
+                const title = item.title || ('name' in item ? (item as any).name : 'Title');
+                const character = 'character' in item ? (item as any).character : null;
+                return (
+                  <TouchableOpacity 
+                    key={`${item.id}-${index}`} 
+                    style={styles.filmRow}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push({ 
+                        pathname: '/movie/[id]', 
+                        params: { id: item.id.toString(), type: item.media_type || 'movie' } 
+                      } as any);
+                    }}
+                  >
+                    <Text style={styles.filmYear} allowFontScaling={false}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
+                    <View style={styles.filmMeta}>
+                      <Text style={styles.filmTitle} allowFontScaling={false}>{title}</Text>
+                      {character ? <Text style={styles.filmRole} allowFontScaling={false}>{character}</Text> : null}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
           

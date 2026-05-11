@@ -27,13 +27,18 @@ import MovieDetailTable from '../components/movie/MovieDetailTable';
 import PosterCard from '../components/common/PosterCard';
 import RatingBadge from '../components/common/RatingBadge';
 import LogModal from '../components/movie/LogModal';
+import ReviewFeed from '../components/movie/ReviewFeed';
 import { useLanguage } from '../context/LanguageContext';
+import { useSocial } from '../context/SocialContext';
+import StarRating from '../components/common/StarRating';
 
 const { width } = Dimensions.get('window');
 
+import { FetchState } from '../types';
+
 interface MovieDetailScreenProps {
-  route: any;
-  navigation: any;
+  route: { params: { id: string, type: 'movie' | 'tv' } };
+  navigation: { goBack: () => void };
 }
 
 
@@ -60,14 +65,31 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
   
   const [expandedStory, setExpandedStory] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
+  const { getAverageRating } = useSocial();
+  const [communityRating, setCommunityRating] = useState<FetchState<{ average: number; count: number }>>({
+    status: 'idle',
+    data: { average: 0, count: 0 },
+    error: null
+  });
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (actualId) {
       addToRecentlyViewed(Number(actualId));
+      fetchCommunityRating();
     }
   }, [actualId]);
+
+  const fetchCommunityRating = async () => {
+    setCommunityRating(prev => ({ ...prev, status: 'loading' }));
+    try {
+      const score = await getAverageRating(Number(actualId));
+      setCommunityRating({ status: 'success', data: score, error: null });
+    } catch (err) {
+      setCommunityRating({ status: 'error', data: null, error: (err as Error).message });
+    }
+  };
 
   if (loading) {
     return (
@@ -103,12 +125,12 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
 
   let ageRating = 'NR';
   if (releaseDates) {
-    const usRelease = releaseDates.find((r: any) => r.iso_3166_1 === 'US');
+    const usRelease = releaseDates.find((r: { iso_3166_1: string; release_dates: any[] }) => r.iso_3166_1 === 'US');
     if (usRelease) {
-      if (usRelease.rating) {
-        ageRating = usRelease.rating;
+      if ('rating' in usRelease && usRelease.rating) {
+        ageRating = usRelease.rating as string;
       } else if (usRelease.release_dates?.length > 0) {
-        const rating = usRelease.release_dates.find((r: any) => r.certification !== '');
+        const rating = usRelease.release_dates.find((r: { certification: string }) => r.certification !== '');
         if (rating) ageRating = rating.certification;
       }
     }
@@ -123,7 +145,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
     }
 
     if (inWatchlist) removeFromWatchlist(movie.id);
-    else addToWatchlist(movie);
+    else addToWatchlist({ ...movie, media_type: type });
   };
 
   const openTrailer = (key: string) => {
@@ -266,6 +288,27 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           </TouchableOpacity>
         </View>
 
+        {/* Community Rating Section */}
+        {communityRating.data && communityRating.data.count > 0 && (
+          <View style={styles.communityRatingCard}>
+            <View style={styles.communityHeader}>
+              <View>
+                <Text style={s.communityLabel}>WatchListID Community</Text>
+                <Text style={s.communitySub}>{communityRating.data.count} reviews from our users</Text>
+              </View>
+              <View style={s.scoreBox}>
+                <Text style={s.scoreText}>{(communityRating.data.average / 2).toFixed(1)}</Text>
+              </View>
+            </View>
+            <View style={s.starsRow}>
+              <StarRating rating={communityRating.data.average / 2} size={24} />
+              <View style={s.progressTrack}>
+                <View style={[s.progressBar, { width: `${(communityRating.data.average / 10) * 100}%` }]} />
+              </View>
+            </View>
+          </View>
+        )}
+
         <View style={styles.actionRow}>
           {featuredTrailer && (
             <TouchableOpacity 
@@ -392,28 +435,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           <MovieDetailTable movie={movie} />
         </View>
 
-        {reviews.length > 0 && (
-          <View style={styles.reviewsSection}>
-            <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('userReviews')}</Text>
-            {reviews.map((review: { id: string; author: string; content: string; created_at: string; author_details?: { rating: number | null; avatar_path: string | null } }) => (
-              <View key={review.id} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewAvatar}>
-                    <Text style={styles.reviewAvatarText} allowFontScaling={false}>{review.author.charAt(0).toUpperCase()}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.reviewAuthor} allowFontScaling={false}>{review.author}</Text>
-                    <Text style={styles.reviewDate} allowFontScaling={false}>{new Date(review.created_at).toLocaleDateString()}</Text>
-                  </View>
-                  {review.author_details?.rating && (
-                    <RatingBadge rating={review.author_details.rating} size="sm" />
-                  )}
-                </View>
-                <Text style={styles.reviewText} numberOfLines={4} allowFontScaling={false}>{review.content}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <ReviewFeed movieId={Number(actualId)} />
       </View>
     </View>
 
@@ -552,7 +574,66 @@ const styles = StyleSheet.create({
   confirmBtn: { marginTop: Spacing.xxl, backgroundColor: Colors.primary, height: 50, borderRadius: Radius.lg, justifyContent: 'center', alignItems: 'center' },
   confirmBtnText: { fontSize: FontSize.lg, color: Colors.white, fontWeight: FontWeight.bold },
   cancelBtn: { marginTop: Spacing.md, justifyContent: 'center', alignItems: 'center', height: 40 },
-  cancelBtnText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.6)' }
+  cancelBtnText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.6)' },
+
+  communityRatingCard: {
+    backgroundColor: 'rgba(63, 114, 175, 0.08)',
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: Radius.xl,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(63, 114, 175, 0.2)',
+  },
+  communityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  communityLabel: {
+    color: Colors.white,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.black,
+    letterSpacing: -0.3,
+  },
+  communitySub: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  scoreBox: {
+    backgroundColor: Colors.accentBlue,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: FontWeight.black,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#F5C518',
+    borderRadius: Radius.full,
+  },
 });
+
+const s = styles;
 
 export default MovieDetailScreen;

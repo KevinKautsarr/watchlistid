@@ -11,18 +11,19 @@ import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../con
 import { useLanguage } from '../../context/LanguageContext';
 import { useSocial } from '../../context/SocialContext';
 import { useWatchlist } from '../../context/WatchlistContext';
-import { Movie } from '../../types';
+import { Movie, MovieLog } from '../../types';
+import StarRating from '../common/StarRating';
 
 interface LogModalProps {
   visible: boolean;
   movie: Movie | null;
   onClose: () => void;
-  existingLog?: any;
+  existingLog?: MovieLog;
 }
 
 export default function LogModal({ visible, onClose, movie, existingLog }: LogModalProps) {
   const { t } = useLanguage();
-  const { addLog } = useSocial();
+  const { addLog, addReview } = useSocial();
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState('');
   const [isSpoiler, setIsSpoiler] = useState(false);
@@ -49,7 +50,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
       const success = await addLog({
         movie_id: movie.id,
         media_type: movie.media_type || 'movie',
-        movie_title: movie.title || (movie as any).name,
+        movie_title: movie.title || ('name' in movie ? (movie as { name: string }).name : 'Title'),
         poster_path: movie.poster_path || undefined,
         watched_at: watchedDate,
         rating: rating,
@@ -58,6 +59,17 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
       });
 
       if (success) {
+        // Save to professional reviews table if there is content
+        if (reviewText.trim()) {
+          await addReview({
+            movie_id: movie.id,
+            media_type: movie.media_type || 'movie',
+            content: reviewText.trim(),
+            rating: rating,
+            is_spoiler: isSpoiler,
+          });
+        }
+
         // Juga update rating di watchlist lokal agar sinkron
         setLocalRating(movie.id, rating);
         
@@ -70,9 +82,10 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
         // Fallback alert because Toast might be hidden behind Modal
         Alert.alert('Error', 'Failed to save movie log. Please check your connection or profile.');
       }
-    } catch (err: any) {
-      console.error("Log Save Error:", err);
-      Alert.alert('Error', err.message || 'An unexpected error occurred.');
+    } catch (err) {
+      const error = err as Error;
+      console.error("Log Save Error:", error);
+      Alert.alert('Error', error.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -107,8 +120,8 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
-            {/* Movie Info */}
-            <Text style={s.movieTitle} allowFontScaling={false}>{movie.title || (movie as any).name}</Text>
+            <Star size={24} color={Colors.primary} fill={Colors.primary} />
+            <Text style={s.movieTitle} allowFontScaling={false}>{movie.title || ('name' in movie ? (movie as { name: string }).name : 'Title')}</Text>
             <Text style={s.movieYear} allowFontScaling={false}>{movie.release_date?.split('-')[0]}</Text>
 
             {/* Date Picker (Simplified) */}
@@ -134,29 +147,21 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
               </View>
             </View>
 
-            {/* Rating */}
             <View style={s.section}>
               <Text style={s.label} allowFontScaling={false}>{t('yourRating')} <Text style={{color: Colors.primary}}>*</Text></Text>
-              <View style={s.starsRow}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
-                  <TouchableOpacity 
-                    key={star} 
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setRating(star);
-                    }}
-                    style={s.starBtn}
-                  >
-                    <Star 
-                      size={28} 
-                      color={star <= rating ? '#F5C518' : 'rgba(255,255,255,0.1)'} 
-                      fill={star <= rating ? '#F5C518' : 'transparent'} 
-                    />
-                  </TouchableOpacity>
-                ))}
+              <View style={s.starsContainer}>
+                <StarRating 
+                  rating={rating / 2} 
+                  size={40} 
+                  interactive={true} 
+                  onRatingChange={(newRating) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setRating(newRating * 2);
+                  }}
+                />
               </View>
               <Text style={s.ratingHint} allowFontScaling={false}>
-                {rating > 0 ? `${rating} / 10` : t('ratingHintDefault')}
+                {rating > 0 ? `${rating / 2} / 5 stars` : t('ratingHintDefault')}
               </Text>
             </View>
 
@@ -231,9 +236,9 @@ const s = StyleSheet.create({
   title: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
   closeBtn: { padding: 4 },
   saveBtn: { 
-    backgroundColor: Colors.primary, 
-    paddingHorizontal: 16, 
-    paddingVertical: 8, 
+    backgroundColor: Colors.accentBlue, 
+    paddingHorizontal: 20, 
+    paddingVertical: 10, 
     borderRadius: Radius.full 
   },
   saveBtnDisabled: { opacity: 0.5 },
@@ -269,9 +274,12 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
 
-  starsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  starBtn: { padding: 2 },
-  ratingHint: { textAlign: 'center', color: Colors.text.secondary, fontSize: FontSize.sm },
+  starsContainer: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingHint: { textAlign: 'center', color: Colors.text.secondary, fontSize: FontSize.sm, marginTop: 4 },
 
   textArea: {
     backgroundColor: 'rgba(255,255,255,0.03)',
@@ -287,8 +295,8 @@ const s = StyleSheet.create({
   spoilerSection: { marginTop: 4 },
   spoilerBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  checkboxActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   spoilerText: { flex: 1, color: Colors.text.secondary, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  spoilerTextActive: { color: Colors.primary },
+  spoilerTextActive: { color: Colors.accentBlue },
+  checkboxActive: { backgroundColor: Colors.accentBlue, borderColor: Colors.accentBlue },
   spoilerDesc: { fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 16, marginLeft: 32 },
 });

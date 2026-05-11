@@ -36,7 +36,7 @@ const SkeletonCard: React.FC<SkeletonProps> = ({
     <Animated.View 
       style={[
         styles.skeleton, 
-        { width, height, borderRadius, opacity: shimmerAnim } as any
+        { width, height, borderRadius, opacity: shimmerAnim } as import('react-native').ViewStyle
       ]} 
     />
   );
@@ -69,7 +69,7 @@ export const SkeletonListItem: React.FC<SkeletonProps> = ({
     <Animated.View 
       style={[
         styles.skeletonList, 
-        { height, borderRadius, opacity: shimmerAnim } as any
+        { height, borderRadius, opacity: shimmerAnim } as import('react-native').ViewStyle
       ]} 
     />
   );

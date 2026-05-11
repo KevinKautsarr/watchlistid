@@ -3,8 +3,10 @@ import { Modal, View, StyleSheet, TouchableOpacity, Text, Platform } from 'react
 import { X } from 'lucide-react-native';
 import { Colors, Radius, Spacing, Shadow, FontSize, FontWeight } from '../../constants/theme';
 
+import type { WebView as WebViewType, WebViewMessageEvent } from 'react-native-webview';
+
 // Import WebView conditionally to avoid errors on Web
-let WebView: any;
+let WebView: typeof WebViewType | undefined;
 try {
   if (Platform.OS !== 'web') {
     WebView = require('react-native-webview').WebView;
@@ -23,7 +25,7 @@ const CLOUDFLARE_SITE_KEY = process.env.EXPO_PUBLIC_CLOUDFLARE_SITE_KEY || '1x00
 const BASE_URL = 'https://google.com';
 
 export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaModalProps) {
-  const webViewRef = useRef<any>(null);
+  const webViewRef = useRef<WebViewType>(null);
 
   const html = `
     <!DOCTYPE html>
@@ -97,7 +99,7 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
                 ref={webViewRef}
                 originWhitelist={['*']}
                 source={{ html, baseUrl: BASE_URL }}
-                onMessage={(event: any) => {
+                onMessage={(event: WebViewMessageEvent) => {
                   const token = event.nativeEvent.data;
                   console.log('[Captcha] Token received:', token ? 'YES' : 'NO');
                   if (token) onVerify(token);

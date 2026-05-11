@@ -10,13 +10,14 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { supabase } from '../supabase';
+import { supabase, typedFrom } from '../supabase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { UserProfile, FetchState } from '../types';
 import {
   Bell, Globe, Share2, Info, ChevronRight, Star, Film, Eye,
   LogOut, Edit3, Camera, Check, X, BookOpen, Clock, Trash2, UserPlus, UserMinus,
   LayoutGrid, Play, Bookmark, Menu, Plus, ChevronDown, 
-  Settings as SettingsIcon, AtSign
+  Settings as SettingsIcon, AtSign, Search, ArrowLeft
 } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
@@ -125,10 +126,10 @@ const s = StyleSheet.create({
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { watchlist, toggleWatched, removeFromWatchlist, isLoading: loadingWatchlist } = useWatchlist();
+  const { watchlist, toggleWatched, removeFromWatchlist, userRatings, isLoading: loadingWatchlist } = useWatchlist();
   const { user, profile, refreshProfile, signOut } = useAuth();
   const { t } = useLanguage();
-  const { userLogs, deleteLog, loadingLogs } = useSocial();
+  const { userLogs, deleteLog, loadingLogs, followUser, unfollowUser, getFollowStatus } = useSocial();
   const { unreadCount } = useNotifications();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -151,24 +152,37 @@ const ProfileScreen: React.FC = () => {
 
   const [isSocialModalVisible, setIsSocialModalVisible] = useState(false);
   const [socialModalType, setSocialModalType] = useState<'followers' | 'following'>('followers');
-  const [socialList, setSocialList] = useState<any[]>([]);
-  const [isListLoading, setIsListLoading] = useState(false);
+  const [socialList, setSocialList] = useState<FetchState<UserProfile[]>>({
+    status: 'idle',
+    data: [],
+    error: null
+  });
 
   const [pickedImage, setPickedImage] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
 
   const targetUserId = userId || user?.id;
   const isOwner = !userId || userId === user?.id;
-  const [targetProfile, setTargetProfile] = useState<any>(null);
+  const [targetProfile, setTargetProfile] = useState<FetchState<UserProfile>>({
+    status: 'idle',
+    data: null,
+    error: null
+  });
 
   useEffect(() => {
     if (!targetUserId) return;
     const fetchData = async () => {
+      setTargetProfile(prev => ({ ...prev, status: 'loading' }));
       if (!isOwner) {
-        const { data } = await supabase.from('profiles').select('id, username, avatar_url, bio').eq('id', targetUserId).single();
-        if (data) setTargetProfile(data);
+        try {
+          const { data, error } = await typedFrom('profiles').select('id, username, avatar_url, bio, followers_count, following_count').eq('id', targetUserId).single();
+          if (data) setTargetProfile({ status: 'success', data: data as UserProfile, error: null });
+          else if (error) setTargetProfile({ status: 'error', data: null, error: error.message });
+        } catch (e) {
+          setTargetProfile({ status: 'error', data: null, error: (e as Error).message });
+        }
       } else {
-        setTargetProfile(profile);
+        setTargetProfile({ status: 'success', data: profile as UserProfile, error: null });
       }
       fetchSocialStats();
     };
@@ -177,13 +191,13 @@ const ProfileScreen: React.FC = () => {
 
   const fetchSocialStats = async () => {
     if (!targetUserId) return;
-    const { count: fers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
+    const { count: fers } = await typedFrom('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
     setFollowers(fers || 0);
-    const { count: fing } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
+    const { count: fing } = await typedFrom('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
     setFollowing(fing || 0);
     if (!isOwner && user) {
-      const { data } = await supabase.from('follows').select('id').eq('follower_id', user.id).eq('following_id', targetUserId).single();
-      setIsFollowing(!!data);
+      const status = await getFollowStatus(targetUserId);
+      setIsFollowing(status);
     }
   };
 
@@ -193,13 +207,17 @@ const ProfileScreen: React.FC = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       if (isFollowing) {
-        await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', targetUserId);
-        setIsFollowing(false);
-        setFollowers(prev => Math.max(0, prev - 1));
+        const success = await unfollowUser(targetUserId);
+        if (success) {
+          setIsFollowing(false);
+          setFollowers(prev => Math.max(0, prev - 1));
+        }
       } else {
-        await supabase.from('follows').insert({ follower_id: user.id, following_id: targetUserId });
-        setIsFollowing(true);
-        setFollowers(prev => prev + 1);
+        const success = await followUser(targetUserId);
+        if (success) {
+          setIsFollowing(true);
+          setFollowers(prev => prev + 1);
+        }
       }
     } catch (err) {
       console.error('Follow error:', err);
@@ -212,51 +230,62 @@ const ProfileScreen: React.FC = () => {
     if (!targetUserId) return;
     setSocialModalType(type);
     setIsSocialModalVisible(true);
-    setIsListLoading(true);
-    setSocialList([]);
+    setSocialList(prev => ({ ...prev, status: 'loading', data: [] }));
     try {
       const column = type === 'followers' ? 'follower_id' : 'following_id';
       const filterColumn = type === 'followers' ? 'following_id' : 'follower_id';
-      const { data } = await supabase.from('follows').select(`${column}, profiles:${column} (id, username, avatar_url, bio)`).eq(filterColumn, targetUserId);
+      const { data, error } = await typedFrom('follows').select(`${column}, profiles:${column} (id, username, avatar_url, bio)`).eq(filterColumn, targetUserId);
       if (data) {
-        let users = data.map((item: any) => item.profiles).filter(u => !!u);
+        let users = data.map((item: any) => item.profiles).filter((u): u is UserProfile => !!u);
         if (user) {
-          const { data: myFollows } = await supabase.from('follows').select('following_id').eq('follower_id', user.id);
-          const myFollowingIds = new Set(myFollows?.map(f => f.following_id) || []);
-          users = users.map(u => ({ ...u, is_following: myFollowingIds.has(u.id), full_name: u.username }));
+          const { data: myFollows } = await typedFrom('follows').select('following_id').eq('follower_id', user.id);
+          const myFollowingIds = new Set((myFollows as { following_id: string }[])?.map(f => f.following_id) || []);
+          users = users.map(u => ({ ...u, is_following: myFollowingIds.has(u.id) }));
         }
-        setSocialList(users);
+        setSocialList({ status: 'success', data: users, error: null });
+      } else if (error) {
+        setSocialList({ status: 'error', data: [], error: error.message });
       }
     } catch (err) {
       console.error('Fetch list error:', err);
-    } finally {
-      setIsListLoading(false);
+      setSocialList({ status: 'error', data: [], error: (err as Error).message });
     }
   };
 
   const handleToggleFollowFromList = async (userId: string) => {
-    if (!user || user.id === userId) return;
-    setSocialList(prev => prev.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u));
+    if (!user || user.id === userId || !socialList.data) return;
+    
+    // Optimistic update
+    setSocialList(prev => ({
+      ...prev,
+      data: prev.data?.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u) || []
+    }));
+
     try {
-      const isCurrentlyFollowing = socialList.find(u => u.id === userId)?.is_following;
+      const isCurrentlyFollowing = socialList.data.find(u => u.id === userId)?.is_following;
       if (isCurrentlyFollowing) {
-        await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', userId);
+        await typedFrom('follows').delete().eq('follower_id', user.id).eq('following_id', userId);
       } else {
-        await supabase.from('follows').insert({ follower_id: user.id, following_id: userId });
+        await typedFrom('follows').insert({ follower_id: user.id, following_id: userId } as any);
       }
       fetchSocialStats();
     } catch (err) {
-      setSocialList(prev => prev.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u));
+      // Rollback on error
+      setSocialList(prev => ({
+        ...prev,
+        data: prev.data?.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u) || []
+      }));
       console.error('Toggle follow list error:', err);
     }
   };
 
-  const displayName = targetProfile?.username || (isOwner ? (user?.user_metadata?.username || user?.email?.split('@')[0]) : 'User') || 'Movie Fan';
-  const avatarUrl = targetProfile?.avatar_url || (isOwner ? user?.user_metadata?.avatar_url : null);
+  const profileData = targetProfile.data;
+  const displayName = profileData?.username || (isOwner ? (user?.user_metadata?.username || user?.email?.split('@')[0]) : 'User') || 'Movie Fan';
+  const avatarUrl = profileData?.avatar_url || (isOwner ? user?.user_metadata?.avatar_url : null);
   const avatarLetter = displayName.charAt(0).toUpperCase();
-  const displayBio = targetProfile?.bio ?? '';
+  const displayBio = profileData?.bio ?? '';
 
-  const watched = watchlist.filter(m => m.watched).length;
+  const watched = watchlist.filter(m => m.status === 'completed').length;
   const total = watchlist.length;
   const toWatch = total - watched;
 
@@ -304,7 +333,7 @@ const ProfileScreen: React.FC = () => {
     try {
       const finalAvatar = editAvatar.trim() || null;
       await supabase.auth.updateUser({ data: { username: editName, avatar_url: finalAvatar } });
-      await supabase.from('profiles').update({ username: editName, avatar_url: finalAvatar, bio: editBio }).eq('id', user.id);
+      await typedFrom('profiles').update({ username: editName, avatar_url: editAvatar, bio: editBio } as any).eq('id', user.id);
       
       // Instantly refresh the local context to update UI without reload
       await refreshProfile();
@@ -367,12 +396,15 @@ const ProfileScreen: React.FC = () => {
       if (watchlist && Array.isArray(watchlist)) {
         watchlist.forEach(item => {
           try {
-            const title = String(item.title || 'Unknown').replace(/"/g, '""');
-            const status = item.watched ? 'Watched' : 'To Watch';
-            const year = item.release_date ? item.release_date.substring(0, 4) : '""';
-            const rating = item.userRating ? `"${item.userRating}/10"` : '""';
+            const itemTitle = item.mediaType === 'movie' ? item.title : item.name;
+            const title = String(itemTitle || 'Unknown').replace(/"/g, '""');
+            const status = item.status === 'completed' ? 'Watched' : 'To Watch';
+            const releaseDate = item.mediaType === 'movie' ? item.release_date : item.first_air_date;
+            const year = releaseDate ? releaseDate.substring(0, 4) : '""';
+            const ratingValue = userRatings[item.id];
+            const rating = ratingValue ? `"${ratingValue}/10"` : '""';
             const date = item.addedAt ? `"${new Date(item.addedAt).toLocaleDateString()}"` : '""';
-            csvContent += `${rowNum++},${status},"${title}",${year},${rating},${date},${item.media_type || 'movie'},""\n`;
+            csvContent += `${rowNum++},${status},"${title}",${year},${rating},${date},${item.mediaType},""\n`;
           } catch (e) {
             console.warn('Skipping watchlist item:', e);
           }
@@ -432,9 +464,21 @@ const ProfileScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={[s.topBar, { paddingTop: insets.top + 8 }]}>
           <View style={s.topBarLeft}>
-            <Text style={s.topBarTitle} allowFontScaling={false}>Profil</Text>
+            {!isOwner ? (
+              <TouchableOpacity onPress={() => router.back()} style={s.topBarIcon}>
+                <ArrowLeft size={24} color={Colors.white} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={() => router.push('/search-users' as any)} style={s.topBarIcon}>
+                <Search size={24} color={Colors.white} />
+              </TouchableOpacity>
+            )}
           </View>
-          <View style={s.topBarCenter} />
+          <View style={s.topBarCenter}>
+            <Text style={s.topBarTitle} allowFontScaling={false}>
+              {isOwner ? t('profile') : profileData?.username || t('profile')}
+            </Text>
+          </View>
           <View style={s.topBarRight}>
             {isOwner && (
               <TouchableOpacity style={s.topBarIcon} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowSettingsSheet(true); }}>
@@ -516,6 +560,11 @@ const ProfileScreen: React.FC = () => {
               <Text style={s.statCount}>{following}</Text>
               <Text style={s.statLabel}>{t('following')}</Text>
             </TouchableOpacity>
+            
+            <View style={s.statItem}>
+              <Text style={s.statCount}>{userLogs.length}</Text>
+              <Text style={s.statLabel}>{t('logs')}</Text>
+            </View>
           </View>
           <View style={s.actionRow}>
             {isOwner ? (isEditing ? (<><TouchableOpacity style={[s.primaryBtn, { backgroundColor: Colors.primary }]} onPress={handleSave} disabled={isSaving}>{isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.primaryBtnText}>{t('save')}</Text>}</TouchableOpacity><TouchableOpacity style={s.secondaryBtn} onPress={handleCancel}><Text style={s.secondaryBtnText}>{t('cancel')}</Text></TouchableOpacity></>) : (<><TouchableOpacity style={s.secondaryBtn} onPress={() => setIsEditing(true)}><Text style={s.secondaryBtnText}>{t('editProfile')}</Text></TouchableOpacity><TouchableOpacity style={s.secondaryBtn} onPress={handleShare}><Text style={s.secondaryBtnText}>{t('shareProfile')}</Text></TouchableOpacity></>)) : (<TouchableOpacity style={[s.primaryBtn, isFollowing && s.followingBtn]} onPress={handleFollow} disabled={isFollowLoading}>{isFollowLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[s.primaryBtnText, isFollowing && { color: Colors.white }]}>{isFollowing ? t('unfollow') : t('follow')}</Text>}</TouchableOpacity>)}
@@ -563,16 +612,16 @@ const ProfileScreen: React.FC = () => {
           {activeTab === 'Watched' && (
             loadingWatchlist ? (
               <View style={{ gap: 0 }}>{[1,2,3,4].map(i => <MovieItemSkeleton key={i} />)}</View>
-            ) : watchlist.filter(m => m.watched).length === 0 ? (
+            ) : watchlist.filter(m => m.status === 'completed').length === 0 ? (
               <EmptyState icon={<Eye size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyWatched')} />
             ) : (
-              watchlist.filter(m => m.watched).map(item => (
+              watchlist.filter(m => m.status === 'completed').map(item => (
                 <MovieListItem 
                   key={item.id} 
-                  movie={item} 
-                  onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}`)} 
+                  movie={item as any} 
+                  onPress={() => router.push(`/movie/${item.id}?type=${item.mediaType}` as any)} 
                   showWatched={isOwner} 
-                  watched={item.watched} 
+                  watched={item.status === 'completed'} 
                   inWatchlist={isOwner} 
                   onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} 
                   onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} 
@@ -584,16 +633,16 @@ const ProfileScreen: React.FC = () => {
           {activeTab === 'Watchlist' && (
             loadingWatchlist ? (
               <View style={{ gap: 0 }}>{[1,2,3,4].map(i => <MovieItemSkeleton key={i} />)}</View>
-            ) : watchlist.filter(m => !m.watched).length === 0 ? (
+            ) : watchlist.filter(m => m.status !== 'completed').length === 0 ? (
               <EmptyState icon={<Star size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyToWatch')} />
             ) : (
-              watchlist.filter(m => !m.watched).map(item => (
+              watchlist.filter(m => m.status !== 'completed').map(item => (
                 <MovieListItem 
                   key={item.id} 
-                  movie={item} 
-                  onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}`)} 
+                  movie={item as any} 
+                  onPress={() => router.push(`/movie/${item.id}?type=${item.mediaType}` as any)} 
                   showWatched={isOwner} 
-                  watched={item.watched} 
+                  watched={item.status === 'completed'} 
                   inWatchlist={isOwner} 
                   onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} 
                   onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} 
@@ -621,7 +670,19 @@ const ProfileScreen: React.FC = () => {
       <SettingsSheet visible={showSettingsSheet} onClose={() => setShowSettingsSheet(false)} onLanguagePress={() => setShowLangModal(true)} onLogoutPress={() => setShowLogoutModal(true)} onNotificationsPress={() => router.push('/notifications' as any)} onAboutPress={() => router.push('/about' as any)} onExportPress={handleExport} />
       <LanguageSheet visible={showLangModal} onClose={() => setShowLangModal(false)} />
       <DeleteConfirmModal visible={!!logToDelete} onClose={() => setLogToDelete(null)} onConfirm={() => { if (logToDelete) deleteLog(logToDelete); }} title={t('deleteLogTitle')} message={t('deleteLogDesc')} />
-      <SocialListSheet visible={isSocialModalVisible} onClose={() => setIsSocialModalVisible(false)} initialTab={socialModalType} data={socialList} loading={isListLoading} currentUserId={user?.id || ''} onUserPress={(id) => { setIsSocialModalVisible(false); router.push({ pathname: '/(tabs)/profile', params: { userId: id } }); }} onFollowToggle={(id) => handleToggleFollowFromList(id)} />
+      <SocialListSheet 
+        visible={isSocialModalVisible} 
+        onClose={() => setIsSocialModalVisible(false)} 
+        initialTab={socialModalType} 
+        data={socialList.data || []} 
+        loading={socialList.status === 'loading'} 
+        currentUserId={user?.id || ''} 
+        onUserPress={(id) => { 
+          setIsSocialModalVisible(false); 
+          router.push({ pathname: '/(tabs)/profile', params: { userId: id } } as any); 
+        }} 
+        onFollowToggle={(id) => handleToggleFollowFromList(id)} 
+      />
       {pickedImage && (
         <ImageCropModal 
           visible={showCropModal} 

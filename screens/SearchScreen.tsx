@@ -23,18 +23,19 @@ import {
   getTrendingTV, getTrendingAll, searchMovies, searchPeople, searchTV, searchMulti,
   discoverAnime, discoverAnimation,
 } from "../services/api";
-import { Movie } from "../types";
+import { MediaItem } from "../types/tmdb";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const norm = (i: any, defaultType?: string): Movie | null => {
+const norm = (i: any, defaultType?: 'movie' | 'tv'): MediaItem | null => {
   if (i.media_type === "person") return null;
   return {
     ...i,
     media_type: i.media_type ?? defaultType ?? "movie",
     title: i.title ?? i.name ?? "Unknown",
+    original_title: i.original_title ?? i.original_name ?? "Unknown",
     release_date: i.release_date ?? i.first_air_date ?? "",
     poster_path: i.poster_path ?? null,
-  };
+  } as MediaItem;
 };
 
 // ─── Category definitions ─────────────────────────────────────────────────────
@@ -44,6 +45,7 @@ interface CatDef {
   Icon: React.ElementType; iconColor: string;
   fetchFn: (page: number) => Promise<{ results: any[]; total_pages: number; total_results: number }>;
   normalize?: boolean;
+  defaultType?: 'movie' | 'tv';
 }
 const CATS: Record<CatKey, CatDef> = {
   "trending-movies": { label: "trendingMovies",      subtitle: "catTrendingMoviesSub", Icon: Flame, iconColor: "#E50914", fetchFn: getTrendingMovies },
@@ -91,7 +93,7 @@ function LoadMoreBtn({ onPress, loading, page, total }: { onPress:()=>void; load
 }
 
 // ─── Person row ───────────────────────────────────────────────────────────────
-function PersonCard({ person, onPress }: { person:any; onPress:()=>void }) {
+function PersonCard({ person, onPress }: { person: { profile_path?: string, name: string, known_for_department?: string, known_for?: any[] }; onPress:()=>void }) {
   const { t } = useLanguage();
   const uri = person.profile_path ? `${TMDB_IMAGE_SIZES.small}${person.profile_path}` : null;
   return (
@@ -124,8 +126,8 @@ export default function SearchScreen() {
   const debouncedQ = useDebounce(searchText, 450);
 
   // ── data state ──────────────────────────────────────────────────────────────
-  const [items,         setItems]         = useState<Movie[]>([]);
-  const [personItems,   setPersonItems]   = useState<any[]>([]);
+  const [items,         setItems]         = useState<MediaItem[]>([]);
+  const [personItems,   setPersonItems]   = useState<{ id: number, profile_path?: string, name: string, known_for_department?: string, known_for?: any[] }[]>([]);
   const [page,          setPage]          = useState(1);
   const [totalPages,    setTotalPages]    = useState(1);
   const [totalResults,  setTotalResults]  = useState(0);
@@ -170,30 +172,30 @@ export default function SearchScreen() {
 
       if (filter === "all") {
         const d = query.trim() ? await searchMulti(query, p) : await getTrendingAll(p);
-        raw = (d.results ?? []).map(i => norm(i)).filter((i): i is Movie => i !== null);
+        raw = (d.results ?? []).map(i => norm(i)).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       } else if (filter === "anime") {
         const d = query.trim() ? await searchTV(query, p) : await discoverAnime(p);
-        raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is Movie => i !== null);
+        raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       } else if (filter === "animation") {
         const d = query.trim() ? await searchMovies(query, p) : await discoverAnimation(p);
-        raw = (d.results ?? []).map(i => norm(i, "movie")).filter((i): i is Movie => i !== null);
+        raw = (d.results ?? []).map(i => norm(i, "movie")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       } else if (filter === "movies") {
         const d = query.trim() ? await searchMovies(query, p) : await getTrendingMovies(p);
-        raw = (d.results ?? []).map(i => norm(i, "movie")).filter((i): i is Movie => i !== null);
+        raw = (d.results ?? []).map(i => norm(i, "movie")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       } else if (filter === "tv") {
         const d = query.trim() ? await searchTV(query, p) : await getTrendingTV(p);
-        raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is Movie => i !== null);
+        raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       } else {
         const d = query.trim() ? await searchMovies(query, p) : await discoverMovies(Number(filter), p);
         const results = query.trim()
           ? (d.results ?? []).filter((m:any) => m.genre_ids?.includes(Number(filter)))
           : (d.results ?? []);
-        raw = results.map(i => norm(i, "movie")).filter((i): i is Movie => i !== null);
+        raw = results.map(i => norm(i, "movie")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       }
       setItems(append ? prev => [...prev, ...raw] : raw);
@@ -206,7 +208,10 @@ export default function SearchScreen() {
   const numCols   = 1;
 
   const filteredItems = useMemo(() => {
-    return items.filter(m => !searchText.trim() || m.title?.toLowerCase().includes(searchText.toLowerCase()));
+    return items.filter(m => {
+      const matchTitle = m.media_type === 'movie' ? m.title : (m as any).name;
+      return !searchText.trim() || matchTitle?.toLowerCase().includes(searchText.toLowerCase());
+    });
   }, [items, searchText]);
 
   const listContentStyle = useMemo(() => [
@@ -225,7 +230,7 @@ export default function SearchScreen() {
       const def = CATS[cat];
       const d   = await def.fetchFn(p);
       const mediaType = def.normalize ? 'tv' : 'movie';
-      const raw = (d.results ?? []).map(i => norm(i, mediaType)).filter((i): i is Movie => i !== null);
+      const raw = (d.results ?? []).map(i => norm(i, mediaType)).filter((i): i is MediaItem => i !== null);
       setItems(append ? prev => [...prev, ...raw] : raw);
       setTotalPages(d.total_pages ?? 1);
       setTotalResults(d.total_results ?? raw.length);
@@ -255,16 +260,19 @@ export default function SearchScreen() {
   };
 
   const exitCat = () => { setActiveCat(null); setItems([]); setPage(1); setSearchText(""); };
-  const toggleWL = (m: Movie) => {
+  const toggleWL = (m: MediaItem) => {
     const has = isInWatchlist(m.id);
     Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
     has ? removeFromWatchlist(m.id) : addToWatchlist(m);
   };
-  const goToMovie  = (id:number, type: string = 'movie') => { 
+  const goToMovie  = (id:number, type: 'movie' | 'tv' = 'movie') => { 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); 
-    router.push(`/movie/${id}?type=${type}` as any); 
+    router.push({ pathname: '/movie/[id]', params: { id: id.toString(), type } } as any); 
   };
-  const goToPerson = (id:number) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/person/${id}` as any); };
+  const goToPerson = (id:number) => { 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); 
+    router.push({ pathname: '/person/[id]', params: { id: id.toString() } } as any); 
+  };
   const hitSearch  = (t:string)  => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSearchText(t); };
   const onFocus = () => Animated.spring(inputScale,{toValue:1.015,useNativeDriver:true,speed:20}).start();
   const onBlur  = () => Animated.spring(inputScale,{toValue:1,useNativeDriver:true,speed:20}).start();

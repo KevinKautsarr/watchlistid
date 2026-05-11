@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { Bell, Play, Plus, Star, Flame, Award, Clock, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import SectionHeader from '../components/common/SectionHeader';
 import Avatar from '../components/common/Avatar';
+import ActivityFeed from '../components/movie/ActivityFeed';
 import { MediaCard } from '../components/movie/MediaCard';
 import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
@@ -306,6 +307,7 @@ export default function HomeScreen() {
   const bp = useBreakpoint();
   const { t } = useLanguage();
   const [showBottomSections, setShowBottomSections] = useState(false);
+  const [homeTab, setHomeTab] = useState<'discover' | 'following'>('discover');
 
   useEffect(() => {
     // Delay rendering of bottom sections to prioritize Hero and Trending
@@ -319,11 +321,11 @@ export default function HomeScreen() {
   const { data: trendingTVData, isLoading: ltv,  refetch: rtv  } = useTrendingTV();
   const { data: topRatedTVData, isLoading: lrtv, refetch: rrtv } = useTopRatedTV();
 
-  const trending   = ((trendingData   as any[] | null) ?? []).filter(m => !m.adult);
-  const popular    = ((popularData    as any[] | null) ?? []).filter(m => !m.adult);
-  const topRated   = ((topRatedData   as any[] | null) ?? []).filter(m => !m.adult);
-  const trendingTV = ((trendingTVData as any[] | null) ?? []).filter(m => !m.adult);
-  const topRatedTV = ((topRatedTVData as any[] | null) ?? []).filter(m => !m.adult);
+  const trending   = ((trendingData   as Movie[] | null) ?? []).filter(m => !m.adult);
+  const popular    = ((popularData    as Movie[] | null) ?? []).filter(m => !m.adult);
+  const topRated   = ((topRatedData   as Movie[] | null) ?? []).filter(m => !m.adult);
+  const trendingTV = ((trendingTVData as Movie[] | null) ?? []).filter(m => !m.adult);
+  const topRatedTV = ((topRatedTVData as Movie[] | null) ?? []).filter(m => !m.adult);
   const loading    = lt || lp || ltr;
 
   const onRefresh = async () => {
@@ -333,24 +335,24 @@ export default function HomeScreen() {
     finally { setRefreshing(false); }
   };
 
-  const goToMovie = (movie: any) => {
+  const goToMovie = (movie: Movie) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const type = movie.media_type || (movie.first_air_date ? 'tv' : 'movie');
-    router.push(`/movie/${movie.id}?type=${type}` as any);
+    const type = movie.media_type || (('first_air_date' in movie) ? 'tv' : 'movie');
+    router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type } } as any);
   };
-  const toggleWL = (movie: any) => {
+  const toggleWL = (movie: Movie) => {
     if (!user) {
       router.push('/auth/login' as any);
       return;
     }
     const has = isInWatchlist(movie.id);
     Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
-    has ? removeFromWatchlist(movie.id) : addToWatchlist(movie);
+    has ? removeFromWatchlist(movie.id) : addToWatchlist(movie as any);
   };
 
   const recentMovies = useMemo(() => {
     const all = [...trending, ...popular, ...topRated, ...trendingTV, ...topRatedTV];
-    return recentlyViewed.map(id => all.find((m: any) => m.id === id)).filter((m): m is Movie => m != null).slice(0, 10);
+    return recentlyViewed.map(id => all.find((m) => m.id === id)).filter((m): m is Movie => m != null).slice(0, 10);
   }, [recentlyViewed, trending, popular, topRated, trendingTV, topRatedTV]);
 
   const headerBg = scrollY.interpolate({
@@ -435,17 +437,47 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Trending Movies */}
-          <SectionHeader title={t('trendingMovies')}      Icon={Flame} iconColor="#E50914" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=trending-movies' as any)} />
-          {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trending.slice(0, N)} />}
+          {/* Tab Switcher */}
+          <View style={[s.tabSwitcher, { paddingHorizontal: PAD }]}>
+            <TouchableOpacity 
+              style={[s.tabItem, homeTab === 'discover' && s.tabItemActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setHomeTab('discover');
+              }}
+            >
+              <Text style={[s.tabItemText, homeTab === 'discover' && s.tabItemTextActive]}>Discover</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[s.tabItem, homeTab === 'following' && s.tabItemActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setHomeTab('following');
+              }}
+            >
+              <Text style={[s.tabItemText, homeTab === 'following' && s.tabItemTextActive]}>Following</Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Trending Shows */}
-          <SectionHeader title={t('trendingShows')}       Icon={Flame} iconColor="#FF6B35" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=trending-tv' as any)} />
-          {ltv    ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trendingTV.slice(0, N)} />}
+          {homeTab === 'discover' ? (
+            <>
+              {/* Trending Movies */}
+              <SectionHeader title={t('trendingMovies')} Icon={Flame} iconColor="#E50914" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=trending-movies' as any)} />
+              {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trending.slice(0, N)} />}
 
-          {/* Popular */}
-          <SectionHeader title={t('popular')} Icon={Star}  iconColor="#F5C518" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=popular' as any)} />
-          {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={popular.slice(0, N)} />}
+              {/* Trending Shows */}
+              <SectionHeader title={t('trendingShows')} Icon={Flame} iconColor="#FF6B35" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=trending-tv' as any)} />
+              {ltv ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={trendingTV.slice(0, N)} />}
+
+              {/* Popular */}
+              <SectionHeader title={t('popular')} Icon={Star} iconColor="#F5C518" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=popular' as any)} />
+              {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={popular.slice(0, N)} />}
+            </>
+          ) : (
+            <View style={{ paddingHorizontal: PAD }}>
+              <ActivityFeed />
+            </View>
+          )}
 
           {/* Top Rated Movies */}
           <SectionHeader title={t('topRatedMovies')}     Icon={Award} iconColor="#4CAF50" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=top-rated-movies' as any)} />
@@ -561,6 +593,31 @@ const s = StyleSheet.create({
   body:        { paddingTop: 8 },
   browseTitle: { fontSize: 30, fontWeight: '900', color: '#fff', letterSpacing: -0.3 },
   browseSub:   { fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 4 },
+
+  tabSwitcher: {
+    flexDirection: 'row',
+    gap: 20,
+    marginTop: 20,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  tabItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabItemActive: {
+    borderBottomColor: Colors.accentBlue,
+  },
+  tabItemText: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    color: 'rgba(255,255,255,0.4)',
+  },
+  tabItemTextActive: {
+    color: Colors.white,
+  },
 
   // Card (all sections)
   card: { borderRadius: Radius.md, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: Colors.surface },

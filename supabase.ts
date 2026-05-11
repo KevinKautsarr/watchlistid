@@ -1,5 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
+import { Database } from './types/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your Supabase Project URL derived from the Project ID
@@ -23,7 +24,7 @@ const ExpoProvider = {
   },
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: ExpoProvider,
     autoRefreshToken: true,
@@ -31,3 +32,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+export type TableNames = keyof Database['public']['Tables'];
+
+import type { PostgrestQueryBuilder } from '@supabase/supabase-js';
+
+/**
+ * Type-safe query builder wrapper around supabase.from()
+ * Prevents querying non-existent tables automatically via Database types.
+ */
+export const typedFrom = <T extends TableNames>(table: T) => {
+  return supabase.from(table as string);
+};

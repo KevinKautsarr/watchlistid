@@ -25,7 +25,7 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
     onClose();
   };
 
-  const LANGUAGES = [
+  const LANGUAGES: { id: 'en' | 'id', label: string, sub: string, flag: string }[] = [
     { id: 'en', label: 'English', sub: 'Default language', flag: '🇬🇧' },
     { id: 'id', label: 'Indonesia', sub: 'Bahasa Indonesia', flag: '🇮🇩' },
   ];
@@ -62,7 +62,7 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
                 <TouchableOpacity
                   key={item.id}
                   style={[s.option, active && s.optionActive]}
-                  onPress={() => handleSelect(item.id as any)}
+                  onPress={() => handleSelect(item.id)}
                   activeOpacity={0.7}
                 >
                   <View style={s.flagContainer}>

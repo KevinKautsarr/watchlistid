@@ -6,14 +6,24 @@ import { Star } from 'lucide-react-native';
 import { TMDB_IMAGE_SIZES, Radius, Colors } from '../../constants/theme';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-export interface MediaCardProps {
+export interface BaseCardProps {
   poster_path?: string;
-  title?: string;
-  name?: string;
   vote_average?: number;
   onPress: () => void;
   width: number;
 }
+
+export interface MovieCardProps {
+  title: string;
+  name?: never;
+}
+
+export interface TVCardProps {
+  name: string;
+  title?: never;
+}
+
+export type MediaCardProps = BaseCardProps & (MovieCardProps | TVCardProps);
 
 // ─── Component ───────────────────────────────────────────────────────────────
 // Wrapped in React.memo so re-renders only happen when props actually change.
@@ -64,10 +74,10 @@ export const MediaCard = React.memo(function MediaCard({
           {
             width,
             height,
-            boxShadow: isHovered 
+            boxShadow: (isHovered 
               ? '0 12px 30px rgba(229, 9, 20, 0.4)' // Red-ish glow on hover
-              : '0 8px 20px rgba(0,0,0,0.5)',
-          } as any,
+              : '0 8px 20px rgba(0,0,0,0.5)') as any,
+          },
         ]}
         activeOpacity={1}
         onPress={onPress}

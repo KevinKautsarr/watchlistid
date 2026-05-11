@@ -1,89 +1,88 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../supabase';
-import { Movie, WatchlistMovie } from '../types';
+import { supabase, typedFrom } from '../supabase';
+import { Movie, TVShow, MediaItem } from '../types/tmdb';
+import { WatchlistMap, WatchlistItem, WATCHLIST_STATUS, StorageSchema } from '../types/watchlist';
 import Toast from '../components/common/Toast';
 
-// ── Types ──────────────────────────────────────────────────────────────────
-interface WatchlistContextType {
-  watchlist:            WatchlistMovie[];
-  addToWatchlist:       (movie: Movie) => void;
-  removeFromWatchlist:  (movieId: number) => void;
-  toggleWatched:        (movieId: number) => void;
-  isInWatchlist:        (movieId: number) => boolean;
-  userRatings:          Record<number, number>;
-  setRating:            (movieId: number, rating: number) => void;
-  getRating:            (movieId: number) => number | null;
-  recentlyViewed:       number[];
-  addToRecentlyViewed:  (movieId: number) => void;
-  isLoading:            boolean;
-}
-
-const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
-
 // ── Supabase helpers ───────────────────────────────────────────────────────
-function toSupabaseRow(movie: WatchlistMovie, userId: string) {
+function toSupabaseRow(item: WatchlistItem, userId: string) {
   return {
     user_id:      userId,
-    movie_id:     movie.id,
-    media_type:   movie.media_type ?? 'movie',
-    title:        movie.title,
-    poster_path:  movie.poster_path ?? null,
-    release_date: movie.release_date ?? null,
-    vote_average: movie.vote_average ?? null,
-    runtime:      movie.runtime ?? null,
-    genres:       movie.genres ?? null,
-    overview:     movie.overview ?? null,
-    watched:      movie.watched,
-    added_at:     movie.addedAt,
+    movie_id:     item.id,
+    media_type:   item.mediaType,
+    title:        item.mediaType === 'movie' ? item.title : item.name,
+    poster_path:  item.poster_path,
+    release_date: item.mediaType === 'movie' ? item.release_date : item.first_air_date,
+    vote_average: item.vote_average,
+    runtime:      item.mediaType === 'movie' ? item.runtime : null,
+    genres:       item.genres ?? null,
+    overview:     item.overview,
+    watched:      item.status === WATCHLIST_STATUS.COMPLETED, // Backward compatibility
+    status:       item.status,
+    added_at:     item.addedAt,
   };
 }
 
-function fromSupabaseRow(row: any): WatchlistMovie {
-  return {
+function fromSupabaseRow(row: any): WatchlistItem {
+  const isMovie = row.media_type === 'movie' || !row.media_type;
+  
+  let status = row.status;
+  if (!status) {
+    status = row.watched ? WATCHLIST_STATUS.COMPLETED : WATCHLIST_STATUS.PLAN_TO_WATCH;
+  }
+
+  const base = {
     id:            row.movie_id,
-    media_type:    row.media_type ?? 'movie',
-    title:         row.title,
     overview:      row.overview ?? '',
     poster_path:   row.poster_path ?? null,
     backdrop_path: null,
     vote_average:  row.vote_average ?? 0,
     vote_count:    0,
-    release_date:  row.release_date ?? '',
-    runtime:       row.runtime ?? undefined,
     genres:        row.genres ?? undefined,
-    watched:       row.watched,
     addedAt:       row.added_at,
+    status:        status,
   };
+
+  if (isMovie) {
+    return {
+      ...base,
+      mediaType: 'movie',
+      title: row.title,
+      release_date: row.release_date ?? '',
+      runtime: row.runtime ?? undefined,
+    } as WatchlistItem;
+  } else {
+    return {
+      ...base,
+      mediaType: 'tv',
+      name: row.title,
+      first_air_date: row.release_date ?? '',
+    } as WatchlistItem;
+  }
 }
 
-// ── Provider ───────────────────────────────────────────────────────────────
-export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [watchlist,      setWatchlist]      = useState<WatchlistMovie[]>([]);
+// ── Provider Logic Hook ────────────────────────────────────────────────────
+function useWatchlistProviderLogic() {
+  const [watchlistMap,   setWatchlistMap]   = useState<WatchlistMap>({});
   const [userRatings,    setUserRatings]    = useState<Record<number, number>>({});
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
-    visible: false,
-    message: '',
-    type: 'success',
-  });
+  const [isLoaded,       setIsLoaded]       = useState(false);
+  const [isSyncing,      setIsSyncing]      = useState(false);
   const [userId,         setUserId]         = useState<string | null>(null);
 
-  // ── Track auth state (no dependency on AuthContext to avoid circular imports)
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
+    visible: false, message: '', type: 'success',
+  });
+
+  // Track auth state
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user?.id ?? null);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
+    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user?.id ?? null));
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => setUserId(session?.user?.id ?? null));
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // ── Load from AsyncStorage on mount ───────────────────────────────────
+  // Load from AsyncStorage
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -92,9 +91,42 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           AsyncStorage.getItem('@userRatings'),
           AsyncStorage.getItem('@recentlyViewed'),
         ]);
-        if (storedWatchlist) setWatchlist(JSON.parse(storedWatchlist));
-        if (storedRatings)   setUserRatings(JSON.parse(storedRatings));
-        if (storedHistory)   setRecentlyViewed(JSON.parse(storedHistory));
+
+        if (storedWatchlist) {
+          const parsed = JSON.parse(storedWatchlist);
+          if (Array.isArray(parsed)) {
+            // Migration Logic: Array -> Record
+            const migratedMap: WatchlistMap = {};
+            parsed.forEach((item: any) => {
+              const status = item.watched ? WATCHLIST_STATUS.COMPLETED : WATCHLIST_STATUS.PLAN_TO_WATCH;
+              const isMovie = item.media_type === 'movie' || !item.media_type;
+              
+              if (isMovie) {
+                migratedMap[item.id] = {
+                  ...item,
+                  mediaType: 'movie',
+                  status,
+                  title: item.title,
+                  release_date: item.release_date ?? '',
+                };
+              } else {
+                migratedMap[item.id] = {
+                  ...item,
+                  mediaType: 'tv',
+                  status,
+                  name: item.title || item.name,
+                  first_air_date: item.release_date || item.first_air_date || '',
+                };
+              }
+            });
+            setWatchlistMap(migratedMap);
+          } else {
+            setWatchlistMap(parsed as WatchlistMap);
+          }
+        }
+
+        if (storedRatings) setUserRatings(JSON.parse(storedRatings));
+        if (storedHistory) setRecentlyViewed(JSON.parse(storedHistory));
       } catch (e) {
         console.error('Failed to load local data', e);
       } finally {
@@ -104,32 +136,29 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     loadData();
   }, []);
 
-  // ── When user logs in, fetch cloud data and merge (cloud wins) ─────────
+  // Sync from Cloud
   useEffect(() => {
     if (!userId || !isLoaded) return;
-
     const syncFromCloud = async () => {
       setIsSyncing(true);
       try {
-        // Watchlist
         const { data: cloudRows } = await supabase
           .from('watchlist')
-          .select('movie_id, media_type, title, poster_path, release_date, vote_average, runtime, genres, overview, watched, added_at')
+          .select('*')
           .eq('user_id', userId)
           .order('added_at', { ascending: true });
 
         if (cloudRows && cloudRows.length > 0) {
-          const cloudList = cloudRows.map(fromSupabaseRow);
-          setWatchlist(cloudList);
-          AsyncStorage.setItem('@watchlist', JSON.stringify(cloudList)).catch(console.error);
+          const newMap: WatchlistMap = {};
+          cloudRows.forEach(row => {
+            const item = fromSupabaseRow(row);
+            newMap[item.id] = item;
+          });
+          setWatchlistMap(newMap);
+          AsyncStorage.setItem('@watchlist', JSON.stringify(newMap)).catch(console.error);
         }
 
-        // Ratings
-        const { data: ratingRows } = await supabase
-          .from('user_ratings')
-          .select('movie_id, rating')
-          .eq('user_id', userId);
-
+        const { data: ratingRows } = await typedFrom('user_ratings').select('movie_id, rating').eq('user_id', userId);
         if (ratingRows && ratingRows.length > 0) {
           const ratings: Record<number, number> = {};
           ratingRows.forEach(r => { ratings[r.movie_id] = r.rating; });
@@ -142,134 +171,110 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsSyncing(false);
       }
     };
-
     syncFromCloud();
   }, [userId, isLoaded]);
 
-  // ── Persist watchlist to AsyncStorage ─────────────────────────────────
-  useEffect(() => {
-    if (!isLoaded) return;
-    AsyncStorage.setItem('@watchlist', JSON.stringify(watchlist)).catch(console.error);
-  }, [watchlist, isLoaded]);
+  // Persist to AsyncStorage
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem('@watchlist', JSON.stringify(watchlistMap)).catch(console.error); }, [watchlistMap, isLoaded]);
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem('@userRatings', JSON.stringify(userRatings)).catch(console.error); }, [userRatings, isLoaded]);
+  useEffect(() => { if (isLoaded) AsyncStorage.setItem('@recentlyViewed', JSON.stringify(recentlyViewed)).catch(console.error); }, [recentlyViewed, isLoaded]);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    AsyncStorage.setItem('@userRatings', JSON.stringify(userRatings)).catch(console.error);
-  }, [userRatings, isLoaded]);
+  // Mutations
+  const showToast = useCallback((message: string, type: 'success' | 'info' = 'success') => setToast({ visible: true, message, type }), []);
+  const hideToast = useCallback(() => setToast(prev => ({ ...prev, visible: false })), []);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    AsyncStorage.setItem('@recentlyViewed', JSON.stringify(recentlyViewed)).catch(console.error);
-  }, [recentlyViewed, isLoaded]);
+  const addToWatchlist = useCallback((item: MediaItem) => {
+    setWatchlistMap(prev => {
+      if (prev[item.id]) return prev;
 
-  // ── Mutations ──────────────────────────────────────────────────────────
-  const addToWatchlist = useCallback((movie: Movie) => {
-    setWatchlist(prev => {
-      if (prev.find(m => m.id === movie.id)) return prev;
-      const newItem: WatchlistMovie = {
-        ...movie,
-        addedAt: new Date().toISOString(),
-        watched: false,
-      };
-      // Cloud sync
-      if (userId) {
-        supabase.from('watchlist')
-          .upsert(toSupabaseRow(newItem, userId))
-          .then(({ error }) => { if (error) console.error('Supabase add error', error); });
+      let newItem: WatchlistItem;
+      if (item.media_type === 'movie') {
+        newItem = {
+          ...item,
+          mediaType: 'movie',
+          addedAt: new Date().toISOString(),
+          status: WATCHLIST_STATUS.PLAN_TO_WATCH,
+        } as WatchlistItem;
+      } else {
+        newItem = {
+          ...item,
+          mediaType: 'tv',
+          addedAt: new Date().toISOString(),
+          status: WATCHLIST_STATUS.PLAN_TO_WATCH,
+        } as WatchlistItem;
       }
+
+      if (userId) typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId) as any).then(({ error }) => error && console.error(error));
       showToast('Added to Watchlist', 'success');
-      return [...prev, newItem];
+      return { ...prev, [item.id]: newItem };
+    });
+  }, [userId, showToast]);
+
+  const removeFromWatchlist = useCallback((id: number) => {
+    setWatchlistMap(prev => {
+      if (!prev[id]) return prev;
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    showToast('Removed from Watchlist', 'info');
+    if (userId) typedFrom('watchlist').delete().eq('user_id', userId).eq('movie_id', id).then(({ error }) => error && console.error(error));
+  }, [userId, showToast]);
+
+  const toggleWatched = useCallback((id: number) => {
+    setWatchlistMap(prev => {
+      const item = prev[id];
+      if (!item) return prev;
+      
+      const newStatus = item.status === WATCHLIST_STATUS.COMPLETED ? WATCHLIST_STATUS.PLAN_TO_WATCH : WATCHLIST_STATUS.COMPLETED;
+      const updated = { ...item, status: newStatus } as WatchlistItem;
+      
+      if (userId) {
+        typedFrom('watchlist')
+          .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED, status: newStatus } as any)
+          .eq('user_id', userId)
+          .eq('movie_id', id)
+          .then(({ error }) => error && console.error(error));
+      }
+      return { ...prev, [id]: updated };
     });
   }, [userId]);
 
-  const removeFromWatchlist = useCallback((movieId: number) => {
-    setWatchlist(prev => prev.filter(m => m.id !== movieId));
-    showToast(`Removed from Watchlist`, 'info');
-    if (userId) {
-      supabase.from('watchlist')
-        .delete()
-        .eq('user_id', userId)
-        .eq('movie_id', movieId)
-        .then(({ error }) => { if (error) console.error('Supabase delete error', error); });
-    }
+  const isInWatchlist = useCallback((id: number) => !!watchlistMap[id], [watchlistMap]);
+
+  const setRating = useCallback((id: number, rating: number) => {
+    setUserRatings(prev => ({ ...prev, [id]: rating }));
+      if (userId) typedFrom('user_ratings').upsert({ user_id: userId, movie_id: id, rating } as any).then(({ error }) => error && console.error(error));
   }, [userId]);
 
-  const toggleWatched = useCallback((movieId: number) => {
-    setWatchlist(prev =>
-      prev.map(m => {
-        if (m.id !== movieId) return m;
-        const updated = { ...m, watched: !m.watched };
-        // Cloud sync
-        if (userId) {
-          supabase.from('watchlist')
-            .update({ watched: updated.watched })
-            .eq('user_id', userId)
-            .eq('movie_id', movieId)
-            .then(({ error }) => { if (error) console.error('Supabase toggle error', error); });
-        }
-        return updated;
-      }),
-    );
-  }, [userId]);
+  const getRating = useCallback((id: number) => userRatings[id] || null, [userRatings]);
 
-  const isInWatchlist = useCallback((movieId: number) => watchlist.some(m => m.id === movieId), [watchlist]);
-
-  const setRating = useCallback((movieId: number, rating: number) => {
-    setUserRatings(prev => ({ ...prev, [movieId]: rating }));
-    if (userId) {
-      supabase.from('user_ratings')
-        .upsert({ user_id: userId, movie_id: movieId, rating })
-        .then(({ error }) => { if (error) console.error('Supabase rating error', error); });
-    }
-  }, [userId]);
-
-  const getRating = useCallback((movieId: number) => userRatings[movieId] || null, [userRatings]);
-
-  const addToRecentlyViewed = useCallback((movieId: number) => {
+  const addToRecentlyViewed = useCallback((id: number) => {
     setRecentlyViewed(prev => {
-      const filtered = prev.filter(id => id !== movieId);
-      return [movieId, ...filtered].slice(0, 10);
+      const filtered = prev.filter(vid => vid !== id);
+      return [id, ...filtered].slice(0, 10);
     });
   }, []);
 
   const clearData = async () => {
-    setWatchlist([]);
+    setWatchlistMap({});
     setUserRatings({});
     setRecentlyViewed([]);
-    try {
-      await Promise.all([
-        AsyncStorage.removeItem('@watchlist'),
-        AsyncStorage.removeItem('@userRatings'),
-        AsyncStorage.removeItem('@recentlyViewed'),
-      ]);
-    } catch (e) {
-      console.error('Failed to clear local data', e);
-    }
+    try { await Promise.all([AsyncStorage.removeItem('@watchlist'), AsyncStorage.removeItem('@userRatings'), AsyncStorage.removeItem('@recentlyViewed')]); } catch (e) { console.error(e); }
   };
 
-  // Clear data when user logs out (userId becomes null AFTER being set)
   const prevUserIdRef = useRef<string | null>(undefined as any);
   useEffect(() => {
     if (!isLoaded) return;
-    // Only clear if we previously HAD a userId (i.e., user logged out)
-    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== null && !userId) {
-      clearData();
-    }
+    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== null && !userId) clearData();
     prevUserIdRef.current = userId;
   }, [userId, isLoaded]);
 
-  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
-    setToast({ visible: true, message, type });
-  };
+  const watchlistArray = useMemo(() => Object.values(watchlistMap), [watchlistMap]);
 
-  const hideToast = () => {
-    setToast(prev => ({ ...prev, visible: false }));
-  };
-
-  // Memoize context value — prevents all consumers from re-rendering
-  // when an unrelated piece of state (like toast) changes.
-  const contextValue = useMemo(() => ({
-    watchlist,
+  return {
+    watchlistMap,
+    watchlist: watchlistArray,
     addToWatchlist,
     removeFromWatchlist,
     toggleWatched,
@@ -280,39 +285,29 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     recentlyViewed,
     addToRecentlyViewed,
     isLoading: isSyncing || !isLoaded,
-  }), [
-    watchlist,
-    addToWatchlist,
-    removeFromWatchlist,
-    toggleWatched,
-    isInWatchlist,
-    userRatings,
-    setRating,
-    getRating,
-    recentlyViewed,
-    addToRecentlyViewed,
-    isSyncing,
-    isLoaded,
-  ]);
+    toast,
+    hideToast,
+  };
+}
+
+// ── Types & Context ────────────────────────────────────────────────────────
+export type WatchlistContextType = Omit<ReturnType<typeof useWatchlistProviderLogic>, 'toast' | 'hideToast'>;
+const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
+
+// ── Provider ───────────────────────────────────────────────────────────────
+export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { toast, hideToast, ...contextValue } = useWatchlistProviderLogic();
 
   return (
     <WatchlistContext.Provider value={contextValue}>
       {children}
-      <Toast 
-        visible={toast.visible} 
-        message={toast.message} 
-        type={toast.type} 
-        onHide={hideToast} 
-      />
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} onHide={hideToast} />
     </WatchlistContext.Provider>
   );
 };
 
-// ── Hook ───────────────────────────────────────────────────────────────────
 export const useWatchlist = () => {
   const context = useContext(WatchlistContext);
-  if (context === undefined) {
-    throw new Error('useWatchlist must be used within a WatchlistProvider');
-  }
+  if (context === undefined) throw new Error('useWatchlist must be used within a WatchlistProvider');
   return context;
 };

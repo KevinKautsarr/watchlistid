@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { supabase } from '../supabase';
+import { supabase, typedFrom } from '../supabase';
 import { useAuth } from './AuthContext';
 
 export interface Notification {
@@ -31,8 +31,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const fetchNotifications = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('notifications')
+    const { data, error } = await typedFrom('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
@@ -73,8 +72,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user]);
 
   const markAsRead = async (id: string) => {
-    const { error } = await supabase
-      .from('notifications')
+    const { error } = await typedFrom('notifications')
       .update({ is_read: true })
       .eq('id', id);
 
