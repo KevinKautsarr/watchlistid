@@ -14,10 +14,10 @@ create table public.profiles (
 -- Turn on Row Level Security (RLS)
 alter table public.profiles enable row level security;
 
--- Allow users to read their own profile
-create policy "Users can view own profile" 
+-- Allow anyone to view profiles (needed for social features)
+create policy "Profiles are viewable by everyone" 
 on profiles for select 
-using ( auth.uid() = id );
+using ( true );
 
 -- Allow users to update their own profile
 create policy "Users can update own profile" 

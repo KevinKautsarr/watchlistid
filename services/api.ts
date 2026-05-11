@@ -1,7 +1,13 @@
 import { TMDB_API_KEY, TMDB_BASE_URL } from '../config';
 import type { Movie, Person, Genre } from '../types';
 
-// ── Core fetcher ─────────────────────────────────────────────────────────────
+// ── In-memory cache with TTL to avoid redundant TMDB fetches ─────────────────
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+interface CacheEntry<T> { data: T; expiresAt: number }
+const memCache = new Map<string, CacheEntry<any>>();
+const inflight  = new Map<string, Promise<any>>();
+
+// ── Core fetcher with cache & deduplication ───────────────────────────────────
 async function tmdbGet<T>(
   endpoint: string,
   params: Record<string, string> = {}
@@ -12,9 +18,26 @@ async function tmdbGet<T>(
     include_adult: 'false' 
   };
   const query = new URLSearchParams({ ...defaultParams, ...params }).toString();
-  const res   = await fetch(`${TMDB_BASE_URL}${endpoint}?${query}`);
-  if (!res.ok) throw new Error(`TMDB error ${res.status}: ${endpoint}`);
-  return res.json() as Promise<T>;
+  const cacheKey = `${endpoint}?${query}`;
+
+  // Return cached result if still fresh
+  const cached = memCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) return cached.data as T;
+
+  // Deduplicate simultaneous identical requests
+  if (inflight.has(cacheKey)) return inflight.get(cacheKey) as Promise<T>;
+
+  const promise = (async () => {
+    const res = await fetch(`${TMDB_BASE_URL}${endpoint}?${query}`);
+    if (!res.ok) throw new Error(`TMDB error ${res.status}: ${endpoint}`);
+    const data = await res.json() as T;
+    memCache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+    inflight.delete(cacheKey);
+    return data;
+  })();
+
+  inflight.set(cacheKey, promise);
+  return promise;
 }
 
 // ── Paginated response type ───────────────────────────────────────────────────

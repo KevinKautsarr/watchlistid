@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase';
 import { Movie, WatchlistMovie } from '../types';
@@ -17,6 +17,7 @@ interface WatchlistContextType {
   getRating:            (movieId: number) => number | null;
   recentlyViewed:       number[];
   addToRecentlyViewed:  (movieId: number) => void;
+  isLoading:            boolean;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -63,6 +64,7 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [userRatings,    setUserRatings]    = useState<Record<number, number>>({});
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
     visible: false,
     message: '',
@@ -107,11 +109,12 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!userId || !isLoaded) return;
 
     const syncFromCloud = async () => {
+      setIsSyncing(true);
       try {
         // Watchlist
         const { data: cloudRows } = await supabase
           .from('watchlist')
-          .select('*')
+          .select('movie_id, media_type, title, poster_path, release_date, vote_average, runtime, genres, overview, watched, added_at')
           .eq('user_id', userId)
           .order('added_at', { ascending: true });
 
@@ -134,7 +137,9 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           AsyncStorage.setItem('@userRatings', JSON.stringify(ratings)).catch(console.error);
         }
       } catch (e) {
-        console.error('Failed to sync from cloud', e);
+        console.error('Cloud sync error:', e);
+      } finally {
+        setIsSyncing(false);
       }
     };
 
@@ -158,7 +163,7 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [recentlyViewed, isLoaded]);
 
   // ── Mutations ──────────────────────────────────────────────────────────
-  const addToWatchlist = (movie: Movie) => {
+  const addToWatchlist = useCallback((movie: Movie) => {
     setWatchlist(prev => {
       if (prev.find(m => m.id === movie.id)) return prev;
       const newItem: WatchlistMovie = {
@@ -175,9 +180,9 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       showToast('Added to Watchlist', 'success');
       return [...prev, newItem];
     });
-  };
+  }, [userId]);
 
-  const removeFromWatchlist = (movieId: number) => {
+  const removeFromWatchlist = useCallback((movieId: number) => {
     setWatchlist(prev => prev.filter(m => m.id !== movieId));
     showToast(`Removed from Watchlist`, 'info');
     if (userId) {
@@ -187,9 +192,9 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .eq('movie_id', movieId)
         .then(({ error }) => { if (error) console.error('Supabase delete error', error); });
     }
-  };
+  }, [userId]);
 
-  const toggleWatched = (movieId: number) => {
+  const toggleWatched = useCallback((movieId: number) => {
     setWatchlist(prev =>
       prev.map(m => {
         if (m.id !== movieId) return m;
@@ -205,27 +210,27 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return updated;
       }),
     );
-  };
+  }, [userId]);
 
-  const isInWatchlist = (movieId: number) => watchlist.some(m => m.id === movieId);
+  const isInWatchlist = useCallback((movieId: number) => watchlist.some(m => m.id === movieId), [watchlist]);
 
-  const setRating = (movieId: number, rating: number) => {
+  const setRating = useCallback((movieId: number, rating: number) => {
     setUserRatings(prev => ({ ...prev, [movieId]: rating }));
     if (userId) {
       supabase.from('user_ratings')
         .upsert({ user_id: userId, movie_id: movieId, rating })
         .then(({ error }) => { if (error) console.error('Supabase rating error', error); });
     }
-  };
+  }, [userId]);
 
-  const getRating = (movieId: number) => userRatings[movieId] || null;
+  const getRating = useCallback((movieId: number) => userRatings[movieId] || null, [userRatings]);
 
-  const addToRecentlyViewed = (movieId: number) => {
+  const addToRecentlyViewed = useCallback((movieId: number) => {
     setRecentlyViewed(prev => {
       const filtered = prev.filter(id => id !== movieId);
       return [movieId, ...filtered].slice(0, 10);
     });
-  };
+  }, []);
 
   const clearData = async () => {
     setWatchlist([]);
@@ -243,7 +248,7 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // Clear data when user logs out (userId becomes null AFTER being set)
-  const prevUserIdRef = React.useRef<string | null>(undefined as any);
+  const prevUserIdRef = useRef<string | null>(undefined as any);
   useEffect(() => {
     if (!isLoaded) return;
     // Only clear if we previously HAD a userId (i.e., user logged out)
@@ -261,19 +266,37 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setToast(prev => ({ ...prev, visible: false }));
   };
 
+  // Memoize context value — prevents all consumers from re-rendering
+  // when an unrelated piece of state (like toast) changes.
+  const contextValue = useMemo(() => ({
+    watchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+    toggleWatched,
+    isInWatchlist,
+    userRatings,
+    setRating,
+    getRating,
+    recentlyViewed,
+    addToRecentlyViewed,
+    isLoading: isSyncing || !isLoaded,
+  }), [
+    watchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+    toggleWatched,
+    isInWatchlist,
+    userRatings,
+    setRating,
+    getRating,
+    recentlyViewed,
+    addToRecentlyViewed,
+    isSyncing,
+    isLoaded,
+  ]);
+
   return (
-    <WatchlistContext.Provider value={{
-      watchlist,
-      addToWatchlist,
-      removeFromWatchlist,
-      toggleWatched,
-      isInWatchlist,
-      userRatings,
-      setRating,
-      getRating,
-      recentlyViewed,
-      addToRecentlyViewed,
-    }}>
+    <WatchlistContext.Provider value={contextValue}>
       {children}
       <Toast 
         visible={toast.visible} 

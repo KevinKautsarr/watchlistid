@@ -7,9 +7,9 @@ import {
 import { Image } from 'expo-image';
 import { Search, UserPlus, UserMinus, X, ChevronRight, User } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
 import { useLanguage } from '../../context/LanguageContext';
+import Avatar from '../common/Avatar';
 
 interface SocialUser {
   id: string;
@@ -55,13 +55,7 @@ const SocialListSheet: React.FC<SocialListSheetProps> = ({
         activeOpacity={0.7}
       >
         <View style={s.avatarContainer}>
-          {item.avatar_url ? (
-            <Image source={{ uri: item.avatar_url }} style={s.avatar} />
-          ) : (
-            <View style={[s.avatar, s.placeholderAvatar]}>
-              <Text style={s.placeholderText}>{item.username.charAt(0).toUpperCase()}</Text>
-            </View>
-          )}
+          <Avatar uri={item.avatar_url} name={item.username} size={48} />
         </View>
 
         <View style={s.userInfo}>

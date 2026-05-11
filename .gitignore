@@ -48,3 +48,20 @@ app-example
 
 # documentation
 IMPLEMENTATION_PLAN.md
+
+# EAS Build
+*.tar.gz
+*.apk
+*.aab
+*.ipa
+
+# Testing
+coverage/
+
+# Supabase Local
+supabase/.temp/
+supabase/.branches/
+
+# AI Agents
+.agents/
+skills-lock.json

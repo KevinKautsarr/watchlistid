@@ -21,6 +21,7 @@ interface AuthContextType {
   signIn:     (email: string, password: string, captchaToken?: string) => Promise<string | null>;
   signInWithGoogle: () => Promise<string | null>;
   signUp:     (email: string, password: string, username?: string, captchaToken?: string) => Promise<string | null>;
+  refreshProfile: () => Promise<void>;
   signOut:    () => Promise<void>;
 }
 
@@ -59,8 +60,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Fetch initial profile
     supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data) setProfile(data);
+      .then(async ({ data, error }) => {
+        if (data) {
+          setProfile(data);
+          
+          // Auto-sync: If DB profile is missing info but metadata has it, sync it back to DB
+          const metaUsername = user.user_metadata?.username || user.user_metadata?.full_name;
+          const metaAvatar   = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+          
+          const needsSync = (!data.username && metaUsername) || (!data.avatar_url && metaAvatar);
+          
+          if (needsSync) {
+            const updates = {
+              username:   data.username || metaUsername,
+              avatar_url: data.avatar_url || metaAvatar,
+            };
+            await supabase.from('profiles').update(updates).eq('id', user.id);
+            // setProfile will be updated via the realtime subscription below
+          }
+        } else if (error && error.code === 'PGRST116') {
+          // Profile doesn't exist, create it (fallback if trigger fails)
+          const metaUsername = user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0];
+          const metaAvatar   = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+          
+          await supabase.from('profiles').insert({
+            id: user.id,
+            username: metaUsername,
+            avatar_url: metaAvatar
+          });
+        }
       });
 
     // Subscribe to realtime changes on this user's profile
@@ -71,9 +99,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
-  }, [user?.id]);
+  }, [user]);
+
+  const refreshProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
+    if (data) setProfile(data as UserProfile);
+  };
 
   /** Returns null on success, or an error message string on failure. */
   const signIn = async (email: string, password: string, captchaToken?: string): Promise<string | null> => {
@@ -152,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isLoading, signIn, signInWithGoogle, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, isLoading, refreshProfile, signIn, signInWithGoogle, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { X, Star, Calendar, AlertTriangle, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { Alert } from 'react-native';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
 import { useLanguage } from '../../context/LanguageContext';
@@ -65,9 +66,13 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
         setReviewText('');
         setIsSpoiler(false);
         onClose();
+      } else {
+        // Fallback alert because Toast might be hidden behind Modal
+        Alert.alert('Error', 'Failed to save movie log. Please check your connection or profile.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Log Save Error:", err);
+      Alert.alert('Error', err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }

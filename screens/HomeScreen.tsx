@@ -11,6 +11,8 @@ import { useRouter } from 'expo-router';
 
 import { Bell, Play, Plus, Star, Flame, Award, Clock, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import SectionHeader from '../components/common/SectionHeader';
+import Avatar from '../components/common/Avatar';
+import { MediaCard } from '../components/movie/MediaCard';
 import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
@@ -48,48 +50,31 @@ function SkeletonRow({ cardWidth, pad }: { cardWidth: number; pad: number }) {
     loop.start();
     return () => loop.stop();
   }, [shimmer]);
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.25] });
+  const cardHeight = Math.round(cardWidth * 1.5);
   return (
-    <Animated.View style={{ flexDirection: 'row', paddingLeft: pad, opacity }}>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <View key={i} style={{ width: cardWidth, height: Math.round(cardWidth * 1.5), borderRadius: Radius.md, backgroundColor: Colors.surface, marginRight: 10 }} />
+    <Animated.View style={{ flexDirection: 'row', paddingLeft: pad, opacity, minHeight: cardHeight }}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <View key={i} style={{ width: cardWidth, height: cardHeight, borderRadius: Radius.md, backgroundColor: Colors.surface, marginRight: 10 }} />
       ))}
     </Animated.View>
   );
 }
 
-// ─── Media Card ──────────────────────────────────────────────────────────────
-interface MediaCardProps {
-  poster_path?: string;
-  title?: string;
-  name?: string;
-  vote_average?: number;
-  onPress: () => void;
-  width: number;
-}
-function MediaCard({ poster_path, title, name, vote_average, onPress, width }: MediaCardProps) {
-  const height = Math.round(width * 1.5);
+function HeroSkeleton({ width, height }: { width: number; height: number }) {
   return (
-    <TouchableOpacity style={[s.card, { width, height }]} activeOpacity={0.82} onPress={onPress}>
-      <Image
-        source={{ uri: `${TMDB_IMAGE_SIZES.medium}${poster_path}` }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        transition={250}
-      />
-      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.88)']} style={StyleSheet.absoluteFill} />
-      <View style={s.cardMeta}>
-        <View style={s.cardRating}>
-          <Star size={9} color="#F5C518" fill="#F5C518" strokeWidth={0} />
-          <Text style={s.cardRatingTxt} allowFontScaling={false}>{vote_average?.toFixed(1)}</Text>
-        </View>
-        <Text style={[s.cardTitle, { fontSize: width >= 170 ? 13 : 11 }]} numberOfLines={2} allowFontScaling={false}>
-          {title || name}
-        </Text>
+    <View style={{ width, height, backgroundColor: '#1a1a1a', padding: 28, justifyContent: 'flex-end' }}>
+      <View style={{ width: '70%', height: 40, backgroundColor: '#2a2a2a', borderRadius: 8, marginBottom: 12 }} />
+      <View style={{ width: '40%', height: 16, backgroundColor: '#2a2a2a', borderRadius: 4, marginBottom: 24 }} />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ width: 140, height: 46, backgroundColor: '#2a2a2a', borderRadius: Radius.sm }} />
+        <View style={{ width: 120, height: 46, backgroundColor: '#2a2a2a', borderRadius: Radius.sm }} />
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
+
+// MediaCard is now in components/movie/MediaCard.tsx (memoized + animated)
 
 // ─── Scrollable Section Row with arrow nav for tablet/desktop ────────────────
 interface MediaRowProps {
@@ -100,7 +85,7 @@ interface MediaRowProps {
   isLarge?: boolean;
 }
 
-function MediaRow({ data, cardWidth, pad, onPress, isLarge }: MediaRowProps) {
+const MediaRow = React.memo(({ data, cardWidth, pad, onPress, isLarge }: MediaRowProps) => {
   const scrollRef = useRef<ScrollView>(null);
   const [scrollX,  setScrollX]  = useState(0);
   const [maxScroll, setMaxScroll] = useState(1);
@@ -155,7 +140,7 @@ function MediaRow({ data, cardWidth, pad, onPress, isLarge }: MediaRowProps) {
       )}
     </View>
   );
-}
+});
 
 const sr = StyleSheet.create({
   wrap: { position: 'relative' },
@@ -188,12 +173,20 @@ interface HeroProps {
   onPressItem: (item: any) => void;
   onToggleWL: (item: any) => void;
   isInWatchlist: (id: number) => boolean;
+  heroHeight: number;
 }
-function HeroCarousel({ items, contentWidth, onPressItem, onToggleWL, isInWatchlist }: HeroProps) {
+function HeroCarousel({ items, contentWidth, onPressItem, onToggleWL, isInWatchlist, heroHeight }: HeroProps) {
   const [idx, setIdx] = useState(0);
+  const [isReady, setIsReady] = useState(false);
   const ref  = useRef<ScrollView>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const slides = items.slice(0, 8);
+  const slides = items.slice(0, 5);
+
+  useEffect(() => {
+    // Wait for the app to settle before enabling the full carousel
+    const readyTimer = setTimeout(() => setIsReady(true), 3000);
+    return () => clearTimeout(readyTimer);
+  }, []);
 
   const scrollTo = useCallback((i: number) => {
     const c = Math.max(0, Math.min(i, slides.length - 1));
@@ -208,13 +201,14 @@ function HeroCarousel({ items, contentWidth, onPressItem, onToggleWL, isInWatchl
         ref.current?.scrollTo({ x: next * contentWidth, animated: true });
         return next;
       });
-    }, 5000);
+    }, 7000); // increased from 5000 to reduce JS main-thread load
   }, [slides.length, contentWidth]);
 
   useEffect(() => {
+    if (!isReady) return;
     startAuto();
     return () => { if (timer.current) clearInterval(timer.current); };
-  }, [startAuto]);
+  }, [startAuto, isReady]);
 
   const resetAuto = () => { if (timer.current) clearInterval(timer.current); startAuto(); };
 
@@ -222,27 +216,44 @@ function HeroCarousel({ items, contentWidth, onPressItem, onToggleWL, isInWatchl
   const cur = slides[idx];
   const inWL = isInWatchlist(cur?.id);
 
-  const HERO_HEIGHT = contentWidth < 600 ? 480 : 520;
-
   return (
-    <View style={{ width: contentWidth, height: HERO_HEIGHT }}>
+    <View style={{ width: contentWidth, height: heroHeight, minHeight: heroHeight }}>
       {/* Backdrop slides */}
-      <ScrollView ref={ref} horizontal pagingEnabled scrollEnabled={false} showsHorizontalScrollIndicator={false}>
-        {slides.map((m) => (
-          <View key={m.id} style={{ width: contentWidth, height: HERO_HEIGHT }}>
-            <Image
-              source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${m.backdrop_path}` }}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={['rgba(20,20,20,0.02)', 'rgba(20,20,20,0.45)', '#141414']}
-              locations={[0, 0.5, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-        ))}
-      </ScrollView>
+      {!isReady ? (
+        <View style={{ width: contentWidth, height: heroHeight }}>
+          <Image
+            source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${slides[0].backdrop_path}` }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            priority="high"
+            accessibilityLabel={slides[0].title || slides[0].name || 'Movie backdrop'}
+          />
+          <LinearGradient
+            colors={['rgba(20,20,20,0.02)', 'rgba(20,20,20,0.45)', '#141414']}
+            locations={[0, 0.5, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+      ) : (
+        <ScrollView ref={ref} horizontal pagingEnabled scrollEnabled={false} showsHorizontalScrollIndicator={false}>
+          {slides.map((m, i) => (
+            <View key={m.id} style={{ width: contentWidth, height: heroHeight }}>
+              <Image
+                source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${m.backdrop_path}` }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                priority={i === 0 ? 'high' : 'low'}
+                accessibilityLabel={m.title || m.name || 'Movie backdrop'}
+              />
+              <LinearGradient
+                colors={['rgba(20,20,20,0.02)', 'rgba(20,20,20,0.45)', '#141414']}
+                locations={[0, 0.5, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Overlay content */}
       <View style={s.heroContent}>
@@ -294,6 +305,13 @@ export default function HomeScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const bp = useBreakpoint();
   const { t } = useLanguage();
+  const [showBottomSections, setShowBottomSections] = useState(false);
+
+  useEffect(() => {
+    // Delay rendering of bottom sections to prioritize Hero and Trending
+    const timer = setTimeout(() => setShowBottomSections(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const { data: trendingData,   isLoading: lt,   refetch: rt   } = useTrending();
   const { data: popularData,    isLoading: lp,   refetch: rp   } = usePopular();
@@ -346,9 +364,10 @@ export default function HomeScreen() {
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
 
   // ── Key responsive values ────────────────────────────────────────────────
-  // contentWidth = screen width minus sidebar (so hero fills exactly the content area)
+  // contentWidth = screen width minus sidebar, constrained by maxContentWidth
   const sidebarW    = bp.isDesktop ? SIDEBAR_FULL : bp.isTablet ? SIDEBAR_ICON : 0;
-  const contentWidth = bp.width - sidebarW;
+  const contentWidth = Math.min(bp.width - sidebarW, bp.maxContentWidth);
+  const HERO_HEIGHT = bp.isDesktop ? 600 : bp.isTablet ? 500 : 480;
 
   // Card widths — larger on bigger screens
   const CARD =
@@ -374,10 +393,7 @@ export default function HomeScreen() {
           <Text style={s.logo} allowFontScaling={false}>WATCHLISTID</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <TouchableOpacity style={s.avatar} onPress={() => router.push('/(tabs)/profile')}>
-              {avatarUrl
-                ? <Image source={{ uri: avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} />
-                : <Text style={s.avatarTxt} allowFontScaling={false}>{initial}</Text>
-              }
+              <Avatar uri={avatarUrl} name={username} size={36} />
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -388,17 +404,25 @@ export default function HomeScreen() {
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E50914" colors={['#E50914']} />}
+        contentContainerStyle={{
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: bp.maxContentWidth,
+        }}
       >
         {/* ── HERO ── */}
-        {trending.length > 0 && (
+        {lt ? (
+          <HeroSkeleton width={contentWidth} height={HERO_HEIGHT} />
+        ) : trending.length > 0 ? (
           <HeroCarousel
             items={trending}
             contentWidth={contentWidth}
+            heroHeight={HERO_HEIGHT}
             onPressItem={goToMovie}
             onToggleWL={toggleWL}
             isInWatchlist={isInWatchlist}
           />
-        )}
+        ) : null}
 
         {/* ── CONTENT BODY ── */}
         <View style={s.body}>
@@ -429,31 +453,33 @@ export default function HomeScreen() {
 
           {/* Top Rated Shows */}
           <SectionHeader title={t('topRatedShows')}      Icon={Award} iconColor="#2196F3" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search?category=top-rated-tv' as any)} />
-          {lrtv   ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={topRatedTV.slice(0, N)} />}
+          {lrtv || !showBottomSections ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={topRatedTV.slice(0, N)} />}
 
-
-
-          {/* Browse by Genre */}
-          <SectionHeader title={t('browseByGenre')}     Icon={Flame} iconColor="#6C5CE7" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search' as any)} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: PAD, paddingRight: PAD, paddingBottom: 4, gap: 10 }}>
-            {GENRES.map(g => {
-              const gW = bp.isDesktop ? 160 : bp.isTablet ? 140 : 120;
-              const gH = Math.round(gW * 0.62);
-              return (
-                <TouchableOpacity key={g.id} style={{ width: gW, height: gH, borderRadius: Radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }} activeOpacity={0.82} onPress={() => router.push(`/(tabs)/search?genre=${g.id}` as any)}>
-                  <Image source={{ uri: `${TMDB_IMAGE_SIZES.small}${g.image}` }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                  <LinearGradient colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.82)']} style={StyleSheet.absoluteFill} />
-                  <Text style={s.genreName} allowFontScaling={false}>{t(g.nameKey as any)}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Recently Viewed */}
-          {recentMovies.length > 0 && (
+          {showBottomSections && (
             <>
-              <SectionHeader title={t('recentlyViewed')} Icon={Clock} iconColor="#E50914" textColor="#fff" />
-              <MediaRow {...rowProps} data={recentMovies} />
+              {/* Browse by Genre */}
+              <SectionHeader title={t('browseByGenre')}     Icon={Flame} iconColor="#6C5CE7" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search' as any)} />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: PAD, paddingRight: PAD, paddingBottom: 4, gap: 10 }}>
+                {GENRES.map(g => {
+                  const gW = bp.isDesktop ? 160 : bp.isTablet ? 140 : 120;
+                  const gH = Math.round(gW * 0.62);
+                  return (
+                    <TouchableOpacity key={g.id} style={{ width: gW, height: gH, borderRadius: Radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }} activeOpacity={0.82} onPress={() => router.push(`/(tabs)/search?genre=${g.id}` as any)}>
+                      <Image source={{ uri: `${TMDB_IMAGE_SIZES.thumb}${g.image}` }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={`${t(g.nameKey as any)} genre`} />
+                      <LinearGradient colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.82)']} style={StyleSheet.absoluteFill} />
+                      <Text style={s.genreName} allowFontScaling={false}>{t(g.nameKey as any)}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Recently Viewed */}
+              {recentMovies.length > 0 && (
+                <>
+                  <SectionHeader title={t('recentlyViewed')} Icon={Clock} iconColor="#E50914" textColor="#fff" />
+                  <MediaRow {...rowProps} data={recentMovies} />
+                </>
+              )}
             </>
           )}
 

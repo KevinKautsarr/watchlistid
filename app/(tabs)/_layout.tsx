@@ -110,10 +110,10 @@ export default function TabLayout() {
           tabBar={(props) => (isMobile ? <CustomMobileTabBar {...props} /> : null)}
           screenOptions={{ headerShown: false }}
         >
-          <Tabs.Screen name="index" />
-          <Tabs.Screen name="search" />
-          <Tabs.Screen name="watchlist" />
-          <Tabs.Screen name="profile" />
+          <Tabs.Screen name="index"     options={{ title: 'WatchlistID — Home' }} />
+          <Tabs.Screen name="search"    options={{ title: 'Discover Movies & TV — WatchlistID' }} />
+          <Tabs.Screen name="watchlist" options={{ title: 'My Watchlist — WatchlistID' }} />
+          <Tabs.Screen name="profile"   options={{ title: 'My Profile — WatchlistID' }} />
         </Tabs>
       </View>
     </View>
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: PRIMARY, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 10 },
       android: { elevation: 8 },
+      web: { boxShadow: `0 6px 10px ${PRIMARY}80` } as any,
     }),
   },
   brandTitle: { fontSize: 18, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.3 },

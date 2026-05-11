@@ -20,6 +20,7 @@ import { Video, CastMember, Movie } from '../types';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useContentDetails } from '../hooks/useMovies';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 import TrailerCard from '../components/movie/TrailerCard';
 import CastCard from '../components/movie/CastCard';
 import MovieDetailTable from '../components/movie/MovieDetailTable';
@@ -43,6 +44,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
   const rawType = Array.isArray(params.type) ? params.type[0] : params.type;
   const type: 'movie' | 'tv' = rawType === 'tv' ? 'tv' : 'movie';
   const insets = useSafeAreaInsets();
+  const bp = useBreakpoint();
   const { session } = useAuth();
   const { t } = useLanguage();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, setRating, addToRecentlyViewed } = useWatchlist();
@@ -143,6 +145,18 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
 
   const featuredTrailer = videos.find((v: { type: string }) => v.type === "Trailer");
 
+  const renderTitleBlock = () => (
+    <View style={[styles.titleBlock, bp.isLarge && { marginTop: 24, paddingHorizontal: 0 }]}>
+      <Text style={[styles.movieTitle, bp.isLarge && { fontSize: 36, lineHeight: 40 }]} allowFontScaling={false}>{movie.title}</Text>
+      <View style={styles.metaRow}>
+        <Text style={styles.metaText} allowFontScaling={false}>{movie.release_date?.substring(0,4)}</Text>
+        <View style={styles.agePill}><Text style={styles.agePillText} allowFontScaling={false}>{ageRating}</Text></View>
+        <Text style={styles.metaText} allowFontScaling={false}>{movie.runtime ? `${Math.floor(movie.runtime/60)}h ${movie.runtime%60}m` : 'N/A'}</Text>
+      </View>
+      {movie.tagline ? <Text style={styles.tagline} allowFontScaling={false}>{movie.tagline}</Text> : null}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -170,29 +184,44 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+        contentContainerStyle={[bp.isLarge && { alignItems: 'center' }]}
       >
-        <View style={styles.heroWrap}>
+        <View style={[styles.heroWrap, bp.isLarge && { width: '100%', maxWidth: bp.maxContentWidth, height: 450 }]}>
           <Image 
             source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${movie.backdrop_path}` }} 
             style={styles.backdrop} 
-            contentFit="cover" 
+            contentFit="cover"
+            priority="high"
+            accessibilityLabel={`${movie.title} backdrop`}
           />
           <LinearGradient
             colors={['transparent', 'transparent', Colors.background]}
             locations={[0, 0.4, 1]}
             style={styles.backdropOverlay}
           />
+          
+          {/* User Rating Badge Overlay */}
+          {userRating && !bp.isLarge && (
+            <Animated.View style={styles.userRatingOverlayBadge}>
+              <Star size={14} color="#F5C518" fill="#F5C518" />
+              <Text style={styles.userRatingOverlayText}>{userRating}</Text>
+            </Animated.View>
+          )}
         </View>
 
-        <View style={styles.titleBlock}>
-          <Text style={styles.movieTitle} allowFontScaling={false}>{movie.title}</Text>
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText} allowFontScaling={false}>{movie.release_date?.substring(0,4)}</Text>
-            <View style={styles.agePill}><Text style={styles.agePillText} allowFontScaling={false}>{ageRating}</Text></View>
-            <Text style={styles.metaText} allowFontScaling={false}>{movie.runtime ? `${Math.floor(movie.runtime/60)}h ${movie.runtime%60}m` : 'N/A'}</Text>
-          </View>
-          {movie.tagline ? <Text style={styles.tagline} allowFontScaling={false}>{movie.tagline}</Text> : null}
-        </View>
+        <View style={[bp.isLarge && { flexDirection: 'row', width: '100%', maxWidth: bp.maxContentWidth, paddingHorizontal: 40 }]}>
+          
+          {/* Left Column (Desktop) / Full Width (Mobile) */}
+          <View style={[bp.isLarge && { width: 300, marginRight: 40 }]}>
+            {bp.isLarge && (
+              <Image 
+                source={{ uri: `${TMDB_IMAGE_SIZES.large}${movie.poster_path}` }} 
+                style={{ width: 300, height: 450, borderRadius: Radius.lg, marginTop: -200, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', boxShadow: '0 12px 30px rgba(0,0,0,0.8)' } as any} 
+                contentFit="cover" 
+              />
+            )}
+
+            {!bp.isLarge && renderTitleBlock()}
 
         <View style={styles.ratingBlock}>
           <View style={styles.ratingCol}>
@@ -250,7 +279,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           )}
           <View style={styles.actionSubRow}>
             <TouchableOpacity 
-              style={[styles.btnWatchlist, inWatchlist && styles.btnWatchlistActive]}
+              style={[styles.btnWatchlist, !!inWatchlist && styles.btnWatchlistActive]}
             onPress={handleWatchlist}
           >
             {inWatchlist ? (
@@ -258,25 +287,32 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             ) : (
               <BookmarkPlus size={22} color={Colors.white} strokeWidth={2} />
             )}
-            <Text style={[styles.btnWatchlistText, inWatchlist && styles.btnWatchlistTextActive]} allowFontScaling={false}>
+            <Text style={[styles.btnWatchlistText, !!inWatchlist && styles.btnWatchlistTextActive]} allowFontScaling={false}>
               {inWatchlist ? t('inWatchlist') : t('addToWatchlist')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.btnRate}
-            onPress={() => {
-              if (!session) {
-                router.push('/auth/login' as any);
-                return;
-              }
-              setShowLogModal(true);
-            }}
-          >
-            <Star size={16} color={Colors.primary} strokeWidth={2} />
-            <Text style={styles.btnRateText} allowFontScaling={false}>{t('log')}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.btnRate, !!userRating && styles.btnRateActive]}
+              onPress={() => {
+                if (!session) {
+                  router.push('/auth/login' as any);
+                  return;
+                }
+                setShowLogModal(true);
+              }}
+            >
+              <Star size={16} color={userRating ? "#F5C518" : Colors.primary} fill={userRating ? "#F5C518" : "transparent"} strokeWidth={2} />
+              <Text style={[styles.btnRateText, !!userRating && styles.btnRateTextActive]} allowFontScaling={false}>
+                {userRating ? `${t('log')}ed` : t('log')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
+      </View>
+
+      {/* Right Column (Desktop) / Flow (Mobile) */}
+      <View style={[bp.isLarge && { flex: 1 }]}>
+        {bp.isLarge && renderTitleBlock()}
 
         {videos.length > 0 && (
           <View style={styles.trailerSection}>
@@ -378,6 +414,10 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             ))}
           </View>
         )}
+      </View>
+    </View>
+
+    <View style={[bp.isLarge && { width: '100%', maxWidth: bp.maxContentWidth, paddingHorizontal: 40 }]}>
 
         {similar.length > 0 && (
           <View style={styles.similarSection}>
@@ -396,8 +436,9 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             </ScrollView>
           </View>
         )}
+      </View>
 
-        <View style={{ height: 100 }} />
+      <View style={{ height: 100 }} />
       </Animated.ScrollView>
 
       <LogModal 
@@ -457,7 +498,29 @@ const styles = StyleSheet.create({
   btnWatchlistText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
   btnWatchlistTextActive: { color: Colors.white },
   btnRate: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  btnRateActive: { backgroundColor: 'rgba(245, 197, 24, 0.15)', borderWidth: 1, borderColor: 'rgba(245, 197, 24, 0.3)' },
   btnRateText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
+  btnRateTextActive: { color: '#F5C518' },
+  userRatingOverlayBadge: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backdropFilter: 'blur(10px)',
+  } as any,
+  userRatingOverlayText: {
+    color: '#fff',
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.black,
+  },
   trailerSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   sectionHeader: { paddingHorizontal: Spacing.xl, marginBottom: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white },

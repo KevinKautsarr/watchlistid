@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -23,6 +23,83 @@ if ((Text as any).defaultProps) {
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+// ── Web-only SEO & Security head injection ────────────────────────────────────
+function WebHead() {
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const setMeta = (name: string, content: string, attr = 'name') => {
+      let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    // Title
+    if (!document.title || document.title === '') {
+      document.title = 'WatchlistID — Track Movies & TV Shows';
+    }
+
+    // Charset & viewport (idempotent)
+    let charset = document.querySelector('meta[charset]');
+    if (!charset) {
+      charset = document.createElement('meta');
+      charset.setAttribute('charset', 'utf-8');
+      document.head.insertBefore(charset, document.head.firstChild);
+    }
+
+    // SEO basics
+    setMeta('description', 'WatchlistID is your personal movie and TV show tracker. Discover trending films, build your watchlist, rate what you have watched, and follow friends.');
+    setMeta('robots', 'index, follow');
+    setMeta('theme-color', '#141414');
+    setMeta('color-scheme', 'dark');
+
+    // Open Graph
+    setMeta('og:type', 'website', 'property');
+    setMeta('og:title', 'WatchlistID — Track Movies & TV Shows', 'property');
+    setMeta('og:description', 'Your personal movie and TV show tracker. Discover, rate and share.', 'property');
+    setMeta('og:site_name', 'WatchlistID', 'property');
+
+    // Twitter card
+    setMeta('twitter:card', 'summary');
+    setMeta('twitter:title', 'WatchlistID — Track Movies & TV Shows');
+    setMeta('twitter:description', 'Your personal movie and TV show tracker.');
+
+    // Security headers via meta (best-effort; full protection requires server headers)
+    // Content-Security-Policy
+    setMeta(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // RN web requires inline scripts
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: blob: https://image.tmdb.org https://*.supabase.co",
+        "connect-src 'self' https://api.themoviedb.org https://*.supabase.co wss://*.supabase.co",
+        "media-src 'self' https://www.youtube.com",
+        "frame-src https://www.youtube.com",
+        "object-src 'none'",
+        "base-uri 'self'",
+      ].join('; '),
+      'http-equiv'
+    );
+
+    // X-Frame-Options (clickjacking protection)
+    setMeta('X-Frame-Options', 'SAMEORIGIN', 'http-equiv');
+
+    // Cross-Origin-Opener-Policy
+    setMeta('Cross-Origin-Opener-Policy', 'same-origin-allow-popups', 'http-equiv');
+
+    // lang attribute on <html>
+    document.documentElement.lang = 'en';
+  }, []);
+
+  return null;
+}
 
 function RootLayoutNav() {
   const { session, isLoading } = useAuth();
@@ -69,6 +146,7 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <ErrorBoundary>
+      <WebHead />
       <AuthProvider>
         <LanguageProvider>
           <NotificationProvider>

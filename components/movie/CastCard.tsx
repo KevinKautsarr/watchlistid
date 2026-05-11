@@ -26,6 +26,7 @@ const CastCard: React.FC<CastCardProps> = ({
             source={{ uri: `${TMDB_IMAGE_SIZES.medium}${cast.profile_path}` }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
+            accessibilityLabel={`${cast.name} profile photo`}
           />
         ) : (
           <User size={32} color={Colors.text.secondary} strokeWidth={1.5} />

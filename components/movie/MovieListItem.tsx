@@ -38,9 +38,10 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
         onPress={onPress}
       >
         <Image 
-          source={{ uri: `${TMDB_IMAGE_SIZES.medium}${movie.poster_path}` }} 
+          source={{ uri: `https://image.tmdb.org/t/p/w154${movie.poster_path}` }} 
           style={StyleSheet.absoluteFill} 
-          contentFit="cover" 
+          contentFit="cover"
+          accessibilityLabel={`${movie.title || (movie as any).name || 'Movie'} poster`}
         />
         {rank != null && (
           <View style={styles.rankBadge}>
@@ -133,6 +134,7 @@ const styles = StyleSheet.create({
   posterWrap: { 
     width: 60, 
     height: 88, 
+    minHeight: 88,
     borderRadius: Radius.sm, 
     backgroundColor: Colors.surface, 
     overflow: 'hidden' 

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 export const Colors = {
   background:   '#141414',
   surface:      '#202020',
@@ -66,32 +67,32 @@ export const FontWeight = {
 
 export const Shadow = {
   sm: {
-    shadowColor:   '#000000',
-    shadowOffset:  { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius:  6,
-    elevation:     2,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 2px 4px rgba(0,0,0,0.2)' } as any,
+    })
   },
   md: {
-    shadowColor:   '#000000',
-    shadowOffset:  { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius:  10,
-    elevation:     4,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+      android: { elevation: 4 },
+      web: { boxShadow: '0 4px 8px rgba(0,0,0,0.3)' } as any,
+    })
   },
   lg: {
-    shadowColor:   '#000000',
-    shadowOffset:  { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius:  16,
-    elevation:     8,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16 },
+      android: { elevation: 8 },
+      web: { boxShadow: '0 8px 16px rgba(0,0,0,0.4)' } as any,
+    })
   },
   primary: {
-    shadowColor:   '#E50914',
-    shadowOffset:  { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius:  10,
-    elevation:     6,
+    ...Platform.select({
+      ios: { shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
+      android: { elevation: 6 },
+      web: { boxShadow: `0 4px 10px ${Colors.primary}66` } as any,
+    })
   },
 } as const;
 
@@ -100,5 +101,5 @@ export const TMDB_IMAGE_SIZES = {
   small:    'https://image.tmdb.org/t/p/w185',
   medium:   'https://image.tmdb.org/t/p/w342',
   large:    'https://image.tmdb.org/t/p/w500',
-  backdrop: 'https://image.tmdb.org/t/p/w1280',
+  backdrop: 'https://image.tmdb.org/t/p/w780',  // was w1280 — saves ~50% image size
 } as const;

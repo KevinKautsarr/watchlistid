@@ -159,11 +159,11 @@ const styles = StyleSheet.create({
   },
   shadowWrapper: {
     height: PILL_HEIGHT,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 },
+      android: { elevation: 10 },
+      web: { boxShadow: '0 10px 20px rgba(0,0,0,0.5)' } as any,
+    }),
     backgroundColor: 'transparent',
   },
   svgClipper: {
@@ -182,11 +182,11 @@ const styles = StyleSheet.create({
     backgroundColor: ACTIVE_TINT,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: ACTIVE_TINT,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    ...Platform.select({
+      ios: { shadowColor: ACTIVE_TINT, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12 },
+      android: { elevation: 8 },
+      web: { boxShadow: `0 8px 12px ${ACTIVE_TINT}66` } as any,
+    }),
     zIndex: 10,
   },
   tabsRow: {

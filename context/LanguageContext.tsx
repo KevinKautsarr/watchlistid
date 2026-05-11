@@ -70,6 +70,8 @@ const translations = {
     tapToAddBio: 'Tap ✏️ to add a bio',
     shortBioPlaceholder: 'Write a short bio…',
     yourNamePlaceholder: 'Your name',
+    nameLabel: 'Name',
+    bioLabel: 'Bio',
     shareMessage: '🎬 Check out my movie journey on WATCHLISTID!\nI have watched {watched} movies and have {toWatch} on my watchlist.\nExplore my Diary: https://watchlistid.com/u/{username}',
     
     // Social
@@ -285,6 +287,8 @@ const translations = {
     tapToAddBio: 'Ketuk ✏️ untuk menambah bio',
     shortBioPlaceholder: 'Tulis bio singkat…',
     yourNamePlaceholder: 'Nama Anda',
+    nameLabel: 'Nama',
+    bioLabel: 'Bio',
     shareMessage: '🎬 Lihat perjalanan film saya di WATCHLISTID!\nSaya sudah menonton {watched} film dan ada {toWatch} film di daftar tontonan saya.\nLihat Diari saya: https://watchlistid.com/u/{username}',
     
     // Social

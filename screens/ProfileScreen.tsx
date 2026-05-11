@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../supabase';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,6 +31,8 @@ import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
 import LanguageSheet from '../components/settings/LanguageSheet';
 import SocialListSheet from '../components/settings/SocialListSheet';
 import SettingsSheet from '../components/settings/SettingsSheet';
+import ImageCropModal from '../components/common/ImageCropModal';
+import Avatar from '../components/common/Avatar';
 
 type ContentTab = 'Diary' | 'Watched' | 'Watchlist';
 
@@ -49,27 +51,32 @@ const s = StyleSheet.create({
   headerBadge: { position: 'absolute', top: 0, right: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary, borderWidth: 2, borderColor: Colors.background },
 
   /* Hero Redesign */
+  /* Hero Upgrade */
   heroContainer: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.xl, alignItems: 'center' },
-  heroCentered: { alignItems: 'center', gap: 16 },
+  heroEditCard: { backgroundColor: 'rgba(255,255,255,0.03)', marginHorizontal: Spacing.lg, marginTop: Spacing.lg, borderRadius: Radius.xxl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', paddingVertical: Spacing.xl },
   avatarContainer: { width: 86, height: 86, borderRadius: 43, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden' },
+  avatarEditGlow: { borderColor: Colors.primary, borderWidth: 2 },
   avatarImg: { width: '100%', height: '100%' },
-  avatarPlaceholder: { flex: 1, backgroundColor: 'rgba(229,9,20,0.15)', alignItems: 'center', justifyContent: 'center' },
-  avatarLetter: { fontSize: 32, fontWeight: FontWeight.black, color: Colors.primary },
-  cameraOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  cameraOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
   
-  statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 40, marginTop: 4 },
-  statItem: { flex: 1, alignItems: 'center' },
-  statCount: { fontSize: 17, fontWeight: FontWeight.black, color: Colors.white, textAlign: 'center' },
-  statLabel: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 2, textAlign: 'center' },
+  identityBox: { alignItems: 'center', marginTop: 12, width: '100%' },
+  editFields: { width: '100%', gap: 16, paddingHorizontal: Spacing.md },
+  inputGroup: { width: '100%' },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  fieldLabel: { color: Colors.primary, fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1.5, marginBottom: 4, textTransform: 'uppercase' },
+  charCount: { color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: FontWeight.bold },
+  
+  displayName: { color: '#fff', fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5, textAlign: 'center' },
+  nameInput: { color: '#fff', fontSize: FontSize.lg, fontWeight: FontWeight.bold, borderBottomWidth: 1, borderBottomColor: Colors.primary, paddingVertical: 8, textAlign: 'center' },
+  
+  bioText: { color: 'rgba(255,255,255,0.85)', fontSize: FontSize.sm, lineHeight: 20, textAlign: 'center', marginTop: 6, paddingHorizontal: 20 },
+  bioInput: { color: 'rgba(255,255,255,0.9)', fontSize: FontSize.sm, lineHeight: 22, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)', paddingVertical: 8, textAlign: 'center', minHeight: 44 },
+  bioPlaceholder: { color: 'rgba(255,255,255,0.5)', fontSize: FontSize.sm, fontStyle: 'italic', marginTop: 6 },
 
-  identityBox: { marginTop: 16, gap: 4, alignItems: 'center' },
-  displayName: { fontSize: 18, fontWeight: FontWeight.black, color: Colors.white, textAlign: 'center' },
-  nameInput: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.primary, paddingBottom: 2 },
-  bioText: { fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 20, marginTop: 1, textAlign: 'center' },
-  bioPlaceholder: { fontSize: 13, color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' },
-  bioInputWrap: { marginTop: 6, width: '100%' },
-  bioInput: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: Radius.md, padding: 12, fontSize: 14, color: Colors.white, minHeight: 60, textAlignVertical: 'top' },
-  bioCounter: { fontSize: 11, color: Colors.primary, fontWeight: FontWeight.bold, textAlign: 'right', marginTop: 4, opacity: 0.8 },
+  statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 40, marginTop: 24, width: '100%' },
+  statItem: { alignItems: 'center' },
+  statCount: { fontSize: 18, fontWeight: FontWeight.black, color: Colors.white },
+  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: FontWeight.bold, textTransform: 'uppercase' },
 
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 24, width: '100%' },
   primaryBtn: { flex: 1, height: 36, backgroundColor: Colors.primary, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
@@ -118,10 +125,10 @@ const s = StyleSheet.create({
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { watchlist, toggleWatched, removeFromWatchlist } = useWatchlist();
-  const { user, profile, signOut } = useAuth();
+  const { watchlist, toggleWatched, removeFromWatchlist, isLoading: loadingWatchlist } = useWatchlist();
+  const { user, profile, refreshProfile, signOut } = useAuth();
   const { t } = useLanguage();
-  const { userLogs, deleteLog } = useSocial();
+  const { userLogs, deleteLog, loadingLogs } = useSocial();
   const { unreadCount } = useNotifications();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -147,6 +154,9 @@ const ProfileScreen: React.FC = () => {
   const [socialList, setSocialList] = useState<any[]>([]);
   const [isListLoading, setIsListLoading] = useState(false);
 
+  const [pickedImage, setPickedImage] = useState<string | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+
   const targetUserId = userId || user?.id;
   const isOwner = !userId || userId === user?.id;
   const [targetProfile, setTargetProfile] = useState<any>(null);
@@ -155,7 +165,7 @@ const ProfileScreen: React.FC = () => {
     if (!targetUserId) return;
     const fetchData = async () => {
       if (!isOwner) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', targetUserId).single();
+        const { data } = await supabase.from('profiles').select('id, username, avatar_url, bio').eq('id', targetUserId).single();
         if (data) setTargetProfile(data);
       } else {
         setTargetProfile(profile);
@@ -241,8 +251,8 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  const displayName = targetProfile?.username ?? (isOwner ? (user?.user_metadata?.username ?? user?.email?.split('@')[0]) : 'User') ?? 'Movie Fan';
-  const avatarUrl = targetProfile?.avatar_url ?? (isOwner ? user?.user_metadata?.avatar_url : null);
+  const displayName = targetProfile?.username || (isOwner ? (user?.user_metadata?.username || user?.email?.split('@')[0]) : 'User') || 'Movie Fan';
+  const avatarUrl = targetProfile?.avatar_url || (isOwner ? user?.user_metadata?.avatar_url : null);
   const avatarLetter = displayName.charAt(0).toUpperCase();
   const displayBio = targetProfile?.bio ?? '';
 
@@ -251,27 +261,54 @@ const ProfileScreen: React.FC = () => {
   const toWatch = total - watched;
 
   useEffect(() => {
-    setEditName(displayName);
-    setEditAvatar(avatarUrl || '');
-    setEditBio(displayBio);
-  }, [displayName, avatarUrl, displayBio]);
+    // Only initialize fields when entering edit mode, not on every profile change
+    // to avoid resetting user input while they are typing or cropping.
+    if (!isEditing) {
+      setEditName(displayName);
+      setEditAvatar(avatarUrl || '');
+      setEditBio(displayBio);
+    }
+  }, [displayName, avatarUrl, displayBio, isEditing]);
 
   const handlePickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [1, 1], quality: 0.1, base64: true,
-    });
-    if (!result.canceled && result.assets?.[0]?.base64) {
-      setEditAvatar(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false, 
+        quality: 1, 
+      });
+      
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setPickedImage(result.assets[0].uri);
+        setShowCropModal(true);
+      }
+    } catch (e) {
+      console.error('Pick image error:', e);
     }
+  };
+
+  const handleCropSave = (croppedUri: string) => {
+    setEditAvatar(croppedUri);
+    setShowCropModal(false);
+    setPickedImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setPickedImage(null);
   };
 
   const handleSave = async () => {
     if (!user) return;
     setIsSaving(true);
     try {
-      await supabase.auth.updateUser({ data: { username: editName, avatar_url: editAvatar } });
-      await supabase.from('profiles').update({ username: editName, avatar_url: editAvatar, bio: editBio }).eq('id', user.id);
+      const finalAvatar = editAvatar.trim() || null;
+      await supabase.auth.updateUser({ data: { username: editName, avatar_url: finalAvatar } });
+      await supabase.from('profiles').update({ username: editName, avatar_url: finalAvatar, bio: editBio }).eq('id', user.id);
+      
+      // Instantly refresh the local context to update UI without reload
+      await refreshProfile();
+      
       setIsEditing(false);
     } finally { setIsSaving(false); }
   };
@@ -358,10 +395,9 @@ const ProfileScreen: React.FC = () => {
         document.body.removeChild(link);
       } else {
         // NATIVE: Use FileSystem and Sharing API
-        const fileUri = FileSystem.cacheDirectory + fileName;
+        const fileUri = ((FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '') + fileName;
         
-        // Default encoding is UTF8, so we can omit the explicit EncodingType object
-        // if it's causing issues with undefined properties
+        // Default encoding is UTF8
         await FileSystem.writeAsStringAsync(fileUri, csvContent);
         
         const isAvailable = await Sharing.isAvailableAsync();
@@ -408,18 +444,78 @@ const ProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={s.heroContainer}>
-          <TouchableOpacity style={s.avatarContainer} activeOpacity={isEditing ? 0.7 : 1} onPress={isEditing ? handlePickImage : undefined}>
-            {currentAvatarUrl ? <Image source={{ uri: currentAvatarUrl }} style={s.avatarImg} contentFit="cover" /> : <View style={s.avatarPlaceholder}><Text style={s.avatarLetter} allowFontScaling={false}>{avatarLetter}</Text></View>}
-            {isEditing && <View style={s.cameraOverlay}><Camera size={18} color="#fff" strokeWidth={2} /></View>}
+        <View style={[s.heroContainer, isEditing && s.heroEditCard]}>
+          <TouchableOpacity 
+            style={[s.avatarContainer, isEditing && s.avatarEditGlow]} 
+            activeOpacity={isEditing ? 0.8 : 1} 
+            onPress={isEditing ? handlePickImage : undefined}
+          >
+            <Avatar 
+              uri={currentAvatarUrl} 
+              name={displayName} 
+              size={86} 
+              style={s.avatarImg} 
+              priority="high"
+            />
+            {isEditing && (
+              <View style={s.cameraOverlay}>
+                <Camera size={22} color="#fff" strokeWidth={2.5} />
+              </View>
+            )}
           </TouchableOpacity>
+
           <View style={s.identityBox}>
-            {isEditing ? <TextInput style={s.nameInput} value={editName} onChangeText={setEditName} placeholder={t('yourNamePlaceholder')} placeholderTextColor="rgba(255,255,255,0.4)" autoCorrect={false} /> : <Text style={s.displayName} allowFontScaling={false}>{displayName}</Text>}
-            {isEditing ? <View style={s.bioInputWrap}><TextInput style={s.bioInput} value={editBio} onChangeText={v => setEditBio(v.slice(0, 80))} placeholder={t('shortBioPlaceholder')} placeholderTextColor="rgba(255,255,255,0.3)" multiline maxLength={80} /><Text style={s.bioCounter} allowFontScaling={false}>{editBio.length}/80</Text></View> : displayBio ? <Text style={s.bioText} allowFontScaling={false}>{displayBio}</Text> : isOwner ? <Text style={s.bioPlaceholder} allowFontScaling={false}>{t('tapToAddBio')}</Text> : null}
+            {isEditing ? (
+              <View style={s.editFields}>
+                <View style={s.inputGroup}>
+                  <Text style={s.fieldLabel}>{t('nameLabel') || 'USERNAME'}</Text>
+                  <TextInput 
+                    style={s.nameInput} 
+                    value={editName} 
+                    onChangeText={setEditName} 
+                    placeholder={t('yourNamePlaceholder')} 
+                    placeholderTextColor="rgba(255,255,255,0.2)" 
+                    autoCorrect={false}
+                  />
+                </View>
+
+                <View style={s.inputGroup}>
+                  <View style={s.labelRow}>
+                    <Text style={s.fieldLabel}>{t('bioLabel') || 'BIO / DESCRIPTION'}</Text>
+                    <Text style={s.charCount}>{editBio.length}/80</Text>
+                  </View>
+                  <TextInput 
+                    style={s.bioInput} 
+                    value={editBio} 
+                    onChangeText={v => setEditBio(v.slice(0, 80))} 
+                    placeholder={t('shortBioPlaceholder')} 
+                    placeholderTextColor="rgba(255,255,255,0.2)" 
+                    multiline 
+                    maxLength={80} 
+                  />
+                </View>
+              </View>
+            ) : (
+              <>
+                <Text style={s.displayName} allowFontScaling={false}>{displayName}</Text>
+                {displayBio ? (
+                  <Text style={s.bioText} allowFontScaling={false}>{displayBio}</Text>
+                ) : isOwner ? (
+                  <Text style={s.bioPlaceholder} allowFontScaling={false}>{t('tapToAddBio')}</Text>
+                ) : null}
+              </>
+            )}
           </View>
+
           <View style={s.statsRow}>
-            <TouchableOpacity style={s.statItem} onPress={() => fetchSocialList('followers')}><Text style={s.statCount}>{followers}</Text><Text style={s.statLabel}>{t('followers')}</Text></TouchableOpacity>
-            <TouchableOpacity style={s.statItem} onPress={() => fetchSocialList('following')}><Text style={s.statCount}>{following}</Text><Text style={s.statLabel}>{t('following')}</Text></TouchableOpacity>
+            <TouchableOpacity style={s.statItem} onPress={() => fetchSocialList('followers')}>
+              <Text style={s.statCount}>{followers}</Text>
+              <Text style={s.statLabel}>{t('followers')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.statItem} onPress={() => fetchSocialList('following')}>
+              <Text style={s.statCount}>{following}</Text>
+              <Text style={s.statLabel}>{t('following')}</Text>
+            </TouchableOpacity>
           </View>
           <View style={s.actionRow}>
             {isOwner ? (isEditing ? (<><TouchableOpacity style={[s.primaryBtn, { backgroundColor: Colors.primary }]} onPress={handleSave} disabled={isSaving}>{isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.primaryBtnText}>{t('save')}</Text>}</TouchableOpacity><TouchableOpacity style={s.secondaryBtn} onPress={handleCancel}><Text style={s.secondaryBtnText}>{t('cancel')}</Text></TouchableOpacity></>) : (<><TouchableOpacity style={s.secondaryBtn} onPress={() => setIsEditing(true)}><Text style={s.secondaryBtnText}>{t('editProfile')}</Text></TouchableOpacity><TouchableOpacity style={s.secondaryBtn} onPress={handleShare}><Text style={s.secondaryBtnText}>{t('shareProfile')}</Text></TouchableOpacity></>)) : (<TouchableOpacity style={[s.primaryBtn, isFollowing && s.followingBtn]} onPress={handleFollow} disabled={isFollowLoading}>{isFollowLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[s.primaryBtnText, isFollowing && { color: Colors.white }]}>{isFollowing ? t('unfollow') : t('follow')}</Text>}</TouchableOpacity>)}
@@ -446,9 +542,65 @@ const ProfileScreen: React.FC = () => {
             <Text style={s.sectionTitle}>{activeTabInfo?.label}</Text>
             <Text style={s.sectionCount}>{activeTabInfo?.count} {t('titles')}</Text>
           </View>
-          {activeTab === 'Diary' && (userLogs.length === 0 ? <EmptyState icon={<BookOpen size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyDiary')} /> : userLogs.map(log => <DiaryCard key={log.id} log={log} onDelete={isOwner ? (id) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setLogToDelete(id); } : () => {}} onPressPoster={(id) => router.push(`/movie/${id}?type=${log.media_type || 'movie'}` as any)} />))}
-          {activeTab === 'Watched' && (watchlist.filter(m => m.watched).length === 0 ? <EmptyState icon={<Eye size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyWatched')} /> : watchlist.filter(m => m.watched).map(item => <MovieListItem key={item.id} movie={item} onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}`)} showWatched={isOwner} watched={item.watched} inWatchlist={isOwner} onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} />))}
-          {activeTab === 'Watchlist' && (watchlist.filter(m => !m.watched).length === 0 ? <EmptyState icon={<Star size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyToWatch')} /> : watchlist.filter(m => !m.watched).map(item => <MovieListItem key={item.id} movie={item} onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}`)} showWatched={isOwner} watched={item.watched} inWatchlist={isOwner} onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} />))}
+          {activeTab === 'Diary' && (
+            loadingLogs ? (
+              <View style={{ gap: 12 }}>{[1,2,3].map(i => <DiarySkeleton key={i} />)}</View>
+            ) : userLogs.length === 0 ? (
+              <EmptyState icon={<BookOpen size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyDiary')} />
+            ) : (
+              userLogs.map((log, index) => (
+                <DiaryCard 
+                  key={log.id} 
+                  log={log} 
+                  priority={index < 2 ? 'high' : 'normal'}
+                  onDelete={isOwner ? (id) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setLogToDelete(id); } : () => {}} 
+                  onPressPoster={(id) => router.push(`/movie/${id}?type=${log.media_type || 'movie'}` as any)} 
+                />
+              ))
+            )
+          )}
+          
+          {activeTab === 'Watched' && (
+            loadingWatchlist ? (
+              <View style={{ gap: 0 }}>{[1,2,3,4].map(i => <MovieItemSkeleton key={i} />)}</View>
+            ) : watchlist.filter(m => m.watched).length === 0 ? (
+              <EmptyState icon={<Eye size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyWatched')} />
+            ) : (
+              watchlist.filter(m => m.watched).map(item => (
+                <MovieListItem 
+                  key={item.id} 
+                  movie={item} 
+                  onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}`)} 
+                  showWatched={isOwner} 
+                  watched={item.watched} 
+                  inWatchlist={isOwner} 
+                  onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} 
+                  onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} 
+                />
+              ))
+            )
+          )}
+          
+          {activeTab === 'Watchlist' && (
+            loadingWatchlist ? (
+              <View style={{ gap: 0 }}>{[1,2,3,4].map(i => <MovieItemSkeleton key={i} />)}</View>
+            ) : watchlist.filter(m => !m.watched).length === 0 ? (
+              <EmptyState icon={<Star size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyToWatch')} />
+            ) : (
+              watchlist.filter(m => !m.watched).map(item => (
+                <MovieListItem 
+                  key={item.id} 
+                  movie={item} 
+                  onPress={() => router.push(`/movie/${item.id}?type=${item.media_type || 'movie'}`)} 
+                  showWatched={isOwner} 
+                  watched={item.watched} 
+                  inWatchlist={isOwner} 
+                  onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} 
+                  onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} 
+                />
+              ))
+            )
+          )}
         </View>
       </ScrollView>
 
@@ -470,12 +622,46 @@ const ProfileScreen: React.FC = () => {
       <LanguageSheet visible={showLangModal} onClose={() => setShowLangModal(false)} />
       <DeleteConfirmModal visible={!!logToDelete} onClose={() => setLogToDelete(null)} onConfirm={() => { if (logToDelete) deleteLog(logToDelete); }} title={t('deleteLogTitle')} message={t('deleteLogDesc')} />
       <SocialListSheet visible={isSocialModalVisible} onClose={() => setIsSocialModalVisible(false)} initialTab={socialModalType} data={socialList} loading={isListLoading} currentUserId={user?.id || ''} onUserPress={(id) => { setIsSocialModalVisible(false); router.push({ pathname: '/(tabs)/profile', params: { userId: id } }); }} onFollowToggle={(id) => handleToggleFollowFromList(id)} />
+      {pickedImage && (
+        <ImageCropModal 
+          visible={showCropModal} 
+          imageUri={pickedImage} 
+          onClose={handleCropCancel} 
+          onSave={handleCropSave} 
+        />
+      )}
     </View>
   );
 };
 
 function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (<View style={s.emptyWrap}>{icon}<Text style={s.emptyText} allowFontScaling={false}>{text}</Text></View>);
+}
+
+function DiarySkeleton() {
+  return (
+    <View style={{ paddingHorizontal: Spacing.xl, paddingVertical: 12, flexDirection: 'row', gap: 12, opacity: 0.15 }}>
+      <View style={{ width: 70, height: 105, backgroundColor: Colors.white, borderRadius: Radius.sm }} />
+      <View style={{ flex: 1, gap: 8, justifyContent: 'center' }}>
+        <View style={{ width: '60%', height: 14, backgroundColor: Colors.white, borderRadius: 4 }} />
+        <View style={{ width: '40%', height: 10, backgroundColor: Colors.white, borderRadius: 4 }} />
+        <View style={{ width: '80%', height: 10, backgroundColor: Colors.white, borderRadius: 4, marginTop: 8 }} />
+      </View>
+    </View>
+  );
+}
+
+function MovieItemSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg, flexDirection: 'row', gap: Spacing.lg, opacity: 0.1 }}>
+      <View style={{ width: 60, height: 88, backgroundColor: Colors.white, borderRadius: Radius.sm }} />
+      <View style={{ flex: 1, gap: 8, justifyContent: 'center' }}>
+        <View style={{ width: '70%', height: 16, backgroundColor: Colors.white, borderRadius: 4 }} />
+        <View style={{ width: '30%', height: 12, backgroundColor: Colors.white, borderRadius: 4 }} />
+        <View style={{ width: '90%', height: 12, backgroundColor: Colors.white, borderRadius: 4, marginTop: 10 }} />
+      </View>
+    </View>
+  );
 }
 
 export default ProfileScreen;

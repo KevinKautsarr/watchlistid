@@ -23,7 +23,13 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "WatchlistID — Track Movies & TV Shows",
+      "shortName": "WatchlistID",
+      "description": "WatchlistID is your personal movie and TV show tracker. Discover trending films, build your watchlist, rate what you've watched, and follow friends.",
+      "lang": "en",
+      "themeColor": "#141414",
+      "backgroundColor": "#141414"
     },
     "plugins": [
       "expo-router",

@@ -40,6 +40,7 @@ const PosterCard: React.FC<PosterCardProps> = ({
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={300}
+          accessibilityLabel={`${movie.title || 'Movie'} poster`}
         />
         {showRank && rank != null && (
           <View style={styles.rankBadge}>

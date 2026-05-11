@@ -342,6 +342,10 @@ export default function SearchScreen() {
           contentContainerStyle={listContentStyle}
           keyboardDismissMode="on-drag"
           ListFooterComponent={Footer}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews
           ListEmptyComponent={!loading ? (
             <View style={s.empty}>
               <View style={s.emptyIcon}><SearchX size={36} color={Colors.primary} strokeWidth={1.5}/></View>
@@ -402,6 +406,10 @@ export default function SearchScreen() {
           )}
           showsVerticalScrollIndicator={false} contentContainerStyle={listContentStyle}
           keyboardDismissMode="on-drag"
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews
           ListHeaderComponent={showDefault ? (
             <View style={{paddingBottom: Spacing.md}}>
               {recentSearches.length>0 && (

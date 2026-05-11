@@ -8,12 +8,13 @@ import { useLanguage } from '../../context/LanguageContext';
 
 interface DiaryCardProps {
   log: MovieLog;
-  onDelete: (id: string) => void;
-  onPressPoster: (movieId: number) => void;
+  onDelete?: (id: string) => void;
+  onPressPoster?: (movieId: number) => void;
   rank?: number;
+  priority?: 'low' | 'normal' | 'high';
 }
 
-const DiaryCard: React.FC<DiaryCardProps> = ({ log, onDelete, onPressPoster, rank }) => {
+const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPressPoster, rank, priority = 'normal' }) => {
   const { t } = useLanguage();
   const [isRevealed, setIsRevealed] = useState(!log.is_spoiler);
 
@@ -38,7 +39,7 @@ const DiaryCard: React.FC<DiaryCardProps> = ({ log, onDelete, onPressPoster, ran
 
         <View style={styles.headerRight}>
           <TouchableOpacity 
-            onPress={() => onDelete(log.id)} 
+            onPress={() => onDelete?.(log.id)} 
             style={styles.deleteBtn}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           >
@@ -51,13 +52,15 @@ const DiaryCard: React.FC<DiaryCardProps> = ({ log, onDelete, onPressPoster, ran
         <TouchableOpacity 
           style={styles.posterContainer}
           activeOpacity={0.8}
-          onPress={() => onPressPoster(log.movie_id)}
+          onPress={() => onPressPoster?.(log.movie_id)}
         >
           {log.poster_path ? (
             <Image 
-              source={{ uri: `https://image.tmdb.org/t/p/w200${log.poster_path}` }} 
+              source={{ uri: `https://image.tmdb.org/t/p/w92${log.poster_path}` }} 
               style={styles.poster} 
-              contentFit="cover" 
+              contentFit="cover"
+              accessibilityLabel={`${log.movie_title} poster`}
+              priority={priority}
             />
           ) : (
             <View style={styles.posterPlaceholder}>
@@ -112,7 +115,7 @@ const DiaryCard: React.FC<DiaryCardProps> = ({ log, onDelete, onPressPoster, ran
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -164,6 +167,7 @@ const styles = StyleSheet.create({
   posterContainer: {
     width: 70,
     height: 105,
+    minHeight: 105,
     borderRadius: Radius.sm,
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.05)',
