@@ -223,7 +223,15 @@ const translations = {
     emptyWatchlistSub: 'Movies and TV shows you add will appear here.',
     findMoviesBtn: 'Find Movies to Watch',
     rated: 'Rated',
+    saveError: 'Failed to save profile changes',
+    avatarError: 'Failed to update profile picture',
+    profileNotFound: 'Profile Not Found',
+    profileNotFoundDesc: "The user you're looking for doesn't exist or is unavailable.",
+    noLogsYet: 'No movies in your Diary yet.',
+    noWatchedYet: 'No watched movies yet.',
+    noWatchlistYet: 'Your watchlist is empty.',
   },
+
   id: {
     // General
     cancel: 'Batal',
@@ -442,7 +450,15 @@ const translations = {
     emptyWatchlistSub: 'Film dan serial yang kamu tambahkan akan muncul di sini.',
     findMoviesBtn: 'Cari Film untuk Ditonton',
     rated: 'Dinilai',
+    saveError: 'Gagal menyimpan perubahan profil',
+    avatarError: 'Gagal memperbarui foto profil',
+    profileNotFound: 'Profil Tidak Ditemukan',
+    profileNotFoundDesc: 'Pengguna yang Anda cari tidak ada atau tidak tersedia.',
+    noLogsYet: 'Belum ada film di Diari kamu.',
+    noWatchedYet: 'Belum ada film yang ditonton.',
+    noWatchlistYet: 'Daftar tontonan kamu masih kosong.',
   }
+
 };
 
 type TranslationKey = keyof typeof translations.en;

@@ -126,7 +126,16 @@ export default function UserSearchScreen() {
           renderItem={renderItem}
           contentContainerStyle={s.listContent}
           keyboardShouldPersistTaps="handled"
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          getItemLayout={(_, index) => ({
+            length: 86,
+            offset: 86 * index,
+            index
+          })}
         />
+
       ) : query.length > 0 ? (
         <View style={s.center}>
           <User size={48} color="rgba(255,255,255,0.1)" />

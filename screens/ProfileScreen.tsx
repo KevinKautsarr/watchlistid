@@ -1,25 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Platform, TextInput, ActivityIndicator, Modal, Share, StatusBar,
-  Dimensions,
+  StatusBar, Dimensions, ActivityIndicator,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+
+
+// Inline base64 to ArrayBuffer decoder to replace missing dependency
+function decode(base64: string): ArrayBuffer {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 import { supabase, typedFrom } from '../supabase';
-import { LinearGradient } from 'expo-linear-gradient';
 import { UserProfile, FetchState } from '../types';
+
 import {
-  Bell, Globe, Share2, Info, ChevronRight, Star, Film, Eye,
-  LogOut, Edit3, Camera, Check, X, BookOpen, Clock, Trash2, UserPlus, UserMinus,
-  LayoutGrid, Play, Bookmark, Menu, Plus, ChevronDown, 
-  Settings as SettingsIcon, AtSign, Search, ArrowLeft
+  ArrowLeft, SearchX, Settings as SettingsIcon,
 } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
@@ -28,12 +34,15 @@ import { useLanguage } from '../context/LanguageContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import DiaryCard from '../components/movie/DiaryCard';
 import MovieListItem from '../components/movie/MovieListItem';
-import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
-import LanguageSheet from '../components/settings/LanguageSheet';
-import SocialListSheet from '../components/settings/SocialListSheet';
-import SettingsSheet from '../components/settings/SettingsSheet';
 import ImageCropModal from '../components/common/ImageCropModal';
-import Avatar from '../components/common/Avatar';
+import SettingsSheet from '../components/settings/SettingsSheet';
+
+// New specialized components
+import ProfileHeader from '../components/profile/ProfileHeader';
+import ProfileStats from '../components/profile/ProfileStats';
+import ProfileActions from '../components/profile/ProfileActions';
+import ProfileTabs from '../components/profile/ProfileTabs';
+import ProfileEditModal from '../components/profile/ProfileEditModal';
 
 type ContentTab = 'Diary' | 'Watched' | 'Watchlist';
 
@@ -42,129 +51,47 @@ const { width } = Dimensions.get('window');
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
-  /* IG Style Top Bar */
+  /* Header */
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, height: 70 },
   topBarLeft: { width: 80, alignItems: 'flex-start' },
   topBarCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   topBarRight: { width: 80, alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.lg },
   topBarTitle: { color: Colors.white, fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5 },
-  topBarIcon: { padding: 4 },
-  headerBadge: { position: 'absolute', top: 0, right: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary, borderWidth: 2, borderColor: Colors.background },
-
-  /* Hero Redesign */
-  /* Hero Upgrade */
-  heroContainer: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.xl, alignItems: 'center' },
-  heroEditCard: { backgroundColor: 'rgba(255,255,255,0.03)', marginHorizontal: Spacing.lg, marginTop: Spacing.lg, borderRadius: Radius.xxl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', paddingVertical: Spacing.xl },
-  avatarContainer: { width: 86, height: 86, borderRadius: 43, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden' },
-  avatarEditGlow: { borderColor: Colors.primary, borderWidth: 2 },
-  avatarImg: { width: '100%', height: '100%' },
-  cameraOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
   
-  identityBox: { alignItems: 'center', marginTop: 12, width: '100%' },
-  editFields: { width: '100%', gap: 16, paddingHorizontal: Spacing.md },
-  inputGroup: { width: '100%' },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  fieldLabel: { color: Colors.primary, fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1.5, marginBottom: 4, textTransform: 'uppercase' },
-  charCount: { color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: FontWeight.bold },
-  
-  displayName: { color: Colors.white, fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5, textAlign: 'center' },
-  nameInput: { color: Colors.white, fontSize: FontSize.lg, fontWeight: FontWeight.bold, borderBottomWidth: 1, borderBottomColor: Colors.primary, paddingVertical: Spacing.sm, textAlign: 'center' },
-  
-  bioText: { color: Colors.text.secondary, fontSize: FontSize.sm, lineHeight: 20, textAlign: 'center', marginTop: Spacing.xs, paddingHorizontal: Spacing.xl },
-  bioInput: { color: Colors.text.primary, fontSize: FontSize.sm, lineHeight: 22, borderBottomWidth: 1, borderBottomColor: Colors.overlay.light, paddingVertical: Spacing.sm, textAlign: 'center', minHeight: 44 },
-  bioPlaceholder: { color: Colors.text.secondary, fontSize: FontSize.sm, fontStyle: 'italic', marginTop: Spacing.xs },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  errorTitle: { color: Colors.white, fontSize: 20, fontWeight: FontWeight.black, marginTop: 20 },
+  errorSub: { color: Colors.text.secondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
+  retryBtn: { marginTop: 30, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: Radius.md },
+  retryBtnText: { color: Colors.white, fontWeight: FontWeight.bold },
 
-  statsRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.xxxl, marginTop: Spacing.xl, width: '100%' },
-  statItem: { alignItems: 'center' },
-  statCount: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white },
-  statLabel: { fontSize: FontSize.xs, color: Colors.text.secondary, marginTop: 2, fontWeight: FontWeight.bold, textTransform: 'uppercase' },
-
-  actionRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xl, width: '100%' },
-  primaryBtn: { flex: 1, height: 40, backgroundColor: Colors.accentBlue, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { color: Colors.white, fontSize: FontSize.base, fontWeight: FontWeight.bold },
-  secondaryBtn: { flex: 1, height: 40, backgroundColor: Colors.overlay.light, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
-  secondaryBtnText: { color: Colors.white, fontSize: FontSize.base, fontWeight: FontWeight.bold },
-  followingBtn: { backgroundColor: 'rgba(255,255,255,0.1)' },
-
-  /* Tabs */
-  tabBar: { flexDirection: 'row', marginBottom: 2, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
-  tab: { flex: 1, height: 48, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: Colors.white },
-  tabLabel: { display: 'none' },
-  tabLabelActive: {},
-  tabIconWrapper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  tabBadge: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 6, minWidth: 20, paddingVertical: 2, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  tabBadgeActive: { backgroundColor: 'rgba(229,9,20,0.2)' },
-  tabBadgeText: { fontSize: 10, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.6)' },
-  tabBadgeTextActive: { color: Colors.primary },
-
-
-
-  content: { paddingHorizontal: 0 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)', marginBottom: Spacing.sm },
-  sectionTitle: { fontSize: 16, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: -0.2 },
-  sectionCount: { fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: FontWeight.bold },
   emptyWrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 16 },
   emptyText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.3)', textAlign: 'center' },
-
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
-  modalCard: { width: '100%', maxWidth: 320, backgroundColor: Colors.surface, borderRadius: Radius.xxl, padding: Spacing.xxl, alignItems: 'center', borderWidth: 1, borderColor: Colors.overlay.light },
-  modalIconBox: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(220,53,69,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.xl },
-  modalTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white, marginBottom: Spacing.xs, textAlign: 'center' },
-  modalSub: { fontSize: FontSize.base, color: Colors.text.secondary, textAlign: 'center', lineHeight: 22, marginBottom: Spacing.xxl },
-  modalActions: { flexDirection: 'row', gap: Spacing.md, width: '100%' },
-  btnSecondary: { flex: 1, height: 48, borderRadius: Radius.lg, backgroundColor: Colors.overlay.light, justifyContent: 'center', alignItems: 'center' },
-  btnSecondaryText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
-  btnDanger: { flex: 1, height: 48, borderRadius: Radius.lg, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
-  btnDangerText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
-
-  socialUserRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  socialUserAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12, overflow: 'hidden' },
-  socialUserName: { flex: 1, color: '#fff', fontSize: FontSize.base, fontWeight: FontWeight.medium },
 });
 
-const ProfileScreen: React.FC = () => {
+export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { watchlist, toggleWatched, removeFromWatchlist, userRatings, isLoading: loadingWatchlist } = useWatchlist();
-  const { user, profile, refreshProfile, signOut } = useAuth();
   const { t } = useLanguage();
-  const { userLogs, deleteLog, loadingLogs, followUser, unfollowUser, getFollowStatus } = useSocial();
-  const { unreadCount } = useNotifications();
+  const { user, profile, refreshProfile, signOut } = useAuth();
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editAvatar, setEditAvatar] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showLangModal, setShowLangModal] = useState(false);
-  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [activeTab, setActiveTab] = useState<ContentTab>('Diary');
-  const [logToDelete, setLogToDelete] = useState<string | null>(null);
+  const { watchlist } = useWatchlist();
+  const { 
+    userLogs, getFollowStatus, followUser, unfollowUser, 
+  } = useSocial();
+
   
   const { userId } = useLocalSearchParams<{ userId: string }>();
   
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
-  const { updatePassword, deleteAccount } = useAuth();
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
-  const [isSocialModalVisible, setIsSocialModalVisible] = useState(false);
-  const [socialModalType, setSocialModalType] = useState<'followers' | 'following'>('followers');
-  const [socialList, setSocialList] = useState<FetchState<UserProfile[]>>({
-    status: 'idle',
-    data: [],
-    error: null
-  });
-
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [pickedImage, setPickedImage] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
+  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
 
   const targetUserId = userId || user?.id;
   const isOwner = !userId || userId === user?.id;
@@ -174,11 +101,13 @@ const ProfileScreen: React.FC = () => {
     error: null
   });
 
+  const [activeTab, setActiveTab] = useState<ContentTab>('Diary');
+
   useEffect(() => {
     if (!targetUserId) return;
     const fetchData = async () => {
-      setTargetProfile(prev => ({ ...prev, status: 'loading' }));
       if (!isOwner) {
+        setTargetProfile(prev => ({ ...prev, status: 'loading' }));
         try {
           const { data, error } = await typedFrom('profiles').select('id, username, avatar_url, bio').eq('id', targetUserId).single();
           if (data) setTargetProfile({ status: 'success', data: { ...data, followers_count: 0, following_count: 0 } as UserProfile, error: null });
@@ -187,12 +116,16 @@ const ProfileScreen: React.FC = () => {
           setTargetProfile({ status: 'error', data: null, error: (e as Error).message });
         }
       } else {
-        setTargetProfile({ status: 'success', data: profile as UserProfile, error: null });
+        setTargetProfile({ 
+          status: profile.status, 
+          data: profile.data ? { ...profile.data, id: user?.id || '' } as UserProfile : null, 
+          error: profile.error 
+        });
       }
       fetchSocialStats();
     };
     fetchData();
-  }, [targetUserId, isOwner, profile]);
+  }, [targetUserId, isOwner, profile.status, profile.data]);
 
   const fetchSocialStats = async () => {
     if (!targetUserId) return;
@@ -231,606 +164,246 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  const fetchSocialList = async (type: 'followers' | 'following') => {
-    if (!targetUserId) return;
-    setSocialModalType(type);
-    setIsSocialModalVisible(true);
-    setSocialList(prev => ({ ...prev, status: 'loading', data: [] }));
-    try {
-      const column = type === 'followers' ? 'follower_id' : 'following_id';
-      const filterColumn = type === 'followers' ? 'following_id' : 'follower_id';
-      const { data, error } = await typedFrom('follows').select(`${column}, profiles:${column} (id, username, avatar_url, bio)`).eq(filterColumn, targetUserId);
-      if (data) {
-        let users = data.map((item: any) => item.profiles).filter((u): u is UserProfile => !!u);
-        if (user) {
-          const { data: myFollows } = await typedFrom('follows').select('following_id').eq('follower_id', user.id);
-          const myFollowingIds = new Set((myFollows as { following_id: string }[])?.map(f => f.following_id) || []);
-          users = users.map(u => ({ ...u, is_following: myFollowingIds.has(u.id) }));
-        }
-        setSocialList({ status: 'success', data: users, error: null });
-      } else if (error) {
-        setSocialList({ status: 'error', data: [], error: error.message });
-      }
-    } catch (err) {
-      console.error('Fetch list error:', err);
-      setSocialList({ status: 'error', data: [], error: (err as Error).message });
-    }
-  };
-
-  const handleToggleFollowFromList = async (userId: string) => {
-    if (!user || user.id === userId || !socialList.data) return;
-    
-    // Optimistic update
-    setSocialList(prev => ({
-      ...prev,
-      data: prev.data?.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u) || []
-    }));
-
-    try {
-      const isCurrentlyFollowing = socialList.data.find(u => u.id === userId)?.is_following;
-      if (isCurrentlyFollowing) {
-        await typedFrom('follows').delete().eq('follower_id', user.id).eq('following_id', userId);
-      } else {
-        await typedFrom('follows').insert({ follower_id: user.id, following_id: userId } as any);
-      }
-      fetchSocialStats();
-    } catch (err) {
-      // Rollback on error
-      setSocialList(prev => ({
-        ...prev,
-        data: prev.data?.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u) || []
-      }));
-      console.error('Toggle follow list error:', err);
-    }
-  };
-
-  const profileData = targetProfile.data;
-  const displayName = profileData?.username || (isOwner ? (user?.user_metadata?.username || user?.email?.split('@')[0]) : 'User') || 'Movie Fan';
-  const avatarUrl = profileData?.avatar_url || (isOwner ? user?.user_metadata?.avatar_url : null);
-  const avatarLetter = displayName.charAt(0).toUpperCase();
-  const displayBio = profileData?.bio ?? '';
-
-  const watched = watchlist.filter(m => m.status === 'completed').length;
-  const total = watchlist.length;
-  const toWatch = total - watched;
-
-  useEffect(() => {
-    // Only initialize fields when entering edit mode, not on every profile change
-    // to avoid resetting user input while they are typing or cropping.
-    if (!isEditing) {
-      setEditName(displayName);
-      setEditAvatar(avatarUrl || '');
-      setEditBio(displayBio);
-    }
-  }, [displayName, avatarUrl, displayBio, isEditing]);
-
   const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false, 
-        quality: 1, 
-      });
-      
-      if (!result.canceled && result.assets?.[0]?.uri) {
-        setPickedImage(result.assets[0].uri);
-        setShowCropModal(true);
-      }
-    } catch (e) {
-      console.error('Pick image error:', e);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      setPickedImage(result.assets[0].uri);
+      setShowCropModal(true);
     }
   };
 
-  const handleCropSave = (croppedUri: string) => {
-    setEditAvatar(croppedUri);
-    setShowCropModal(false);
-    setPickedImage(null);
-  };
-
-  const handleCropCancel = () => {
-    setShowCropModal(false);
-    setPickedImage(null);
-  };
-
-  const handleSave = async () => {
+  const handleSaveProfile = async (data: { username: string; bio: string }) => {
     if (!user) return;
     setIsSaving(true);
     try {
-      const finalAvatar = editAvatar.trim() || null;
-      await supabase.auth.updateUser({ data: { username: editName, avatar_url: finalAvatar } });
-      await typedFrom('profiles').update({ username: editName, avatar_url: editAvatar, bio: editBio } as any).eq('id', user.id);
+      const { error } = await typedFrom('profiles').update({
+        username: data.username,
+        bio: data.bio,
+      }).eq('id', user.id);
       
-      // Instantly refresh the local context to update UI without reload
+      if (error) throw error;
+      
       await refreshProfile();
-      
       setIsEditing(false);
-    } finally { setIsSaving(false); }
-  };
-
-  const handleCancel = () => { setEditName(displayName); setEditAvatar(avatarUrl || ''); setEditBio(displayBio); setIsEditing(false); };
-  const handleSignOut = async () => { 
-    await signOut(); 
-    // Navigation is handled by RootLayout state listener, but replace is safer
-    router.replace('/auth/login' as any); 
-  };
-
-  const handleUpdatePassword = async () => {
-    if (newPassword.length < 6) {
-      alert('Password minimal 6 karakter');
-      return;
-    }
-    const err = await updatePassword(newPassword);
-    if (!err) {
-      setShowPasswordModal(false);
-      setNewPassword('');
-      alert('Password berhasil diperbarui');
-    } else {
-      alert(err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      console.error('Save error:', err);
+      alert(t('saveError'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== 'HAPUS') {
-      alert('Silakan ketik HAPUS untuk mengonfirmasi');
-      return;
-    }
-    const err = await deleteAccount();
-    if (err) {
-      alert(err);
-    } else {
-      setShowDeleteModal(false);
-      // Redirect handled by auth state change
-    }
-  };
-
-  const handleShare = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await Share.share({ message: `Check out my movie journey on WATCHLISTID! I've watched ${watched} films. 🎬`, title: 'My WATCHLISTID Profile' });
-  };
-
-  const handleExport = async () => {
-    if (!isOwner || isSaving) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
+  const handleUpdateAvatar = async (uri: string) => {
+    if (!user) return;
+    setIsSaving(true);
     try {
-      // 1. Check if dependencies are loaded
-      if (Platform.OS !== 'web' && (!FileSystem || !Sharing)) {
-        alert('Storage components are not ready. Please restart the app.');
-        return;
-      }
+      const fileName = `${user.id}-${Date.now()}.jpg`;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
 
-      // 2. Prepare Professional CSV Structure
-      let csvContent = `WATCHLISTID - PROFILE EXPORT\n`;
-      csvContent += `Username: ${displayName}\n`;
-      csvContent += `Export Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n`;
-      csvContent += `\n`;
-      csvContent += `--- STATISTICS ---\n`;
-      csvContent += `Total Diary Entries: ${userLogs.length}\n`;
-      csvContent += `Total Watchlist Items: ${watchlist.length}\n`;
-      csvContent += `  - Watched: ${watched}\n`;
-      csvContent += `  - To Watch: ${toWatch}\n`;
-      csvContent += `\n`;
-      csvContent += `--- MOVIE LIST ---\n`;
-      csvContent += 'No,Category,Title,Year,Rating,Date,Media Type,Review\n';
+
       
-      let rowNum = 1;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, decode(base64), { contentType: 'image/jpeg', upsert: true });
 
-      // 3. Add Diary Logs (userLogs)
-      if (userLogs && Array.isArray(userLogs)) {
-        userLogs.forEach(log => {
-          try {
-            const title = String(log.movie_title || 'Unknown').replace(/"/g, '""');
-            const review = String(log.review_text || '').replace(/"/g, '""').replace(/\n/g, ' ');
-            const rating = log.rating ? `"${log.rating}/10"` : '""';
-            const date = log.watched_at ? `"${new Date(log.watched_at).toLocaleDateString()}"` : '""';
-            csvContent += `${rowNum++},Diary,"${title}",,${rating},${date},${log.media_type || 'movie'},"${review}"\n`;
-          } catch (e) {
-            console.warn('Skipping log entry:', e);
-          }
-        });
-      }
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
       
-      // 4. Add Watchlist/Watched Items
-      if (watchlist && Array.isArray(watchlist)) {
-        watchlist.forEach(item => {
-          try {
-            const itemTitle = item.mediaType === 'movie' ? item.title : item.name;
-            const title = String(itemTitle || 'Unknown').replace(/"/g, '""');
-            const status = item.status === 'completed' ? 'Watched' : 'To Watch';
-            const releaseDate = item.mediaType === 'movie' ? item.release_date : item.first_air_date;
-            const year = releaseDate ? releaseDate.substring(0, 4) : '""';
-            const ratingValue = userRatings[item.id];
-            const rating = ratingValue ? `"${ratingValue}/10"` : '""';
-            const date = item.addedAt ? `"${new Date(item.addedAt).toLocaleDateString()}"` : '""';
-            csvContent += `${rowNum++},${status},"${title}",${year},${rating},${date},${item.mediaType},""\n`;
-          } catch (e) {
-            console.warn('Skipping watchlist item:', e);
-          }
-        });
-      }
+      const { error: updateError } = await typedFrom('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
 
-      // 5. Create and Export File
-      const fileName = `watchlistid_export_${Date.now()}.csv`;
-
-      if (Platform.OS === 'web') {
-        // WEB: Use Blob and hidden anchor element for download
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // NATIVE: Use FileSystem and Sharing API
-        const fileUri = ((FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '') + fileName;
-        
-        // Default encoding is UTF8
-        await FileSystem.writeAsStringAsync(fileUri, csvContent);
-        
-        const isAvailable = await Sharing.isAvailableAsync();
-        if (isAvailable) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: 'text/csv',
-            dialogTitle: 'Export your WatchlistID data',
-            UTI: 'public.comma-separated-values-text'
-          });
-        } else {
-          alert('Sharing is not available on this device');
-        }
-      }
-    } catch (error: any) {
-      console.error('Export error details:', error);
-      alert(`Export failed: ${error.message || 'Unknown error'}`);
+      if (updateError) throw updateError;
+      
+      await refreshProfile();
+      setShowCropModal(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      console.error('Avatar update error:', err);
+      alert(t('avatarError'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const TABS: { id: ContentTab; label: string; Icon: any; count: number }[] = [
-    { id: 'Diary', label: t('diary'), Icon: LayoutGrid, count: userLogs.length },
-    { id: 'Watched', label: t('watched'), Icon: Play, count: watched },
-    { id: 'Watchlist', label: t('toWatch'), Icon: Bookmark, count: toWatch },
-  ];
+  if (targetProfile.status === 'error') {
+    return (
+      <View style={s.errorContainer}>
+        <SearchX size={48} color={Colors.primary} />
+        <Text style={s.errorTitle}>{t('profileNotFound')}</Text>
+        <Text style={s.errorSub}>{t('profileNotFoundDesc')}</Text>
+        <TouchableOpacity style={s.retryBtn} onPress={() => router.back()}>
+          <Text style={s.retryBtnText}>{t('goBack')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-  const currentAvatarUrl = isEditing ? editAvatar : avatarUrl;
-  const activeTabInfo = TABS.find(t => t.id === activeTab);
+  const profileData = targetProfile.data;
+  const userLogsList = userLogs.filter((l: any) => l.user_id === targetUserId);
+  const watchedMovies = watchlist.filter(m => m.status === 'completed');
+  const watchlistMovies = watchlist.filter(m => m.status === 'plan_to_watch');
+
 
   return (
     <View style={s.root}>
       <StatusBar barStyle="light-content" />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        <View style={[s.topBar, { paddingTop: insets.top + 8 }]}>
-          <View style={s.topBarLeft}>
-            {!isOwner ? (
-              <TouchableOpacity onPress={() => router.back()} style={s.topBarIcon}>
-                <ArrowLeft size={24} color={Colors.white} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={() => router.push('/search-users' as any)} style={s.topBarIcon}>
-                <Search size={24} color={Colors.white} />
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={s.topBarCenter}>
-            <Text style={s.topBarTitle} allowFontScaling={false}>
-              {isOwner ? t('profile') : profileData?.username || t('profile')}
-            </Text>
-          </View>
-          <View style={s.topBarRight}>
-            {isOwner && (
-              <TouchableOpacity style={s.topBarIcon} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowSettingsSheet(true); }}>
-                <Menu size={24} color="#fff" strokeWidth={2} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        <View style={[s.heroContainer, isEditing && s.heroEditCard]}>
-          <TouchableOpacity 
-            style={[s.avatarContainer, isEditing && s.avatarEditGlow]} 
-            activeOpacity={isEditing ? 0.8 : 1} 
-            onPress={isEditing ? handlePickImage : undefined}
-          >
-            <Avatar 
-              uri={currentAvatarUrl} 
-              name={displayName} 
-              size={86} 
-              style={s.avatarImg} 
-              priority="high"
-            />
-            {isEditing && (
-              <View style={s.cameraOverlay}>
-                <Camera size={22} color="#fff" strokeWidth={2.5} />
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <View style={s.identityBox}>
-            {isEditing ? (
-              <View style={s.editFields}>
-                <View style={s.inputGroup}>
-                  <Text style={s.fieldLabel}>{t('nameLabel') || 'USERNAME'}</Text>
-                  <TextInput 
-                    style={s.nameInput} 
-                    value={editName} 
-                    onChangeText={setEditName} 
-                    placeholder={t('yourNamePlaceholder')} 
-                    placeholderTextColor="rgba(255,255,255,0.2)" 
-                    autoCorrect={false}
-                  />
-                </View>
-
-                <View style={s.inputGroup}>
-                  <View style={s.labelRow}>
-                    <Text style={s.fieldLabel}>{t('bioLabel') || 'BIO / DESCRIPTION'}</Text>
-                    <Text style={s.charCount}>{editBio.length}/80</Text>
-                  </View>
-                  <TextInput 
-                    style={s.bioInput} 
-                    value={editBio} 
-                    onChangeText={v => setEditBio(v.slice(0, 80))} 
-                    placeholder={t('shortBioPlaceholder')} 
-                    placeholderTextColor="rgba(255,255,255,0.2)" 
-                    multiline 
-                    maxLength={80} 
-                  />
-                </View>
-              </View>
-            ) : (
-              <>
-                <Text style={s.displayName} allowFontScaling={false}>{displayName}</Text>
-                {displayBio ? (
-                  <Text style={s.bioText} allowFontScaling={false}>{displayBio}</Text>
-                ) : isOwner ? (
-                  <Text style={s.bioPlaceholder} allowFontScaling={false}>{t('tapToAddBio')}</Text>
-                ) : null}
-              </>
-            )}
-          </View>
-
-          <View style={s.statsRow}>
-            <TouchableOpacity style={s.statItem} onPress={() => fetchSocialList('followers')}>
-              <Text style={s.statCount}>{followers}</Text>
-              <Text style={s.statLabel}>{t('followers')}</Text>
+      <View style={[s.topBar, { paddingTop: insets.top }]}>
+        <View style={s.topBarLeft}>
+          {!isOwner && (
+            <TouchableOpacity onPress={() => router.back()}>
+              <ArrowLeft color={Colors.white} size={24} />
             </TouchableOpacity>
-            <TouchableOpacity style={s.statItem} onPress={() => fetchSocialList('following')}>
-              <Text style={s.statCount}>{following}</Text>
-              <Text style={s.statLabel}>{t('following')}</Text>
+          )}
+        </View>
+        <View style={s.topBarCenter}>
+          <Text style={s.topBarTitle} allowFontScaling={false}>
+            {isOwner ? t('profile') : profileData?.username}
+          </Text>
+        </View>
+
+        <View style={s.topBarRight}>
+          {isOwner && (
+            <TouchableOpacity onPress={() => setShowSettingsSheet(true)}>
+              <SettingsIcon color={Colors.white} size={22} />
             </TouchableOpacity>
-            
-            <View style={s.statItem}>
-              <Text style={s.statCount}>{userLogs.length}</Text>
-              <Text style={s.statLabel}>{t('logs')}</Text>
-            </View>
-          </View>
-          <View style={s.actionRow}>
-            {isOwner ? (isEditing ? (<><TouchableOpacity style={[s.primaryBtn, { backgroundColor: Colors.primary }]} onPress={handleSave} disabled={isSaving}>{isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.primaryBtnText}>{t('save')}</Text>}</TouchableOpacity><TouchableOpacity style={s.secondaryBtn} onPress={handleCancel}><Text style={s.secondaryBtnText}>{t('cancel')}</Text></TouchableOpacity></>) : (<><TouchableOpacity style={s.secondaryBtn} onPress={() => setIsEditing(true)}><Text style={s.secondaryBtnText}>{t('editProfile')}</Text></TouchableOpacity><TouchableOpacity style={s.secondaryBtn} onPress={handleShare}><Text style={s.secondaryBtnText}>{t('shareProfile')}</Text></TouchableOpacity></>)) : (<TouchableOpacity style={[s.primaryBtn, isFollowing && s.followingBtn]} onPress={handleFollow} disabled={isFollowLoading}>{isFollowLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[s.primaryBtnText, isFollowing && { color: Colors.white }]}>{isFollowing ? t('unfollow') : t('follow')}</Text>}</TouchableOpacity>)}
-          </View>
+          )}
+        </View>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <ProfileHeader 
+          displayName={profileData?.username || 'User'} 
+          avatarUrl={profileData?.avatar_url}
+          bio={profileData?.bio}
+          isOwner={isOwner}
+        />
+
+        <ProfileStats 
+          followers={followers} 
+          following={following} 
+          watched={watchedMovies.length}
+          onFollowersPress={() => {}}
+          onFollowingPress={() => {}}
+          t={t}
+        />
+
+        <ProfileActions 
+          isOwner={isOwner}
+          isFollowing={isFollowing}
+          isFollowLoading={isFollowLoading}
+          onFollowPress={handleFollow}
+          onEditPress={() => setIsEditing(true)}
+          t={t}
+        />
+
+        <View style={{ marginTop: Spacing.xl }}>
+          <ProfileTabs 
+            activeTab={activeTab}
+            onTabPress={setActiveTab}
+            counts={{
+              diary: userLogsList.length,
+              watched: watchedMovies.length,
+              watchlist: watchlistMovies.length
+            }}
+
+          />
         </View>
 
-        <View style={s.tabBar}>
-          {TABS.map(({ id, label, Icon, count }) => {
-            const active = activeTab === id;
-            return (
-              <TouchableOpacity key={id} style={[s.tab, active && s.tabActive]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(id); }} activeOpacity={0.7}>
-                <View style={s.tabIconWrapper}>
-                  <Icon size={22} color={active ? Colors.primary : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} />
-                </View>
-                <Text style={[s.tabLabel, active && s.tabLabelActive]} allowFontScaling={false}>{label}</Text>
-              </TouchableOpacity>
-
-            );
-          })}
-        </View>
-
-        <View style={s.content}>
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>{activeTabInfo?.label}</Text>
-            <Text style={s.sectionCount}>{activeTabInfo?.count} {t('titles')}</Text>
-          </View>
+        {/* Content Lists based on Active Tab */}
+        <View style={{ paddingVertical: Spacing.lg }}>
           {activeTab === 'Diary' && (
-            loadingLogs ? (
-              <View style={{ gap: 12 }}>{[1,2,3].map(i => <DiarySkeleton key={i} />)}</View>
-            ) : userLogs.length === 0 ? (
-              <EmptyState icon={<BookOpen size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyDiary')} />
+            userLogsList.length > 0 ? (
+              userLogsList.map((log: any) => <DiaryCard key={log.id} log={log} />)
             ) : (
-              userLogs.map((log, index) => (
-                <DiaryCard 
-                  key={log.id} 
-                  log={log} 
-                  priority={index < 2 ? 'high' : 'normal'}
-                  onDelete={isOwner ? (id) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setLogToDelete(id); } : () => {}} 
-                  onPressPoster={(id) => router.push(`/movie/${id}?type=${log.media_type || 'movie'}` as any)} 
-                />
-              ))
+              <View style={s.emptyWrap}>
+                <Text style={s.emptyText}>{t('noLogsYet')}</Text>
+              </View>
             )
           )}
-          
+
           {activeTab === 'Watched' && (
-            loadingWatchlist ? (
-              <View style={{ gap: 0 }}>{[1,2,3,4].map(i => <MovieItemSkeleton key={i} />)}</View>
-            ) : watchlist.filter(m => m.status === 'completed').length === 0 ? (
-              <EmptyState icon={<Eye size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyWatched')} />
-            ) : (
-              watchlist.filter(m => m.status === 'completed').map(item => (
+            watchedMovies.length > 0 ? (
+              watchedMovies.map(movie => (
                 <MovieListItem 
-                  key={item.id} 
-                  movie={item as any} 
-                  onPress={() => router.push(`/movie/${item.id}?type=${item.mediaType}` as any)} 
-                  showWatched={isOwner} 
-                  watched={item.status === 'completed'} 
-                  inWatchlist={isOwner} 
-                  onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} 
-                  onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} 
+                  key={movie.id} 
+                  movie={movie} 
+                  onPress={() => router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type: movie.mediaType } } as any)}
+
                 />
               ))
+            ) : (
+              <View style={s.emptyWrap}>
+                <Text style={s.emptyText}>{t('noWatchedYet')}</Text>
+              </View>
             )
           )}
-          
           {activeTab === 'Watchlist' && (
-            loadingWatchlist ? (
-              <View style={{ gap: 0 }}>{[1,2,3,4].map(i => <MovieItemSkeleton key={i} />)}</View>
-            ) : watchlist.filter(m => m.status !== 'completed').length === 0 ? (
-              <EmptyState icon={<Star size={44} color="rgba(255,255,255,0.12)" strokeWidth={1.5} />} text={t('emptyToWatch')} />
-            ) : (
-              watchlist.filter(m => m.status !== 'completed').map(item => (
+            watchlistMovies.length > 0 ? (
+              watchlistMovies.map(movie => (
                 <MovieListItem 
-                  key={item.id} 
-                  movie={item as any} 
-                  onPress={() => router.push(`/movie/${item.id}?type=${item.mediaType}` as any)} 
-                  showWatched={isOwner} 
-                  watched={item.status === 'completed'} 
-                  inWatchlist={isOwner} 
-                  onToggleWatched={isOwner ? () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); toggleWatched(item.id); } : () => {}} 
-                  onRemove={isOwner ? () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); removeFromWatchlist(item.id); } : () => {}} 
+                  key={movie.id} 
+                  movie={movie} 
+                  onPress={() => router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type: movie.mediaType } } as any)}
+
                 />
               ))
+            ) : (
+              <View style={s.emptyWrap}>
+                <Text style={s.emptyText}>{t('noWatchlistYet')}</Text>
+              </View>
             )
           )}
         </View>
       </ScrollView>
 
-      {/* Fix 4: Password Change Modal */}
-      <Modal visible={showPasswordModal} transparent animationType="fade">
-        <View style={s.overlay}>
-          <View style={s.modalCard}>
-            <View style={[s.modalIconBox, { backgroundColor: 'rgba(66,133,244,0.1)' }]}>
-              <SettingsIcon size={24} color="#4285F4" />
-            </View>
-            <Text style={s.modalTitle} allowFontScaling={false}>Ganti Password</Text>
-            <Text style={s.modalSub} allowFontScaling={false}>Masukkan password baru kamu (minimal 6 karakter).</Text>
-            <TextInput
-              style={{ width: '100%', marginBottom: 24, backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', padding: 12, borderRadius: 8, height: 50 }}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="Password baru"
-              placeholderTextColor="rgba(255,255,255,0.3)"
-              secureTextEntry
-              allowFontScaling={false}
-            />
-            <View style={s.modalActions}>
-              <TouchableOpacity style={s.btnSecondary} onPress={() => setShowPasswordModal(false)} activeOpacity={0.7}>
-                <Text style={s.btnSecondaryText} allowFontScaling={false}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[s.btnDanger, { backgroundColor: '#4285F4' }]} onPress={handleUpdatePassword} activeOpacity={0.8}>
-                <Text style={s.btnDangerText} allowFontScaling={false}>Simpan</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {isOwner && (
+        <ProfileEditModal 
+          visible={isEditing}
+          onClose={() => setIsEditing(false)}
+          onSave={handleSaveProfile}
+          initialData={{
+            username: profileData?.username || '',
+            bio: profileData?.bio || '',
+            avatarUrl: profileData?.avatar_url || undefined
+          }}
+          onPickImage={handlePickImage}
 
-      {/* Fix 5: Account Deletion Modal */}
-      <Modal visible={showDeleteModal} transparent animationType="fade">
-        <View style={s.overlay}>
-          <View style={s.modalCard}>
-            <View style={s.modalIconBox}>
-              <Trash2 size={24} color={Colors.primary} />
-            </View>
-            <Text style={s.modalTitle} allowFontScaling={false}>Hapus Akun?</Text>
-            <Text style={s.modalSub} allowFontScaling={false}>Tindakan ini permanen. Semua watchlist, diary, dan profil kamu akan dihapus. Ketik HAPUS untuk melanjutkan.</Text>
-            <TextInput
-              style={{ width: '100%', marginBottom: 24, backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center', height: 50 }}
-              value={deleteConfirmText}
-              onChangeText={setDeleteConfirmText}
-              placeholder="HAPUS"
-              placeholderTextColor="rgba(255,255,255,0.2)"
-              autoCapitalize="characters"
-              allowFontScaling={false}
-            />
-            <View style={s.modalActions}>
-              <TouchableOpacity style={s.btnSecondary} onPress={() => setShowDeleteModal(false)} activeOpacity={0.7}>
-                <Text style={s.btnSecondaryText} allowFontScaling={false}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.btnDanger} onPress={handleDeleteAccount} activeOpacity={0.8}>
-                <Text style={s.btnDangerText} allowFontScaling={false}>Hapus Akun</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showLogoutModal} transparent animationType="fade">
-        <View style={s.overlay}>
-          <View style={s.modalCard}>
-            <View style={s.modalIconBox}><LogOut size={28} color="#DC3545" strokeWidth={2.5} /></View>
-            <Text style={s.modalTitle} allowFontScaling={false}>{t('signOutConfirmTitle')}</Text>
-            <Text style={s.modalSub} allowFontScaling={false}>{t('signOutConfirmDesc')}</Text>
-            <View style={s.modalActions}>
-              <TouchableOpacity style={s.btnSecondary} onPress={() => setShowLogoutModal(false)} activeOpacity={0.7}><Text style={s.btnSecondaryText} allowFontScaling={false}>{t('cancel')}</Text></TouchableOpacity>
-              <TouchableOpacity style={s.btnDanger} onPress={() => { setShowLogoutModal(false); handleSignOut(); }} activeOpacity={0.8}><Text style={s.btnDangerText} allowFontScaling={false}>{t('signOut')}</Text></TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <SettingsSheet 
-        visible={showSettingsSheet} 
-        onClose={() => setShowSettingsSheet(false)} 
-        onLanguagePress={() => setShowLangModal(true)} 
-        onLogoutPress={() => setShowLogoutModal(true)} 
-        onNotificationsPress={() => router.push('/notifications' as any)} 
-        onAboutPress={() => router.push('/about' as any)} 
-        onExportPress={handleExport}
-        onPasswordPress={() => setShowPasswordModal(true)}
-        onDeletePress={() => setShowDeleteModal(true)}
-      />
-      <LanguageSheet visible={showLangModal} onClose={() => setShowLangModal(false)} />
-      <DeleteConfirmModal visible={!!logToDelete} onClose={() => setLogToDelete(null)} onConfirm={() => { if (logToDelete) deleteLog(logToDelete); }} title={t('deleteLogTitle')} message={t('deleteLogDesc')} />
-      <SocialListSheet 
-        visible={isSocialModalVisible} 
-        onClose={() => setIsSocialModalVisible(false)} 
-        initialTab={socialModalType} 
-        data={socialList.data || []} 
-        loading={socialList.status === 'loading'} 
-        currentUserId={user?.id || ''} 
-        onUserPress={(id) => { 
-          setIsSocialModalVisible(false); 
-          router.push({ pathname: '/(tabs)/profile', params: { userId: id } } as any); 
-        }} 
-        onFollowToggle={(id) => handleToggleFollowFromList(id)} 
-      />
-      {pickedImage && (
-        <ImageCropModal 
-          visible={showCropModal} 
-          imageUri={pickedImage} 
-          onClose={handleCropCancel} 
-          onSave={handleCropSave} 
+          isSaving={isSaving}
+          t={t}
         />
       )}
-    </View>
-  );
-};
 
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (<View style={s.emptyWrap}>{icon}<Text style={s.emptyText} allowFontScaling={false}>{text}</Text></View>);
-}
+      <ImageCropModal 
+        visible={showCropModal}
+        imageUri={pickedImage || ''}
+        onClose={() => setShowCropModal(false)}
+        onSave={handleUpdateAvatar}
+      />
 
-function DiarySkeleton() {
-  return (
-    <View style={{ paddingHorizontal: Spacing.xl, paddingVertical: 12, flexDirection: 'row', gap: 12, opacity: 0.15 }}>
-      <View style={{ width: 70, height: 105, backgroundColor: Colors.white, borderRadius: Radius.sm }} />
-      <View style={{ flex: 1, gap: 8, justifyContent: 'center' }}>
-        <View style={{ width: '60%', height: 14, backgroundColor: Colors.white, borderRadius: 4 }} />
-        <View style={{ width: '40%', height: 10, backgroundColor: Colors.white, borderRadius: 4 }} />
-        <View style={{ width: '80%', height: 10, backgroundColor: Colors.white, borderRadius: 4, marginTop: 8 }} />
-      </View>
-    </View>
-  );
-}
 
-function MovieItemSkeleton() {
-  return (
-    <View style={{ paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg, flexDirection: 'row', gap: Spacing.lg, opacity: 0.1 }}>
-      <View style={{ width: 60, height: 88, backgroundColor: Colors.white, borderRadius: Radius.sm }} />
-      <View style={{ flex: 1, gap: 8, justifyContent: 'center' }}>
-        <View style={{ width: '70%', height: 16, backgroundColor: Colors.white, borderRadius: 4 }} />
-        <View style={{ width: '30%', height: 12, backgroundColor: Colors.white, borderRadius: 4 }} />
-        <View style={{ width: '90%', height: 12, backgroundColor: Colors.white, borderRadius: 4, marginTop: 10 }} />
-      </View>
+      <SettingsSheet 
+        visible={showSettingsSheet}
+        onClose={() => setShowSettingsSheet(false)}
+        onLanguagePress={() => {
+          // Language selection could be implemented here
+          setShowSettingsSheet(false);
+        }}
+        onLogoutPress={async () => {
+          await signOut();
+          setShowSettingsSheet(false);
+          router.replace('/auth/login');
+        }}
+      />
+
+
     </View>
   );
 }
-
-export default ProfileScreen;

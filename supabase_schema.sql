@@ -159,6 +159,18 @@ create table public.follows (
   check (follower_id <> following_id)
 );
 
+-- Fix follows table cascade delete
+ALTER TABLE public.follows
+  DROP CONSTRAINT IF EXISTS follows_follower_id_fkey,
+  DROP CONSTRAINT IF EXISTS follows_following_id_fkey;
+
+ALTER TABLE public.follows
+  ADD CONSTRAINT follows_follower_id_fkey
+    FOREIGN KEY (follower_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD CONSTRAINT follows_following_id_fkey
+    FOREIGN KEY (following_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 -- Enable RLS
 alter table public.follows enable row level security;
 
@@ -281,14 +293,16 @@ create policy "Users can delete own reviews"
 
 -- ─── C2: notifications Table ──────────────────────────────────────────────
 create table if not exists public.notifications (
-  id         uuid default gen_random_uuid() primary key,
-  user_id    uuid references public.profiles(id) on delete cascade not null,
-  title      text not null,
-  message    text not null,
-  type       text not null default 'info' check (type in ('info', 'success', 'warning')),
-  is_read    boolean not null default false,
-  movie_id   integer,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+  id           uuid default gen_random_uuid() primary key,
+  user_id      uuid references public.profiles(id) on delete cascade not null,
+  actor_id     uuid references public.profiles(id) on delete cascade,
+  reference_id uuid, -- Can be review_id, movie_id, etc.
+  title        text not null,
+  message      text not null,
+  type         text not null default 'info' check (type in ('info', 'success', 'warning', 'follow', 'review_like')),
+  is_read      boolean not null default false,
+  movie_id     integer,
+  created_at   timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table public.notifications enable row level security;
@@ -362,4 +376,68 @@ begin
   return true; -- now liked
 end;
 $$;
+
+
+-- ─── M8: Notification Triggers ──────────────────────────────────────────
+
+-- Trigger: notifikasi saat ada follow baru
+CREATE OR REPLACE FUNCTION public.notify_new_follow()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_follower_name TEXT;
+BEGIN
+  SELECT username INTO v_follower_name FROM public.profiles WHERE id = NEW.follower_id;
+  
+  INSERT INTO public.notifications (user_id, type, actor_id, title, message)
+  VALUES (
+    NEW.following_id, 
+    'follow', 
+    NEW.follower_id, 
+    'Pengikut Baru', 
+    v_follower_name || ' mulai mengikuti Anda'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_new_follow ON public.follows;
+CREATE TRIGGER on_new_follow
+AFTER INSERT ON public.follows
+FOR EACH ROW EXECUTE FUNCTION public.notify_new_follow();
+
+-- Trigger: notifikasi saat review di-like
+CREATE OR REPLACE FUNCTION public.notify_review_like()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_review_owner_id UUID;
+  v_liker_name TEXT;
+  v_movie_title TEXT;
+BEGIN
+  -- Get owner of the review
+  SELECT user_id, movie_id INTO v_review_owner_id, v_movie_title FROM public.reviews WHERE id = NEW.review_id;
+  
+  -- Get liker name
+  SELECT username INTO v_liker_name FROM public.profiles WHERE id = NEW.user_id;
+
+  -- Don't notify if liking own review
+  IF v_review_owner_id != NEW.user_id THEN
+    INSERT INTO public.notifications (user_id, type, actor_id, reference_id, title, message)
+    VALUES (
+      v_review_owner_id, 
+      'review_like', 
+      NEW.user_id, 
+      NEW.review_id, 
+      'Ulasan Disukai', 
+      v_liker_name || ' menyukai ulasan Anda'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_review_liked ON public.review_likes;
+CREATE TRIGGER on_review_liked
+AFTER INSERT ON public.review_likes
+FOR EACH ROW EXECUTE FUNCTION public.notify_review_like();
+
 

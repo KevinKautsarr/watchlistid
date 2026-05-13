@@ -23,7 +23,8 @@ import {
   getTrendingTV, getTrendingAll, searchMovies, searchPeople, searchTV, searchMulti,
   discoverAnime, discoverAnimation,
 } from "../services/api";
-import { MediaItem } from "../types/tmdb";
+import { MediaItem, FetchState } from "../types";
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const norm = (i: any, defaultType?: 'movie' | 'tv'): MediaItem | null => {
@@ -126,14 +127,18 @@ export default function SearchScreen() {
   const debouncedQ = useDebounce(searchText, 450);
 
   // ── data state ──────────────────────────────────────────────────────────────
-  const [items,         setItems]         = useState<MediaItem[]>([]);
-  const [personItems,   setPersonItems]   = useState<{ id: number, profile_path?: string, name: string, known_for_department?: string, known_for?: any[] }[]>([]);
+  const [itemsState, setItemsState] = useState<FetchState<MediaItem[]>>({ status: 'idle', data: [], error: null });
+  const [personState, setPersonState] = useState<FetchState<any[]>>({ status: 'idle', data: [], error: null });
   const [page,          setPage]          = useState(1);
   const [totalPages,    setTotalPages]    = useState(1);
   const [totalResults,  setTotalResults]  = useState(0);
-  const [loading,       setLoading]       = useState(false);
   const [loadingMore,   setLoadingMore]   = useState(false);
   const [recentSearches,setRecentSearches]= useState<string[]>([]);
+
+  const items = itemsState.data || [];
+  const personItems = personState.data || [];
+  const loading = itemsState.status === 'loading' || personState.status === 'loading';
+
 
   const inputRef   = useRef<TextInput>(null);
   const inputScale = useRef(new Animated.Value(1)).current;
@@ -141,7 +146,8 @@ export default function SearchScreen() {
   // ── sync params ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const c = params.category as CatKey|undefined;
-    if (c) { setActiveCat(c); setSearchText(""); setItems([]); setPage(1); }
+    if (c) { setActiveCat(c); setSearchText(""); setItemsState({ status: 'idle', data: [], error: null }); setPage(1); }
+
   }, [params.category]);
 
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
@@ -164,8 +170,23 @@ export default function SearchScreen() {
   }, [params.genre]);
 
   // ── fetch helpers ────────────────────────────────────────────────────────────
+  const handleClear = () => {
+    setSearchText("");
+    setItemsState((prev: FetchState<MediaItem[]>) => ({ ...prev, status: 'idle', data: [] }));
+    setPersonState((prev: FetchState<any[]>) => ({ ...prev, status: 'idle', data: [] }));
+    setPage(1);
+    setTotalPages(1);
+    inputRef.current?.focus();
+  };
+
   const fetchPage = useCallback(async (query: string, filter: string, p: number, append: boolean) => {
-    p === 1 ? setLoading(true) : setLoadingMore(true);
+    if (p === 1) {
+      setItemsState(prev => ({ ...prev, status: 'loading' }));
+      setPersonState(prev => ({ ...prev, status: 'loading' }));
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
       let raw: any[]  = [];
       let tp = 1, tr = 0;
@@ -190,6 +211,19 @@ export default function SearchScreen() {
         const d = query.trim() ? await searchTV(query, p) : await getTrendingTV(p);
         raw = (d.results ?? []).map(i => norm(i, "tv")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
+      } else if (filter === "people") {
+        const d = query.trim() ? await searchPeople(query, p) : await getPopularPeople(p);
+        const results = d.results ?? [];
+        setPersonState((prev: FetchState<any[]>) => ({
+          status: 'success',
+          data: append ? [...(prev.data || []), ...results] : results,
+          error: null
+        }));
+
+        setTotalPages(d.total_pages ?? 1);
+        setTotalResults(d.total_results ?? results.length);
+        setItemsState({ status: 'success', data: [], error: null });
+        return;
       } else {
         const d = query.trim() ? await searchMovies(query, p) : await discoverMovies(Number(filter), p);
         const results = query.trim()
@@ -198,12 +232,24 @@ export default function SearchScreen() {
         raw = results.map(i => norm(i, "movie")).filter((i): i is MediaItem => i !== null);
         tp = d.total_pages ?? 1; tr = d.total_results ?? raw.length;
       }
-      setItems(append ? prev => [...prev, ...raw] : raw);
+      
+      setItemsState((prev: FetchState<MediaItem[]>) => ({
+        status: 'success',
+        data: append ? [...(prev.data || []), ...raw] : raw,
+        error: null
+      }));
+
+      setPersonState({ status: 'success', data: [], error: null });
       setTotalPages(tp);
       setTotalResults(tr);
-    } catch(e) { console.error(e); }
-    finally { setLoading(false); setLoadingMore(false); }
+    } catch(e) { 
+      setItemsState((prev: FetchState<MediaItem[]>) => ({ ...prev, status: 'error', error: (e as Error).message }));
+      setPersonState((prev: FetchState<any[]>) => ({ ...prev, status: 'error', error: (e as Error).message }));
+    }
+
+    finally { setLoadingMore(false); }
   }, []);
+
 
   const numCols   = 1;
 
@@ -225,19 +271,28 @@ export default function SearchScreen() {
 
   // ── category fetch ───────────────────────────────────────────────────────────
   const fetchCatPage = useCallback(async (cat: CatKey, p: number, append: boolean) => {
-    p === 1 ? setLoading(true) : setLoadingMore(true);
+    p === 1 ? setItemsState((prev: FetchState<MediaItem[]>) => ({ ...prev, status: 'loading' })) : setLoadingMore(true);
+
     try {
       const def = CATS[cat];
       const d   = await def.fetchFn(p);
       const mediaType = def.normalize ? 'tv' : 'movie';
       const raw = (d.results ?? []).map(i => norm(i, mediaType)).filter((i): i is MediaItem => i !== null);
-      setItems(append ? prev => [...prev, ...raw] : raw);
+      setItemsState((prev: FetchState<MediaItem[]>) => ({
+        status: 'success',
+        data: append ? [...(prev.data || []), ...raw] : raw,
+        error: null
+      }));
+
       setTotalPages(d.total_pages ?? 1);
       setTotalResults(d.total_results ?? raw.length);
-      setPersonItems([]);
-    } catch(e) { console.error(e); }
-    finally { setLoading(false); setLoadingMore(false); }
+      setPersonState({ status: 'success', data: [], error: null });
+    } catch(e) { 
+      setItemsState(prev => ({ ...prev, status: 'error', error: (e as Error).message }));
+    }
+    finally { setLoadingMore(false); }
   }, []);
+
 
   // ── effects ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -259,7 +314,8 @@ export default function SearchScreen() {
     else fetchPage(debouncedQ, activeFilter, next, true);
   };
 
-  const exitCat = () => { setActiveCat(null); setItems([]); setPage(1); setSearchText(""); };
+  const exitCat = () => { setActiveCat(null); setItemsState({ status: 'idle', data: [], error: null }); setPage(1); setSearchText(""); };
+
   const toggleWL = (m: MediaItem) => {
     const has = isInWatchlist(m.id);
     Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
@@ -350,10 +406,16 @@ export default function SearchScreen() {
           contentContainerStyle={listContentStyle}
           keyboardDismissMode="on-drag"
           ListFooterComponent={Footer}
-          initialNumToRender={8}
-          maxToRenderPerBatch={8}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
           windowSize={5}
           removeClippedSubviews
+          getItemLayout={(_, index) => ({
+            length: 120,
+            offset: 120 * index,
+            index
+          })}
+
           ListEmptyComponent={!loading ? (
             <View style={s.empty}>
               <View style={s.emptyIcon}><SearchX size={36} color={Colors.primary} strokeWidth={1.5}/></View>
@@ -395,7 +457,13 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false} contentContainerStyle={s.listContent}
           keyboardDismissMode="on-drag"
           ListFooterComponent={Footer}
+          getItemLayout={(_, index) => ({
+            length: 76,
+            offset: 76 * index,
+            index
+          })}
           ListEmptyComponent={!loading ? (
+
             <View style={s.empty}>
               <View style={s.emptyIcon}><SearchX size={36} color={Colors.primary} strokeWidth={1.5}/></View>
               <Text style={s.emptyTitle} allowFontScaling={false}>{showDefault ? t('searchPlaceholder') : t('noResults')}</Text>
@@ -414,10 +482,16 @@ export default function SearchScreen() {
           )}
           showsVerticalScrollIndicator={false} contentContainerStyle={listContentStyle}
           keyboardDismissMode="on-drag"
-          initialNumToRender={8}
-          maxToRenderPerBatch={8}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
           windowSize={5}
           removeClippedSubviews
+          getItemLayout={(_, index) => ({
+            length: 120,
+            offset: 120 * index,
+            index
+          })}
+
           ListHeaderComponent={showDefault ? (
             <View style={{paddingBottom: Spacing.md}}>
               {recentSearches.length>0 && (

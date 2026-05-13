@@ -9,22 +9,42 @@ interface UseMoviesState<T> {
   refetch:    () => void;
 }
 
+// ── In-Memory Cache ──────────────────────────────────────────────────────────
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const movieCache: Record<string, { data: any, timestamp: number }> = {};
+
 function useAsync<T>(
   fetcher: () => Promise<T>,
-  deps: any[] = []
+  deps: any[] = [],
+  cacheKey?: string
 ): UseMoviesState<T> {
   const [data, setData]         = useState<T | null>(null);
   const [isLoading, setLoading] = useState(true);
   const [error, setError]       = useState<string | null>(null);
-  // Use a counter to trigger manual refetch
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+
+    // Cache check
+    if (cacheKey && movieCache[cacheKey]) {
+      const entry = movieCache[cacheKey];
+      if (Date.now() - entry.timestamp < CACHE_TTL) {
+        setData(entry.data);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
     fetcher()
-      .then(result => { if (!cancelled) setData(result); })
+      .then(result => { 
+        if (!cancelled) {
+          setData(result);
+          if (cacheKey) movieCache[cacheKey] = { data: result, timestamp: Date.now() };
+        }
+      })
       .catch(e     => { if (!cancelled) setError(e instanceof Error ? e.message : 'Unknown error'); })
       .finally(()  => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -37,22 +57,54 @@ function useAsync<T>(
 }
 
 export const useTrending = () =>
-  useAsync(() => api.getTrendingMovies().then(r => r.results.slice(0, 15)));
+  useAsync(() => api.getTrendingMovies().then(r => r.results.slice(0, 15)), [], 'trending');
 
 export const usePopular = () =>
-  useAsync(() => api.getPopularMovies().then(r => r.results.slice(0, 12)));
+  useAsync(() => api.getPopularMovies().then(r => r.results.slice(0, 12)), [], 'popular');
 
 export const useTopRated = () =>
-  useAsync(() => api.getTopRatedMovies().then(r => r.results.slice(0, 12)));
+  useAsync(() => api.getTopRatedMovies().then(r => r.results.slice(0, 12)), [], 'top-rated');
 
 export const useTrendingTV = () =>
-  useAsync(() => api.getTrendingTV().then(r => r.results.slice(0, 12)));
+  useAsync(() => api.getTrendingTV().then(r => r.results.slice(0, 12)), [], 'trending-tv');
 
 export const useTopRatedTV = () =>
-  useAsync(() => api.getTopRatedTV().then(r => r.results.slice(0, 12)));
+  useAsync(() => api.getTopRatedTV().then(r => r.results.slice(0, 12)), [], 'top-rated-tv');
 
-export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') =>
-  useAsync(() => type === 'movie' ? api.getFullMovieDetails(id) : api.getFullTVDetails(id), [id, type]);
+export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') => {
+  const cacheKey = `details-${type}-${id}`;
+  
+  const criticalFetcher = useCallback(() => 
+    type === 'movie' ? api.getCriticalMovieDetails(id) : api.getCriticalTVDetails(id)
+  , [id, type]);
+
+  const state = useAsync(criticalFetcher, [id, type], cacheKey);
+
+  // Load supplementary data if critical data is loaded and not already supplemented
+  useEffect(() => {
+    if (state.data && !((state.data as any).videos)) {
+      const loadSupplementary = async () => {
+        try {
+          const supp = type === 'movie' 
+            ? await api.getSupplementaryMovieDetails(id) 
+            : await api.getSupplementaryTVDetails(id);
+          
+          const fullData = { ...state.data, ...supp };
+          // Update cache with full data
+          movieCache[cacheKey] = { data: fullData, timestamp: Date.now() };
+          // Note: we don't force a re-render of the hook state here to avoid loops,
+          // but next time it's accessed or if we had a proper cache listener it would update.
+          // For now, the screen will handle supplementary fetching if needed or we update state.
+        } catch (e) {
+          console.error('Failed to load supplementary data', e);
+        }
+      };
+      loadSupplementary();
+    }
+  }, [state.data, id, type, cacheKey]);
+
+  return state;
+};
 
 export const usePersonDetails = (id: number) =>
   useAsync(
@@ -66,5 +118,7 @@ export const usePersonDetails = (id: number) =>
         crew: credits.crew || [] 
       } 
     })),
-    [id]
+    [id],
+    `person-${id}`
   );
+

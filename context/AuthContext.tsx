@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { supabase } from '../supabase';
+import { supabase, typedFrom } from '../supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '../utils/authErrors';
+import { FetchState } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWatchlist } from './WatchlistContext';
 
@@ -27,8 +28,8 @@ interface AuthUserProfile {
 interface AuthContextType {
   session:    Session | null;
   user:       User    | null;
-  profile:    AuthUserProfile | null;
-  isLoading:  boolean;
+  profile:    FetchState<AuthUserProfile>;
+  isLoading:  boolean; // Initial session check
   signIn:     (email: string, password: string, captchaToken?: string) => Promise<string | null>;
   signInWithGoogle: () => Promise<string | null>;
   signUp:     (email: string, password: string, username?: string, captchaToken?: string) => Promise<string | null>;
@@ -36,8 +37,9 @@ interface AuthContextType {
   signOut:    () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<string | null>;
   deleteAccount:  () => Promise<string | null>;
-  profileError: boolean;
+  profileError:   boolean;
 }
+
 
 // ── Context ────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,9 +48,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session,   setSession]   = useState<Session | null>(null);
   const [user,      setUser]      = useState<User | null>(null);
-  const [profile,   setProfile]   = useState<AuthUserProfile | null>(null);
+  const [profile,   setProfile]   = useState<FetchState<AuthUserProfile>>({ status: 'idle', data: null, error: null });
   const [isLoading, setIsLoading] = useState(true);
-  const [profileError, setProfileError] = useState(false);
+
   
 
 
@@ -71,34 +73,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!user) {
-      setProfile(null);
+      setProfile({ status: 'idle', data: null, error: null });
       return;
     }
 
+
     // Fetch initial profile
     const fetchProfileWithRetry = async (retryCount = 0) => {
+      setProfile(prev => ({ ...prev, status: 'loading' }));
       try {
-        const { data, error } = await supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
+        const { data, error } = await typedFrom('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
         
         if (data) {
-          setProfile(data);
+          setProfile({ status: 'success', data, error: null });
           const metaUsername = user.user_metadata?.username || user.user_metadata?.full_name;
           const metaAvatar   = user.user_metadata?.avatar_url || user.user_metadata?.picture;
           const needsSync = (!data.username && metaUsername) || (!data.avatar_url && metaAvatar);
           
           if (needsSync) {
-            await supabase.from('profiles').update({
+            await typedFrom('profiles').update({
               username: data.username || metaUsername,
               avatar_url: data.avatar_url || metaAvatar,
             }).eq('id', user.id);
           }
-          setProfileError(false);
         } else if (error && error.code === 'PGRST116') {
-          // Fix 2: Fallback creation with retry
           const metaUsername = user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0];
           const metaAvatar   = user.user_metadata?.avatar_url || user.user_metadata?.picture;
           
-          const { error: insErr } = await supabase.from('profiles').insert({
+          const { error: insErr } = await typedFrom('profiles').insert({
             id: user.id,
             username: metaUsername,
             avatar_url: metaAvatar
@@ -108,12 +110,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setTimeout(() => fetchProfileWithRetry(retryCount + 1), 2000);
           } else if (insErr) {
             console.error('Critical Profile Creation Failure:', insErr);
-            setProfileError(true);
+            setProfile({ status: 'error', data: null, error: insErr.message });
           }
+        } else if (error) {
+          setProfile({ status: 'error', data: null, error: error.message });
         }
       } catch (err) {
         console.error('Profile Fetch Error:', err);
-        setProfileError(true);
+        setProfile({ status: 'error', data: null, error: (err as Error).message });
       }
     };
 
@@ -122,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Subscribe to realtime changes on this user's profile
     const channel = supabase.channel(`public:profiles:${user.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
-        setProfile(payload.new as AuthUserProfile);
+        setProfile(prev => ({ ...prev, data: payload.new as AuthUserProfile, status: 'success' }));
       })
       .subscribe();
 
@@ -133,8 +137,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (!user) return;
-    const { data } = await supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
-    if (data) setProfile(data as AuthUserProfile);
+    const { data } = await typedFrom('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
+    if (data) setProfile({ status: 'success', data: data as AuthUserProfile, error: null });
   };
 
   /** Returns null on success, or an error message string on failure. */
@@ -185,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return null;
     } catch (err: any) {
       console.error('Google Auth Error:', err);
-      return err.message || 'Gagal login dengan Google';
+      return mapAuthError(err);
     }
   };
 
@@ -220,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Delete profile (cascade will handle some things, but auth.users requires admin)
       // Note: Full deletion of auth.users usually needs an Edge Function.
       // Here we clear the profile and sign out as a minimum.
-      const { error: profErr } = await supabase.from('profiles').delete().eq('id', user.id);
+      const { error: profErr } = await typedFrom('profiles').delete().eq('id', user.id);
       if (profErr) throw profErr;
 
       await signOut();
@@ -240,12 +244,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{ 
-      session, user, profile, isLoading, profileError,
+      session, user, profile, isLoading,
       refreshProfile, signIn, signInWithGoogle, signUp, signOut, 
-      updatePassword, deleteAccount 
+      updatePassword, deleteAccount,
+      profileError: profile.status === 'error'
     }}>
       {children}
     </AuthContext.Provider>
+
   );
 };
 

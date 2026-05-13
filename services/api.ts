@@ -123,42 +123,54 @@ export const getSimilarTV        = (id: number) => tmdbGet<{ results: any[] }>(`
 export const getTVKeywords       = (id: number) => tmdbGet<{ results: any[] }>(`/tv/${id}/keywords`);
 export const getTVContentRatings = (id: number) => tmdbGet<{ results: any[] }>(`/tv/${id}/content_ratings`);
 
-export const getFullMovieDetails = async (id: number) => {
+export const getCriticalMovieDetails = async (id: number) => {
   const results = await Promise.allSettled([
-    getMovieDetails(id), getMovieCredits(id), getMovieVideos(id),
-    getMovieReviews(id), getSimilarMovies(id), getMovieKeywords(id), getMovieReleaseDates(id),
+    getMovieDetails(id), getMovieCredits(id)
   ]);
-
   const getValue = (r: PromiseSettledResult<any>, fallback: any = null) =>
     r.status === 'fulfilled' ? r.value : fallback;
 
   return {
-    details:      getValue(results[0]),
-    credits:      getValue(results[1], { cast: [], crew: [] }),
-    videos:       getValue(results[2], { results: [] }),
-    reviews:      getValue(results[3], { results: [] }),
-    similar:      getValue(results[4], { results: [] }),
-    keywords:     getValue(results[5], { keywords: [] }),
-    releaseDates: getValue(results[6], { results: [] }),
+    details: getValue(results[0]),
+    credits: getValue(results[1], { cast: [], crew: [] }),
   };
 };
 
-export const getFullTVDetails = async (id: number) => {
+export const getSupplementaryMovieDetails = async (id: number) => {
   const results = await Promise.allSettled([
-    getTVDetails(id), getTVCredits(id), getTVVideos(id),
-    getTVReviews(id), getSimilarTV(id), getTVKeywords(id), getTVContentRatings(id),
+    getMovieVideos(id), getMovieReviews(id), getSimilarMovies(id), 
+    getMovieKeywords(id), getMovieReleaseDates(id),
   ]);
-
   const getValue = (r: PromiseSettledResult<any>, fallback: any = null) =>
     r.status === 'fulfilled' ? r.value : fallback;
 
-  const details       = getValue(results[0]);
-  const credits       = getValue(results[1], { cast: [], crew: [] });
-  const videos        = getValue(results[2], { results: [] });
-  const reviews       = getValue(results[3], { results: [] });
-  const similar       = getValue(results[4], { results: [] });
-  const keywords      = getValue(results[5], { results: [] });
-  const contentRatings= getValue(results[6], { results: [] });
+  return {
+    videos:       getValue(results[0], { results: [] }),
+    reviews:      getValue(results[1], { results: [] }),
+    similar:      getValue(results[2], { results: [] }),
+    keywords:     getValue(results[3], { keywords: [] }),
+    releaseDates: getValue(results[4], { results: [] }),
+  };
+};
+
+export const getFullMovieDetails = async (id: number) => {
+  const [critical, supplementary] = await Promise.all([
+    getCriticalMovieDetails(id),
+    getSupplementaryMovieDetails(id)
+  ]);
+  return { ...critical, ...supplementary };
+};
+
+
+export const getCriticalTVDetails = async (id: number) => {
+  const results = await Promise.allSettled([
+    getTVDetails(id), getTVCredits(id)
+  ]);
+  const getValue = (r: PromiseSettledResult<any>, fallback: any = null) =>
+    r.status === 'fulfilled' ? r.value : fallback;
+
+  const details = getValue(results[0]);
+  const credits = getValue(results[1], { cast: [], crew: [] });
 
   const normalizedDetails = details ? {
     ...details,
@@ -167,9 +179,24 @@ export const getFullTVDetails = async (id: number) => {
     runtime: (details.episode_run_time && details.episode_run_time.length > 0) ? details.episode_run_time[0] : 0,
   } : null;
 
+  return { details: normalizedDetails, credits };
+};
+
+export const getSupplementaryTVDetails = async (id: number) => {
+  const results = await Promise.allSettled([
+    getTVVideos(id), getTVReviews(id), getSimilarTV(id), 
+    getTVKeywords(id), getTVContentRatings(id),
+  ]);
+  const getValue = (r: PromiseSettledResult<any>, fallback: any = null) =>
+    r.status === 'fulfilled' ? r.value : fallback;
+
+  const videos        = getValue(results[0], { results: [] });
+  const reviews       = getValue(results[1], { results: [] });
+  const similar       = getValue(results[2], { results: [] });
+  const keywords      = getValue(results[3], { results: [] });
+  const contentRatings= getValue(results[4], { results: [] });
+
   return { 
-    details: normalizedDetails, 
-    credits,
     videos,
     reviews,
     similar,
@@ -177,6 +204,15 @@ export const getFullTVDetails = async (id: number) => {
     releaseDates: { results: contentRatings?.results || [] } 
   };
 };
+
+export const getFullTVDetails = async (id: number) => {
+  const [critical, supplementary] = await Promise.all([
+    getCriticalTVDetails(id),
+    getSupplementaryTVDetails(id)
+  ]);
+  return { ...critical, ...supplementary };
+};
+
 
 // ── Person ────────────────────────────────────────────────────────────────────
 export const getPersonDetails = (id: number) => tmdbGet<Person>(`/person/${id}`);

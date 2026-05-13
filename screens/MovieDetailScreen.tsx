@@ -31,6 +31,8 @@ import ReviewFeed from '../components/movie/ReviewFeed';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocial } from '../context/SocialContext';
 import StarRating from '../components/common/StarRating';
+import { getSupplementaryMovieDetails, getSupplementaryTVDetails } from '../services/api';
+
 
 const { width } = Dimensions.get('window');
 
@@ -55,31 +57,49 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, setRating, addToRecentlyViewed } = useWatchlist();
   
   const { data, isLoading: loading, error } = useContentDetails(Number(actualId), type);
+  const [supplementary, setSupplementary] = useState<any>(null);
   const movie = data?.details;
   const credits = data?.credits?.cast?.slice(0, 15) || [];
-  const videos = data?.videos?.results?.filter((v: { site: string; type: string; id: string; key: string }) => v.site === 'YouTube') || [];
-  const reviews = data?.reviews?.results?.slice(0, 2) || [];
-  const similar = data?.similar?.results?.slice(0, 10) || [];
-  const releaseDates = data?.releaseDates?.results || [];
-  const keywords = data?.keywords?.keywords?.slice(0, 10) || [];
+  const videos = supplementary?.videos?.results?.filter((v: { site: string; type: string; id: string; key: string }) => v.site === 'YouTube') || [];
+  const reviews = supplementary?.reviews?.results?.slice(0, 2) || [];
+  const similar = supplementary?.similar?.results?.slice(0, 10) || [];
+  const releaseDates = supplementary?.releaseDates?.results || [];
+  const keywords = supplementary?.keywords?.keywords?.slice(0, 10) || [];
+
+
   
   const [expandedStory, setExpandedStory] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const { getAverageRating } = useSocial();
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   const [communityRating, setCommunityRating] = useState<FetchState<{ average: number; count: number }>>({
     status: 'idle',
     data: { average: 0, count: 0 },
     error: null
   });
 
-  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (actualId) {
       addToRecentlyViewed(Number(actualId));
       fetchCommunityRating();
+      fetchSupplementary();
     }
   }, [actualId]);
+
+  const fetchSupplementary = async () => {
+    try {
+      const supp = type === 'movie' 
+        ? await getSupplementaryMovieDetails(Number(actualId))
+        : await getSupplementaryTVDetails(Number(actualId));
+      setSupplementary(supp);
+    } catch (e) {
+
+      console.error('Failed to fetch supplementary:', e);
+    }
+  };
+
 
   const fetchCommunityRating = async () => {
     setCommunityRating(prev => ({ ...prev, status: 'loading' }));

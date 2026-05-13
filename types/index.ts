@@ -1,4 +1,7 @@
+export type { MediaItem, MediaType, ApiResponse, Movie as TMDBMovie, TVShow as TMDBTVShow } from './tmdb';
+
 export interface Movie {
+
   id:             number;
   media_type?:    'movie' | 'tv';
   title:          string;
