@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { LogIn, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
@@ -74,7 +74,7 @@ const s = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 },
       android: { elevation: 20 },
-      web: { boxShadow: '0 10px 40px rgba(0,0,0,0.5)' } as any,
+      web: { boxShadow: '0 10px 40px rgba(0,0,0,0.5)' } as unknown as ViewStyle,
     }),
   },
   closeBtn: {

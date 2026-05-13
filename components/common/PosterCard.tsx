@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Star } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '@/constants/theme';
-import { Movie } from '@/types';
+import { MediaItem } from '@/types';
 
 interface PosterCardProps {
-  movie:       Movie;
+  movie:       MediaItem;
   width?:      number;
   showRank?:   boolean;
   rank?:       number;
@@ -40,7 +40,7 @@ const PosterCard: React.FC<PosterCardProps> = ({
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={300}
-          accessibilityLabel={`${movie.title || 'Movie'} poster`}
+          accessibilityLabel={`${('title' in movie ? movie.title : (movie as any).name) || 'Media'} poster`}
         />
         {showRank && rank != null && (
           <View style={styles.rankBadge}>
@@ -55,10 +55,10 @@ const PosterCard: React.FC<PosterCardProps> = ({
         </Text>
       </View>
       <Text style={[styles.title, textColor ? { color: textColor } : {}]} numberOfLines={2} allowFontScaling={false}>
-        {movie.title}
+        {('title' in movie) ? movie.title : (movie as any).name}
       </Text>
       <Text style={[styles.year, textColor ? { color: textColor, opacity: 0.7 } : {}]} allowFontScaling={false}>
-        {movie.release_date?.split('-')[0]}
+        {('release_date' in movie) ? movie.release_date?.split('-')[0] : (movie as any).first_air_date?.split('-')[0]}
       </Text>
     </TouchableOpacity>
   );

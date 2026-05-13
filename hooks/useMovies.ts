@@ -82,7 +82,7 @@ export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') =>
 
   // Load supplementary data if critical data is loaded and not already supplemented
   useEffect(() => {
-    if (state.data && !((state.data as any).videos)) {
+    if (state.data && !('videos' in state.data)) {
       const loadSupplementary = async () => {
         try {
           const supp = type === 'movie' 

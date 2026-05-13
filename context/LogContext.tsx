@@ -65,14 +65,18 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     try {
       const formattedDate = new Date(logData.watched_at || new Date()).toISOString();
-      const { media_type, ...otherLogData } = logData as any;
 
       const { error } = await typedFrom('movie_logs')
         .insert({
           user_id: user.id,
-          ...otherLogData,
+          movie_id: logData.movie_id,
+          movie_title: logData.movie_title,
+          poster_path: logData.poster_path,
+          rating: logData.rating,
+          review_text: logData.review_text,
+          is_spoiler: logData.is_spoiler,
           watched_at: formattedDate,
-        } as any);
+        });
 
       if (error) {
         showToast('Failed', error.message || 'An error occurred while saving your log.', 'error');

@@ -21,7 +21,7 @@ export default function MovieDetailRoute() {
 
   return (
     <ScreenErrorBoundary screenName="Detail Film">
-      <MovieDetailScreen route={route as any} navigation={navigation} />
+      <MovieDetailScreen />
     </ScreenErrorBoundary>
   );
 }

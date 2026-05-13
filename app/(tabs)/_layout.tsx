@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Platform, useWindowDimensions, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Platform, useWindowDimensions, TouchableOpacity, StyleSheet, ScrollView, ViewStyle } from 'react-native';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Home, Compass, Bookmark, User, Film } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,7 +31,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
 
   const handlePress = (name: string) => {
     if (!user && (name === 'watchlist' || name === 'profile')) {
-      (global as any).showLoginPrompt();
+      showLoginPrompt?.();
       return;
     }
     router.push(`/(tabs)/${name === 'index' ? '' : name}` as any);
@@ -117,8 +117,8 @@ export default function TabLayout() {
 
   // Expose to global for ease of access from child components (temporary pattern for tab interception)
   React.useEffect(() => {
-    (global as any).showLoginPrompt = () => setLoginPromptVisible(true);
-    return () => { delete (global as any).showLoginPrompt; };
+    showLoginPrompt = () => setLoginPromptVisible(true);
+    return () => { showLoginPrompt = undefined; };
   }, []);
 
   return (
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios:     { shadowColor: '#000', shadowOffset: { width: 4, height: 0 }, shadowOpacity: 0.4, shadowRadius: 16 },
       android: { elevation: 12 },
-      web:     { boxShadow: '4px 0 24px rgba(0,0,0,0.4)' } as any,
+      web:     { boxShadow: '4px 0 24px rgba(0,0,0,0.4)' } as unknown as ViewStyle,
     }),
     zIndex: 20,
   },
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: PRIMARY, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 10 },
       android: { elevation: 8 },
-      web: { boxShadow: `0 6px 10px ${PRIMARY}80` } as any,
+      web: { boxShadow: `0 6px 10px ${PRIMARY}80` } as unknown as ViewStyle,
     }),
   },
   brandTitle: { fontSize: 18, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.3 },

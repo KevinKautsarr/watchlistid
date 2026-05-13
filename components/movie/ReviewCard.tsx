@@ -72,7 +72,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
               setShowSpoiler(true);
             }}
           >
-            <AlertTriangle size={24} color={Colors.accentBlue} style={{ marginBottom: 8 }} />
+            <AlertTriangle size={24} color={Colors.accentBlue} style={s.spoilerIcon} />
             <Text style={s.spoilerTitle} allowFontScaling={false}>Contains Spoilers</Text>
             <Text style={s.spoilerAction} allowFontScaling={false}>Tap to reveal review</Text>
           </TouchableOpacity>
@@ -231,6 +231,9 @@ const s = StyleSheet.create({
   },
   likedText: {
     color: Colors.white,
+  },
+  spoilerIcon: {
+    marginBottom: 8,
   },
 });
 

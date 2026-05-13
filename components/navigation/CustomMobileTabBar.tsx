@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, useWindowDimensions, Animated, Platform } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, useWindowDimensions, Animated, Platform, ViewStyle } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -116,7 +116,7 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
 
             const onPress = () => {
               if (!user && (route.name === 'watchlist' || route.name === 'profile')) {
-                (global as any).showLoginPrompt();
+                showLoginPrompt?.();
                 return;
               }
 
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 },
       android: { elevation: 10 },
-      web: { boxShadow: '0 10px 20px rgba(0,0,0,0.5)' } as any,
+      web: { boxShadow: '0 10px 20px rgba(0,0,0,0.5)' } as unknown as ViewStyle,
     }),
     backgroundColor: 'transparent',
   },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: ACTIVE_TINT, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12 },
       android: { elevation: 8 },
-      web: { boxShadow: `0 8px 12px ${ACTIVE_TINT}66` } as any,
+      web: { boxShadow: `0 8px 12px ${ACTIVE_TINT}66` } as unknown as ViewStyle,
     }),
     zIndex: 10,
   },

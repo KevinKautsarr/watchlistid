@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
@@ -107,7 +107,7 @@ const s = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
       android: { elevation: 6 },
-      web: { boxShadow: `0 4px 12px ${Colors.primary}66` } as any,
+      web: { boxShadow: `0 4px 12px ${Colors.primary}66` } as unknown as ViewStyle,
     }),
   },
   retryText: {

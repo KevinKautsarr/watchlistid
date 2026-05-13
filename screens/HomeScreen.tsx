@@ -1,33 +1,26 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Platform, StatusBar, Animated, RefreshControl,
-} from 'react-native';
+import React, { useState, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Animated, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import { Flame, Star, Award, Clock } from 'lucide-react-native';
 
-import { Bell, Play, Plus, Star, Flame, Award, Clock, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import SectionHeader from '@/components/common/SectionHeader';
 import Avatar from '@/components/common/Avatar';
 import ActivityFeed from '@/components/movie/ActivityFeed';
-import { MediaCard } from '@/components/movie/MediaCard';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
-import { webHover, cursorPointer } from '@/utils/webStyles';
+import { MovieSkeleton } from '@/components/common/MovieSkeleton';
+import SectionHeader from '@/components/common/SectionHeader';
+import { HeroCarousel } from '@/components/home/HeroCarousel';
+import { MediaRow } from '@/components/home/MediaRow';
+import { GenreRow } from '@/components/home/GenreRow';
+import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { useAuth } from '@/context/AuthContext';
-import { useTrending, usePopular, useTopRated, useTrendingTV, useTopRatedTV } from '@/hooks/useMovies';
+import { useHomeData } from '@/hooks/useHomeData';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useLanguage } from '@/context/LanguageContext';
-import { Movie } from '@/types';
+import { MediaItem } from '@/types';
 
-// ─── Sidebar widths (must match _layout.tsx) ─────────────────────────────────
-const SIDEBAR_FULL = 240;
-const SIDEBAR_ICON = 72;
-
-// ─── Genre data ──────────────────────────────────────────────────────────────
 const GENRES = [
   { id: 28,    nameKey: 'genreAction',    image: '/ff2ti5DkA9UYLzyqhQfI2kZqEuh.jpg' },
   { id: 35,    nameKey: 'genreComedy',    image: '/rHTAgPq6ZGoj5CqxFAh04Q3hJWH.jpg' },
@@ -39,298 +32,41 @@ const GENRES = [
   { id: 80,    nameKey: 'genreCrime',     image: '/cfT29Im5VDvjE0RpyKOSdCKZal7.jpg' },
 ] as const;
 
-// ─── Skeleton shimmer ─────────────────────────────────────────────────────────
-import { MovieSkeleton } from '@/components/common/MovieSkeleton';
-
-function HeroSkeleton({ width, height }: { width: number; height: number }) {
-  return (
-    <View style={{ width, height, backgroundColor: Colors.surface, padding: Spacing.xxl, justifyContent: 'flex-end' }}>
-      <View style={{ width: '70%', height: 40, backgroundColor: Colors.overlay.light10, borderRadius: 8, marginBottom: 12 }} />
-      <View style={{ width: '40%', height: 16, backgroundColor: Colors.overlay.light10, borderRadius: 4, marginBottom: 24 }} />
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <View style={{ width: 140, height: 46, backgroundColor: Colors.overlay.light10, borderRadius: Radius.sm }} />
-        <View style={{ width: 120, height: 46, backgroundColor: Colors.overlay.light10, borderRadius: Radius.sm }} />
-      </View>
-    </View>
-  );
-}
-
-// MediaCard is now in components/movie/MediaCard.tsx (memoized + animated)
-
-// ─── Scrollable Section Row with arrow nav for tablet/desktop ────────────────
-interface MediaRowProps {
-  data: any[];
-  cardWidth: number;
-  pad: number;
-  onPress: (m: any) => void;
-  isLarge?: boolean;
-}
-
-const MediaRow = React.memo(({ data, cardWidth, pad, onPress, isLarge }: MediaRowProps) => {
-  const scrollRef = useRef<ScrollView>(null);
-  const [scrollX,  setScrollX]  = useState(0);
-  const [maxScroll, setMaxScroll] = useState(1);
-
-  if (!data.length) return null;
-
-  // Step = 4 cards at a time
-  const STEP = (cardWidth + 10) * 4;
-
-  const scrollLeft  = () => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - STEP), animated: true });
-  const scrollRight = () => scrollRef.current?.scrollTo({ x: Math.min(maxScroll, scrollX + STEP), animated: true });
-
-  const atStart = scrollX <= 4;
-  const atEnd   = scrollX >= maxScroll - 4;
-
-  return (
-    <View style={sr.wrap}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: pad, paddingRight: pad, paddingBottom: 4, gap: 10 }}
-        onScroll={e => setScrollX(e.nativeEvent.contentOffset.x)}
-        onContentSizeChange={(w, _) => setMaxScroll(w)}
-        scrollEventThrottle={16}
-      >
-        {data.map((m: any) => (
-          <MediaCard key={m.id} {...m} width={cardWidth} onPress={() => onPress(m)} />
-        ))}
-      </ScrollView>
-
-      {/* Arrow buttons — only on tablet/desktop */}
-      {isLarge && (
-        <>
-          <TouchableOpacity
-            style={[sr.arrow, sr.arrowLeft, atStart && sr.arrowDisabled, cursorPointer]}
-            onPress={scrollLeft}
-            activeOpacity={0.75}
-            disabled={atStart}
-            accessibilityRole="button"
-            accessibilityLabel="Scroll left"
-          >
-            <ChevronLeft size={IconSize.md} color={atStart ? Colors.overlay.light20 : Colors.white} strokeWidth={2.5} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[sr.arrow, sr.arrowRight, atEnd && sr.arrowDisabled, cursorPointer]}
-            onPress={scrollRight}
-            activeOpacity={0.75}
-            disabled={atEnd}
-            accessibilityRole="button"
-            accessibilityLabel="Scroll right"
-          >
-            <ChevronRight size={IconSize.md} color={atEnd ? Colors.overlay.light20 : Colors.white} strokeWidth={2.5} />
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
-  );
-});
-
-const sr = StyleSheet.create({
-  wrap: { position: 'relative' },
-  arrow: {
-    position: 'absolute',
-    top: '30%',
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(20,20,20,0.85)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    zIndex: 10,
-    ...Platform.select({
-      ios:     { shadowColor: Colors.dark, shadowOpacity: 0.4, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 },
-      android: { elevation: 6 },
-    }),
-  },
-  arrowLeft:     { left: 6 },
-  arrowRight:    { right: 6 },
-  arrowDisabled: { opacity: 0.35 },
-});
-
-// ─── Hero Carousel ───────────────────────────────────────────────────────────
-interface HeroProps {
-  items: any[];
-  contentWidth: number;  // <-- width of the content area (total - sidebar)
-  onPressItem: (item: any) => void;
-  onToggleWL: (item: any) => void;
-  isInWatchlist: (id: number) => boolean;
-  heroHeight: number;
-}
-function HeroCarousel({ items, contentWidth, onPressItem, onToggleWL, isInWatchlist, heroHeight }: HeroProps) {
-  const [idx, setIdx] = useState(0);
-  const [isReady, setIsReady] = useState(false);
-  const ref  = useRef<ScrollView>(null);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const slides = items.slice(0, 5);
-
-  useEffect(() => {
-    // Wait for the app to settle before enabling the full carousel
-    const readyTimer = setTimeout(() => setIsReady(true), 3000);
-    return () => clearTimeout(readyTimer);
-  }, []);
-
-  const scrollTo = useCallback((i: number) => {
-    const c = Math.max(0, Math.min(i, slides.length - 1));
-    setIdx(c);
-    ref.current?.scrollTo({ x: c * contentWidth, animated: true });
-  }, [slides.length, contentWidth]);
-
-  const startAuto = useCallback(() => {
-    timer.current = setInterval(() => {
-      setIdx(prev => {
-        const next = (prev + 1) % slides.length;
-        ref.current?.scrollTo({ x: next * contentWidth, animated: true });
-        return next;
-      });
-    }, 7000); // increased from 5000 to reduce JS main-thread load
-  }, [slides.length, contentWidth]);
-
-  useEffect(() => {
-    if (!isReady) return;
-    startAuto();
-    return () => { if (timer.current) clearInterval(timer.current); };
-  }, [startAuto, isReady]);
-
-  const resetAuto = () => { if (timer.current) clearInterval(timer.current); startAuto(); };
-
-  if (!slides.length) return null;
-  const cur = slides[idx];
-  const inWL = isInWatchlist(cur?.id);
-
-  return (
-    <View style={{ width: contentWidth, height: heroHeight, minHeight: heroHeight }}>
-      {/* Backdrop slides */}
-      {!isReady ? (
-        <View style={{ width: contentWidth, height: heroHeight }}>
-          <Image
-            source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${slides[0].backdrop_path}` }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            priority="high"
-            accessibilityLabel={slides[0].title || slides[0].name || 'Movie backdrop'}
-          />
-          <LinearGradient
-            colors={[Colors.overlay.dark, 'rgba(20,20,20,0.45)', Colors.background]}
-            locations={[0, 0.5, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-      ) : (
-        <ScrollView ref={ref} horizontal pagingEnabled scrollEnabled={false} showsHorizontalScrollIndicator={false}>
-          {slides.map((m, i) => (
-            <View key={m.id} style={{ width: contentWidth, height: heroHeight }}>
-              <Image
-                source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${m.backdrop_path}` }}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                priority={i === 0 ? 'high' : 'low'}
-                accessibilityLabel={m.title || m.name || 'Movie backdrop'}
-              />
-              <LinearGradient
-                colors={['rgba(20,20,20,0.02)', 'rgba(20,20,20,0.45)', '#141414']}
-                locations={[0, 0.5, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-            </View>
-          ))}
-        </ScrollView>
-      )}
-
-      {/* Overlay content */}
-      <View style={s.heroContent}>
-        <Text style={s.heroTitle} numberOfLines={2} allowFontScaling={false}>{cur?.title}</Text>
-        <View style={s.heroMeta}>
-          <View style={s.ratingPill}>
-            <Star size={IconSize.xs} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
-            <Text style={s.ratingScore} allowFontScaling={false}>{cur?.vote_average?.toFixed(1)}</Text>
-          </View>
-          <Text style={s.heroYear} allowFontScaling={false}>{cur?.release_date?.split('-')[0]}</Text>
-        </View>
-        <View style={s.heroButtons}>
-          <TouchableOpacity style={[s.playBtn, cursorPointer]} activeOpacity={0.85} onPress={() => onPressItem(cur)}>
-            <Play size={IconSize.sm} color={Colors.dark} fill={Colors.dark} strokeWidth={0} />
-            <Text style={s.playBtnText} allowFontScaling={false}>Watch Now</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.wlBtn, inWL && s.wlBtnActive, cursorPointer]} activeOpacity={0.85} onPress={() => onToggleWL(cur)}>
-            {inWL ? <Bookmark size={IconSize.sm} color={Colors.white} fill={Colors.white} strokeWidth={0} /> : <Plus size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />}
-            <Text style={s.wlBtnText} allowFontScaling={false}>My List</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={s.dots}>
-          {slides.map((_, i) => (
-            <TouchableOpacity key={i} onPress={() => { scrollTo(i); resetAuto(); }}>
-              <View style={[s.dot, i === idx && s.dotActive]} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Arrow buttons */}
-      <TouchableOpacity style={[s.arrow, { left: 14 }, cursorPointer]} onPress={() => { scrollTo(idx - 1); resetAuto(); }} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Previous slide">
-        <ChevronLeft size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />
-      </TouchableOpacity>
-      <TouchableOpacity style={[s.arrow, { right: 14 }, cursorPointer]} onPress={() => { scrollTo(idx + 1); resetAuto(); }} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Next slide">
-        <ChevronRight size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
 export default function HomeScreen() {
-  const router    = useRouter();
-  const insets    = useSafeAreaInsets();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, recentlyViewed } = useWatchlist();
-  const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const bp = useBreakpoint();
   const { t } = useLanguage();
   const [visibleSections, setVisibleSections] = useState(1);
   const [homeTab, setHomeTab] = useState<'discover' | 'following'>('discover');
 
-  const { data: trendingData,   isLoading: lt,   refetch: rt   } = useTrending();
-  const { data: popularData,    isLoading: lp,   refetch: rp   } = usePopular();
-  const { data: topRatedData,   isLoading: ltr,  refetch: rtr  } = useTopRated();
-  const { data: trendingTVData, isLoading: ltv,  refetch: rtv  } = useTrendingTV();
-  const { data: topRatedTVData, isLoading: lrtv, refetch: rrtv } = useTopRatedTV();
-
-  const trending   = ((trendingData   as Movie[] | null) ?? []).filter(m => !m.adult);
-  const popular    = ((popularData    as Movie[] | null) ?? []).filter(m => !m.adult);
-  const topRated   = ((topRatedData   as Movie[] | null) ?? []).filter(m => !m.adult);
-  const trendingTV = ((trendingTVData as Movie[] | null) ?? []).filter(m => !m.adult);
-  const topRatedTV = ((topRatedTVData as Movie[] | null) ?? []).filter(m => !m.adult);
-  const loading    = lt || lp || ltr;
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    try { await Promise.allSettled([rt(), rp(), rtr(), rtv(), rrtv()]); }
-    finally { setRefreshing(false); }
+  const { state: homeState, isRefreshing, onRefresh } = useHomeData();
+  const { trending, popular, topRated, trendingTV, topRatedTV } = homeState.data || {
+    trending: [], popular: [], topRated: [], trendingTV: [], topRatedTV: []
   };
+  const isLoading = homeState.status === 'loading';
 
-  const goToMovie = (movie: Movie) => {
+  const goToMovie = (id: number, type: 'movie' | 'tv') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const type = movie.media_type || (('first_air_date' in movie) ? 'tv' : 'movie');
-    router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type } } as any);
+    router.push({ pathname: '/movie/[id]', params: { id: id.toString(), type } });
   };
-  const toggleWL = (movie: Movie) => {
+
+  const toggleWL = (item: MediaItem) => {
     if (!user) {
-      (global as any).showLoginPrompt?.();
+      showLoginPrompt?.();
       return;
     }
-    const has = isInWatchlist(movie.id);
+    const has = isInWatchlist(item.id);
     Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
-    has ? removeFromWatchlist(movie.id) : addToWatchlist(movie as any);
+    has ? removeFromWatchlist(item.id) : addToWatchlist(item);
   };
 
   const recentMovies = useMemo(() => {
     const all = [...trending, ...popular, ...topRated, ...trendingTV, ...topRatedTV];
-    return recentlyViewed.map(id => all.find((m) => m.id === id)).filter((m): m is Movie => m != null).slice(0, 10);
+    return recentlyViewed.map(id => all.find(m => m.id === id)).filter((m): m is MediaItem => m != null).slice(0, 10);
   }, [recentlyViewed, trending, popular, topRated, trendingTV, topRatedTV]);
 
   const headerBg = scrollY.interpolate({
@@ -339,64 +75,50 @@ export default function HomeScreen() {
     extrapolate: 'clamp',
   });
 
-  const username  = profile?.data?.username || user?.user_metadata?.username || user?.email || 'User';
+  const username = profile?.data?.username || user?.user_metadata?.username || user?.email || 'User';
   const avatarUrl = profile?.data?.avatar_url || user?.user_metadata?.avatar_url;
 
-  const sidebarW    = bp.isDesktop ? SIDEBAR_FULL : bp.isTablet ? SIDEBAR_ICON : 0;
+  const sidebarW = bp.isDesktop ? 240 : bp.isTablet ? 72 : 0;
   const contentWidth = Math.min(bp.width - sidebarW, bp.maxContentWidth);
   const HERO_HEIGHT = bp.isDesktop ? 600 : bp.isTablet ? 500 : 480;
   const CARD = bp.isDesktop ? 175 : bp.isTablet ? 150 : 130;
-  const PAD  = bp.isDesktop ? 36 : bp.isTablet ? 24 : 20;
-  const N = bp.isDesktop ? 20 : bp.isTablet ? 15 : 12;
-
-  const rowProps = { cardWidth: CARD, pad: PAD, onPress: goToMovie, isLarge: bp.isLarge };
+  const PAD = bp.isDesktop ? 36 : bp.isTablet ? 24 : 20;
 
   const loadMore = () => {
-    if (visibleSections < 5) {
-      setVisibleSections(prev => prev + 1);
-    }
+    if (visibleSections < 5) setVisibleSections(prev => prev + 1);
   };
 
   const renderHeader = () => (
     <>
-      {/* ── HERO ── */}
-      {lt ? (
-        <HeroSkeleton width={contentWidth} height={HERO_HEIGHT} />
+      {isLoading ? (
+        <View style={[s.heroSkeleton, { width: contentWidth, height: HERO_HEIGHT }]} />
       ) : trending.length > 0 ? (
         <HeroCarousel
-          items={trending}
-          contentWidth={contentWidth}
-          heroHeight={HERO_HEIGHT}
+          data={trending}
+          width={contentWidth}
+          height={HERO_HEIGHT}
           onPressItem={goToMovie}
-          onToggleWL={toggleWL}
-          isInWatchlist={isInWatchlist}
         />
       ) : null}
 
-      <View style={s.body}>
+      <View style={[s.body, { paddingHorizontal: PAD }]}>
         {bp.isLarge && (
-          <View style={{ paddingHorizontal: PAD, paddingTop: 28, paddingBottom: 4 }}>
+          <View style={s.browseHeader}>
             <Text style={s.browseTitle} allowFontScaling={false}>{t('browse')}</Text>
-            <Text style={s.browseSub}   allowFontScaling={false}>{t('browseSub')}</Text>
+            <Text style={s.browseSub} allowFontScaling={false}>{t('browseSub')}</Text>
           </View>
         )}
 
-        <View style={[s.tabSwitcher, { paddingHorizontal: PAD }]}>
+        <View style={s.tabSwitcher}>
           <TouchableOpacity 
             style={[s.tabItem, homeTab === 'discover' && s.tabItemActive]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setHomeTab('discover');
-            }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setHomeTab('discover'); }}
           >
             <Text style={[s.tabItemText, homeTab === 'discover' && s.tabItemTextActive]}>Discover</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[s.tabItem, homeTab === 'following' && s.tabItemActive]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setHomeTab('following');
-            }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setHomeTab('following'); }}
           >
             <Text style={[s.tabItemText, homeTab === 'following' && s.tabItemTextActive]}>Following</Text>
           </TouchableOpacity>
@@ -407,24 +129,22 @@ export default function HomeScreen() {
 
   const sections = useMemo(() => {
     if (homeTab === 'following') return [{ id: 'activity-feed', type: 'feed' }];
-    
     const items = [
-      { id: 'trending-movies', type: 'row', title: t('trendingMovies'), icon: Flame, iconColor: Colors.danger, data: trending, category: 'trending-movies' },
-      { id: 'trending-tv',     type: 'row', title: t('trendingShows'),  icon: Flame, iconColor: "#FF6B35", data: trendingTV, category: 'trending-tv' },
-      { id: 'popular',         type: 'row', title: t('popular'),        icon: Star,  iconColor: Colors.ratingGold, data: popular, category: 'popular' },
-      { id: 'top-rated-movies',type: 'row', title: t('topRatedMovies'), icon: Award, iconColor: "#4CAF50", data: topRated, category: 'top-rated-movies' },
-      { id: 'top-rated-tv',    type: 'row', title: t('topRatedShows'),  icon: Award, iconColor: "#2196F3", data: topRatedTV, category: 'top-rated-tv' },
+      { id: 'trending-movies', type: 'row', title: t('trendingMovies'), icon: Flame, iconColor: Colors.danger, data: trending, category: 'trending-movies', mediaType: 'movie' },
+      { id: 'trending-tv',     type: 'row', title: t('trendingShows'),  icon: Flame, iconColor: "#FF6B35", data: trendingTV, category: 'trending-tv', mediaType: 'tv' },
+      { id: 'popular',         type: 'row', title: t('popular'),        icon: Star,  iconColor: Colors.ratingGold, data: popular, category: 'popular', mediaType: 'movie' },
+      { id: 'top-rated-movies',type: 'row', title: t('topRatedMovies'), icon: Award, iconColor: "#4CAF50", data: topRated, category: 'top-rated-movies', mediaType: 'movie' },
+      { id: 'top-rated-tv',    type: 'row', title: t('topRatedShows'),  icon: Award, iconColor: "#2196F3", data: topRatedTV, category: 'top-rated-tv', mediaType: 'tv' },
       { id: 'genres',          type: 'genres' },
-      { id: 'recent',          type: 'row', title: t('recentlyViewed'), icon: Clock, iconColor: Colors.danger, data: recentMovies },
+      { id: 'recent',          type: 'row', title: t('recentlyViewed'), icon: Clock, iconColor: Colors.danger, data: recentMovies, mediaType: 'movie' },
     ];
-    
     return items.slice(0, visibleSections + 2);
   }, [homeTab, trending, trendingTV, popular, topRated, topRatedTV, recentMovies, visibleSections, t]);
 
   const renderSection = ({ item }: { item: any }) => {
     if (item.type === 'feed') {
       return (
-        <View style={{ paddingHorizontal: PAD, paddingTop: 10 }}>
+        <View style={[s.feedContainer, { paddingHorizontal: PAD }]}>
           <ActivityFeed />
         </View>
       );
@@ -432,42 +152,45 @@ export default function HomeScreen() {
 
     if (item.type === 'genres') {
       return (
-        <View style={{ paddingBottom: 20 }}>
-          <SectionHeader title={t('browseByGenre')} Icon={Flame} iconColor="#6C5CE7" textColor="#fff" actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search' as any)} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: PAD, paddingRight: PAD, paddingBottom: 4, gap: 10 }}>
-            {GENRES.map(g => {
-              const gW = bp.isDesktop ? 160 : bp.isTablet ? 140 : 120;
-              const gH = Math.round(gW * 0.62);
-              return (
-                <TouchableOpacity key={g.id} style={[{ width: gW, height: gH, borderRadius: Radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }, cursorPointer]} activeOpacity={0.82} onPress={() => router.push(`/(tabs)/search?genre=${g.id}` as any)}>
-                  <Image source={{ uri: `${TMDB_IMAGE_SIZES.thumb}${g.image}` }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                  <LinearGradient colors={[Colors.overlay.light10, Colors.overlay.dark70]} style={StyleSheet.absoluteFill} />
-                  <Text style={s.genreName} allowFontScaling={false}>{t(g.nameKey as any)}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+        <View style={s.genreSection}>
+          <SectionHeader 
+            title={t('browseByGenre')} Icon={Flame} iconColor="#6C5CE7" textColor="#fff" 
+            actionLabel={t('seeAll')} onAction={() => router.push('/(tabs)/search')} 
+          />
+          <GenreRow 
+            genres={GENRES} 
+            pad={PAD} 
+            onPress={(id) => router.push(`/(tabs)/search?genre=${id}`)} 
+            t={t} 
+            isDesktop={bp.isDesktop} 
+            isTablet={bp.isTablet} 
+          />
         </View>
       );
     }
 
-    if (item.data.length === 0 && !loading) return null;
+    if (item.data.length === 0 && !isLoading) return null;
 
     return (
-      <View style={{ paddingBottom: 10 }}>
+      <View style={s.rowSection}>
         <SectionHeader 
-          title={item.title} 
-          Icon={item.icon} 
-          iconColor={item.iconColor} 
-          textColor={Colors.white} 
+          title={item.title} Icon={item.icon} iconColor={item.iconColor} textColor={Colors.white} 
           actionLabel={item.category ? t('seeAll') : undefined} 
-          onAction={item.category ? () => router.push(`/(tabs)/search?category=${item.category}` as any) : undefined} 
+          onAction={item.category ? () => router.push(`/(tabs)/search?category=${item.category}`) : undefined} 
         />
-        {loading ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: PAD, paddingRight: PAD, paddingBottom: 4, gap: 10 }}>
+        {isLoading ? (
+          <View style={[s.skeletonRow, { paddingLeft: PAD }]}>
              <MovieSkeleton layout="horizontal" count={6} />
-          </ScrollView>
-        ) : <MediaRow {...rowProps} data={item.data.slice(0, N)} />}
+          </View>
+        ) : (
+          <MediaRow 
+            data={item.data.slice(0, bp.isDesktop ? 20 : 12)} 
+            cardWidth={CARD} 
+            pad={PAD} 
+            type={item.mediaType as 'movie' | 'tv'}
+            onPress={goToMovie} 
+          />
+        )}
       </View>
     );
   };
@@ -477,13 +200,11 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {bp.isMobile && (
-        <Animated.View style={[s.header, { backgroundColor: headerBg, paddingTop: Math.max(insets.top, 20), paddingBottom: 14 }]}>
+        <Animated.View style={[s.header, { backgroundColor: headerBg, paddingTop: Math.max(insets.top, 20) }]}>
           <Text style={s.logo} allowFontScaling={false}>WATCHLISTID</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity style={[s.avatar, cursorPointer]} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button" accessibilityLabel="Go to profile">
-              <Avatar uri={avatarUrl} name={username} size={36} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={[s.avatar, cursorPointer]} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
+            <Avatar uri={avatarUrl} name={username} size={36} />
+          </TouchableOpacity>
         </Animated.View>
       )}
 
@@ -497,122 +218,39 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.danger} colors={[Colors.danger]} />}
-        contentContainerStyle={{
-          alignSelf: 'center',
-          width: '100%',
-          maxWidth: bp.maxContentWidth,
-          paddingBottom: 100
-        }}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.danger} colors={[Colors.danger]} />}
+        contentContainerStyle={[s.listContent, { maxWidth: bp.maxContentWidth }]}
       />
     </View>
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#141414' },
-
-  // Mobile header
   header: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.xl, justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl, justifyContent: 'space-between', paddingBottom: 14,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowRadius: 10 },
       android: { elevation: 4 },
     }),
   },
-  logo:    { fontSize: FontSize.xl, fontWeight: '900', color: Colors.danger, letterSpacing: 2 },
-  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  badge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: Colors.danger,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.background,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: FontWeight.black,
-    color: Colors.white,
-  },
-  avatar:  { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.dark, alignItems: 'center', justifyContent: 'center' },
-  avatarTxt: { fontSize: FontSize.lg, color: Colors.white, fontWeight: FontWeight.bold },
-
-  // Hero
-  heroContent: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, alignItems: 'center',
-  },
-  heroTitle: {
-    fontSize: FontSize.h1 * 1.1, fontWeight: FontWeight.black, color: Colors.white,
-    letterSpacing: -0.5, lineHeight: 42, marginBottom: Spacing.sm, textAlign: 'center',
-    textShadowColor: Colors.overlay.dark, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 12,
-  },
-  heroMeta:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(245,197,24,0.18)', borderRadius: Radius.full, paddingHorizontal: Spacing.sm, paddingVertical: 3 },
-  ratingScore:{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.ratingGold },
-  heroYear:   { fontSize: FontSize.sm, color: Colors.text.secondary },
-  heroButtons:{ flexDirection: 'row', gap: 10, width: '100%', justifyContent: 'center', marginBottom: 16 },
-  playBtn:    { flex: 1, maxWidth: 165, height: 46, backgroundColor: Colors.white, borderRadius: Radius.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  playBtnText:{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.dark },
-  wlBtn:      { flex: 1, maxWidth: 150, height: 46, backgroundColor: 'rgba(40,40,40,0.85)', borderRadius: Radius.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  wlBtnActive:{ backgroundColor: Colors.primary + 'D9' },
-  wlBtnText:  { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
-  dots:       { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.overlay.light50 },
-  dotActive:  { width: 22, height: 6, borderRadius: 3, backgroundColor: Colors.primary },
-  arrow: {
-    position: 'absolute', top: '42%',
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.overlay.dark50, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: Colors.overlay.light20,
-  },
-
-  // Body
-  body:        { paddingTop: Spacing.sm, paddingHorizontal: Spacing.xl },
+  logo: { fontSize: FontSize.xl, fontWeight: '900', color: Colors.danger, letterSpacing: 2 },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.dark, alignItems: 'center', justifyContent: 'center' },
+  body: { paddingTop: Spacing.sm },
+  heroSkeleton: { backgroundColor: Colors.surface },
+  browseHeader: { paddingTop: 28, paddingBottom: 4 },
   browseTitle: { fontSize: FontSize.h1, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: -0.3 },
-  browseSub:   { fontSize: FontSize.base, color: Colors.text.secondary, marginTop: Spacing.xs },
-
-  tabSwitcher: {
-    flexDirection: 'row',
-    gap: 20,
-    marginTop: 20,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.overlay.light10,
-  },
-  tabItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabItemActive: {
-    borderBottomColor: Colors.accentBlue,
-  },
-  tabItemText: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-    color: Colors.text.secondary,
-  },
-  tabItemTextActive: {
-    color: Colors.white,
-  },
-
-  // Card (all sections)
-  card: { borderRadius: Radius.md, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: Colors.surface },
-  cardMeta:      { padding: 8 },
-  cardRating:    { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 3 },
-  cardRatingTxt: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.ratingGold },
-  cardTitle:     { fontWeight: FontWeight.bold, color: Colors.white, lineHeight: 15 },
-
-  // Genre
-  genreName: { fontSize: FontSize.sm, fontWeight: '900', color: Colors.white, letterSpacing: 0.4 },
+  browseSub: { fontSize: FontSize.base, color: Colors.text.secondary, marginTop: Spacing.xs },
+  tabSwitcher: { flexDirection: 'row', gap: 20, marginTop: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: Colors.overlay.light10 },
+  tabItem: { paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabItemActive: { borderBottomColor: Colors.accentBlue },
+  tabItemText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.text.secondary },
+  tabItemTextActive: { color: Colors.white },
+  feedContainer: { paddingTop: 10 },
+  genreSection: { paddingBottom: 20 },
+  rowSection: { paddingBottom: 10 },
+  skeletonRow: { paddingBottom: 4, flexDirection: 'row', gap: 10 },
+  listContent: { alignSelf: 'center', width: '100%', paddingBottom: 100 },
 });

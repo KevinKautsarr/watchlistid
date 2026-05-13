@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { TouchableOpacity, Text, View, Animated, StyleSheet, Platform } from 'react-native';
+import { TouchableOpacity, Text, View, Animated, StyleSheet, Platform, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Star } from 'lucide-react-native';

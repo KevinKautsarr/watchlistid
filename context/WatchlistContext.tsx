@@ -11,15 +11,14 @@ function toSupabaseRow(item: WatchlistItem, userId: string) {
     user_id:      userId,
     movie_id:     item.id,
     media_type:   item.mediaType,
-    title:        item.mediaType === 'movie' ? item.title : item.name,
+    title:        (item.mediaType === 'movie' ? item.title : item.name) || 'Title',
     poster_path:  item.poster_path,
-    release_date: item.mediaType === 'movie' ? item.release_date : item.first_air_date,
+    release_date: (item.mediaType === 'movie' ? item.release_date : item.first_air_date) || '',
     vote_average: item.vote_average,
-    runtime:      item.mediaType === 'movie' ? item.runtime : null,
-    genres:       item.genres ?? null,
+    runtime:      (item.mediaType === 'movie' ? item.runtime : null) ?? null,
+    genres:       (item.genres as any) ?? null, // Genres as Json
     overview:     item.overview,
-    watched:      item.status === WATCHLIST_STATUS.COMPLETED, // Backward compatibility
-    status:       item.status,
+    watched:      item.status === WATCHLIST_STATUS.COMPLETED,
     added_at:     item.addedAt,
   };
 }
@@ -204,7 +203,7 @@ function useWatchlistProviderLogic() {
         } as WatchlistItem;
       }
 
-      if (userId) typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId) as any).then(({ error }) => error && console.error(error));
+      if (userId) typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => error && console.error(error));
       showToast('Added to Watchlist', 'success');
       return { ...prev, [item.id]: newItem };
     });
@@ -231,7 +230,7 @@ function useWatchlistProviderLogic() {
       
       if (userId) {
         typedFrom('watchlist')
-          .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED, status: newStatus } as any)
+          .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED })
           .eq('user_id', userId)
           .eq('movie_id', id)
           .then(({ error }) => error && console.error(error));
@@ -244,7 +243,7 @@ function useWatchlistProviderLogic() {
 
   const setRating = useCallback((id: number, rating: number) => {
     setUserRatings(prev => ({ ...prev, [id]: rating }));
-      if (userId) typedFrom('user_ratings').upsert({ user_id: userId, movie_id: id, rating } as any).then(({ error }) => error && console.error(error));
+      if (userId) typedFrom('user_ratings').upsert({ user_id: userId, movie_id: id, rating }).then(({ error }) => error && console.error(error));
   }, [userId]);
 
   const getRating = useCallback((id: number) => userRatings[id] || null, [userRatings]);

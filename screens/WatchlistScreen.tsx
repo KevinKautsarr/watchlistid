@@ -31,7 +31,7 @@ const WatchlistScreen: React.FC = () => {
 
   // M5: Stable callbacks — prevent renderItem from re-creating fns on every render
   const handlePress = useCallback((id: number, mediaType: string) => {
-    router.push({ pathname: '/movie/[id]', params: { id: id.toString(), type: mediaType } } as any);
+    router.push({ pathname: '/movie/[id]', params: { id: id.toString(), type: mediaType } });
   }, [router]);
 
   const handleToggleWatched = useCallback((id: number) => {

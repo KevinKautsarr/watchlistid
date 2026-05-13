@@ -37,7 +37,7 @@ const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
     <View style={styles.grid}>
       <DetailCard 
         label={t('metaReleaseDate')} 
-        value={movie.release_date ? new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} 
+        value={('release_date' in movie ? movie.release_date : movie.first_air_date) ? new Date(('release_date' in movie ? movie.release_date : movie.first_air_date)!).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} 
         Icon={Calendar}
       />
       <DetailCard 
@@ -68,7 +68,7 @@ const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
       <View style={styles.fullWidthCard}>
         <DetailCard 
           label={t('metaProduction')} 
-          value={movie.production_companies?.map(c => c.name).join(' • ')} 
+          value={movie.production_companies?.map((c: { name: string }) => c.name).join(' • ')} 
           Icon={Building2}
         />
       </View>

@@ -25,7 +25,7 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const followUser = async (targetId: string) => {
     if (!user || user.id === targetId) return false;
-    const { error } = await typedFrom('follows').insert({ follower_id: user.id, following_id: targetId } as any);
+    const { error } = await typedFrom('follows').insert({ follower_id: user.id, following_id: targetId });
     return !error;
   };
 

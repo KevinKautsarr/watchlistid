@@ -148,7 +148,7 @@ export default function LoginScreen() {
             {/* Forgot password */}
             <TouchableOpacity
               style={s.forgotBtn}
-              onPress={() => router.push('/auth/forgot' as any)}
+              onPress={() => router.push('/auth/forgot')}
               activeOpacity={0.7}
             >
               <Text style={s.forgotText} allowFontScaling={false}>{t('forgotPassword')}</Text>
@@ -207,7 +207,7 @@ export default function LoginScreen() {
             {/* Register link */}
             <TouchableOpacity
               style={s.secondaryBtn}
-              onPress={() => router.push('/auth/register' as any)}
+              onPress={() => router.push('/auth/register')}
               activeOpacity={0.85}
             >
               <Text style={s.secondaryBtnText} allowFontScaling={false}>
@@ -218,7 +218,7 @@ export default function LoginScreen() {
             {/* Skip & Explore */}
             <TouchableOpacity
               style={s.skipBtn}
-              onPress={() => router.replace('/(tabs)' as any)}
+              onPress={() => router.replace('/(tabs)')}
               activeOpacity={0.7}
             >
               <Text style={s.skipText} allowFontScaling={false}>

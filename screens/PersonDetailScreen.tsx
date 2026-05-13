@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -13,28 +13,22 @@ import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES
 import { usePersonDetails } from '@/hooks/useMovies';
 import PosterCard from '@/components/common/PosterCard';
 import { useLanguage } from '@/context/LanguageContext';
+import { MediaItem } from '@/types';
 
-interface PersonDetailScreenProps {
-  route: { params: { id: string, name?: string } };
-  navigation: { goBack: () => void };
-}
-
-import { useLocalSearchParams } from 'expo-router';
-
-const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigation }): React.JSX.Element => {
+const PersonDetailScreen: React.FC = (): React.JSX.Element => {
   const params = useLocalSearchParams();
   const id = params.id || params.personId;
   const { t } = useLanguage();
-  const { data, isLoading: loading } = usePersonDetails(Number(id));
+  const { data, isLoading } = usePersonDetails(Number(id));
   const person = data?.person;
   const credits = data?.credits?.cast || [];
   
   const [expandedBio, setExpandedBio] = useState(false);
 
-  if (loading || !person) {
+  if (isLoading || !person) {
     return (
-      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: Colors.dark }} allowFontScaling={false}>{t('loading')}</Text>
+      <View style={styles.center}>
+        <Text style={styles.loadingText} allowFontScaling={false}>{t('loading')}</Text>
       </View>
     );
   }
@@ -61,7 +55,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
         style={styles.backBtn} 
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          navigation.goBack();
+          router.back();
         }}
       >
         <ChevronLeft size={24} color={Colors.white} strokeWidth={2.5} />
@@ -72,7 +66,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
           {backdropUri ? (
             <Image source={{ uri: backdropUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.dark }]} />
+            <View style={styles.backdropPlaceholder} />
           )}
           <LinearGradient
             colors={['transparent', 'transparent', Colors.background]}
@@ -94,17 +88,17 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
 
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <Calendar size={18} color={Colors.primary} strokeWidth={2} style={{ marginBottom: 4 }} />
+              <Calendar size={18} color={Colors.primary} strokeWidth={2} style={styles.statIcon} />
               <Text style={styles.statValue} allowFontScaling={false}>{person.birthday ? person.birthday.substring(0,4) : 'N/A'}</Text>
               <Text style={styles.statLabel} allowFontScaling={false}>{t('born')}</Text>
             </View>
             <View style={styles.statCard}>
-              <Globe size={18} color={Colors.primary} strokeWidth={2} style={{ marginBottom: 4 }} />
+              <Globe size={18} color={Colors.primary} strokeWidth={2} style={styles.statIcon} />
               <Text style={styles.statValue} numberOfLines={1} allowFontScaling={false}>{person.place_of_birth?.split(',').pop()?.trim() ?? 'N/A'}</Text>
               <Text style={styles.statLabel} allowFontScaling={false}>{t('birthplace')}</Text>
             </View>
             <View style={styles.statCard}>
-              <TrendingUp size={18} color={Colors.primary} strokeWidth={2} style={{ marginBottom: 4 }} />
+              <TrendingUp size={18} color={Colors.primary} strokeWidth={2} style={styles.statIcon} />
               <Text style={styles.statValue} allowFontScaling={false}>{person.popularity?.toFixed(0)}</Text>
               <Text style={styles.statLabel} allowFontScaling={false}>{t('popularity')}</Text>
             </View>
@@ -126,7 +120,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
 
           {knownFor.length > 0 && (
             <View style={styles.sectionNoPadding}>
-              <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('knownFor')}</Text>
+              <Text style={styles.sectionTitleHorizontal} allowFontScaling={false}>{t('knownFor')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
                 {knownFor.map(item => (
                   <PosterCard 
@@ -137,7 +131,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
                       router.push({ 
                         pathname: '/movie/[id]', 
                         params: { id: item.id.toString(), type: item.media_type || 'movie' } 
-                      } as any);
+                      });
                     }} 
                   />
                 ))}
@@ -147,10 +141,10 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
 
           {filmography.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { marginBottom: Spacing.lg }]} allowFontScaling={false}>{t('filmography')}</Text>
+              <Text style={styles.sectionTitleWithMargin} allowFontScaling={false}>{t('filmography')}</Text>
               {filmography.map((item, index) => {
-                const title = item.title || ('name' in item ? (item as any).name : 'Title');
-                const character = 'character' in item ? (item as any).character : null;
+                const title = item.title || ('name' in item ? (item as { name?: string }).name : 'Title');
+                const character = 'character' in item ? (item as { character?: string }).character : null;
                 return (
                   <TouchableOpacity 
                     key={`${item.id}-${index}`} 
@@ -160,7 +154,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
                       router.push({ 
                         pathname: '/movie/[id]', 
                         params: { id: item.id.toString(), type: item.media_type || 'movie' } 
-                      } as any);
+                      });
                     }}
                   >
                     <Text style={styles.filmYear} allowFontScaling={false}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
@@ -174,7 +168,7 @@ const PersonDetailScreen: React.FC<PersonDetailScreenProps> = ({ route, navigati
             </View>
           )}
           
-          <View style={{ height: 100 }} />
+          <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -216,6 +210,13 @@ const styles = StyleSheet.create({
   filmMeta: { flex: 1 },
   filmTitle: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
   filmRole: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
+  loadingText: { color: Colors.white },
+  backdropPlaceholder: { ...StyleSheet.absoluteFillObject, backgroundColor: Colors.dark },
+  statIcon: { marginBottom: 4 },
+  sectionTitleHorizontal: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white, marginBottom: Spacing.lg, paddingHorizontal: Spacing.xl },
+  sectionTitleWithMargin: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white, marginBottom: Spacing.lg },
+  bottomSpacer: { height: 100 },
 });
 
 export default PersonDetailScreen;

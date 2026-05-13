@@ -29,7 +29,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState('');
   const [isSpoiler, setIsSpoiler] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
   // Simplified date handling for cross-platform
@@ -47,13 +47,13 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const success = await addLog({
         movie_id: movie.id,
         media_type: movie.media_type || 'movie',
-        movie_title: movie.title || ('name' in movie ? (movie as { name: string }).name : 'Title'),
+        movie_title: 'title' in movie ? movie.title : movie.name,
         poster_path: movie.poster_path || undefined,
         watched_at: watchedDate,
         rating: rating,
@@ -90,7 +90,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
       console.error("Log Save Error:", error);
       Alert.alert('Error', error.message || 'An unexpected error occurred.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -110,13 +110,13 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
               {movie.media_type === 'tv' ? t('logShow') : t('logMovie')}
             </Text>
             <TouchableOpacity 
-              style={[s.saveBtn, (rating === 0 || loading) && s.saveBtnDisabled, cursorPointer]} 
+              style={[s.saveBtn, (rating === 0 || isLoading) && s.saveBtnDisabled, cursorPointer]} 
               onPress={handleSave}
-              disabled={rating === 0 || loading}
+              disabled={rating === 0 || isLoading}
               accessibilityRole="button"
               accessibilityLabel="Save review"
             >
-              {loading ? (
+              {isLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text style={s.saveText} allowFontScaling={false}>{t('save')}</Text>
@@ -126,8 +126,8 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
             <Star size={IconSize.lg} color={Colors.primary} fill={Colors.primary} />
-            <Text style={s.movieTitle} allowFontScaling={false}>{movie.title || ('name' in movie ? (movie as { name: string }).name : 'Title')}</Text>
-            <Text style={s.movieYear} allowFontScaling={false}>{movie.release_date?.split('-')[0]}</Text>
+            <Text style={s.movieTitle} allowFontScaling={false}>{'title' in movie ? movie.title : movie.name}</Text>
+            <Text style={s.movieYear} allowFontScaling={false}>{('release_date' in movie ? movie.release_date : movie.first_air_date)?.split('-')[0]}</Text>
 
             {/* Date Picker (Simplified) */}
             <View style={s.section}>
@@ -153,7 +153,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
             </View>
 
             <View style={s.section}>
-              <Text style={s.label} allowFontScaling={false}>{t('yourRating')} <Text style={{color: Colors.primary}}>*</Text></Text>
+              <Text style={s.label} allowFontScaling={false}>{t('yourRating')} <Text style={s.required}>*</Text></Text>
               <View style={s.starsContainer}>
                 <StarRating 
                   rating={rating / 2} 
@@ -230,7 +230,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
               </Text>
             </View>
 
-            <View style={{ height: 40 }} />
+            <View style={s.bottomSpacer} />
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -339,6 +339,8 @@ const s = StyleSheet.create({
     minHeight: 120,
   },
   previewPholder: { color: Colors.overlay.light30, fontSize: FontSize.sm, fontStyle: 'italic' },
+  required: { color: Colors.primary },
+  bottomSpacer: { height: 40 },
 });
 
 const markdownStyles = {

@@ -1,16 +1,7 @@
-export type { MediaItem, MediaType, ApiResponse, Movie as TMDBMovie, TVShow as TMDBTVShow } from './tmdb';
+import type { MediaItem, MediaType, ApiResponse, Movie as TMDBMovie, TVShow as TMDBTVShow } from './tmdb';
+export type { MediaItem, MediaType, ApiResponse, TMDBMovie, TMDBTVShow };
 
-export interface Movie {
-
-  id:             number;
-  media_type?:    'movie' | 'tv';
-  title:          string;
-  overview:       string;
-  poster_path:    string | null;
-  backdrop_path:  string | null;
-  vote_average:   number;
-  vote_count:     number;
-  release_date:   string;
+type AdditionalMovieProps = {
   genre_ids?:     number[];
   genres?:        Genre[];
   runtime?:       number;
@@ -25,9 +16,9 @@ export interface Movie {
   keywords?: { keywords: Keyword[] };
   adult?: boolean;
   original_title?: string;
-  name?: string; // For TV shows
-  first_air_date?: string; // For TV shows
-}
+};
+
+export type Movie = (TMDBMovie & AdditionalMovieProps) | (TMDBTVShow & AdditionalMovieProps);
 
 export interface Genre {
   id:   number;
@@ -95,23 +86,23 @@ export interface Keyword {
   name: string;
 }
 
-export interface WatchlistMovie extends Movie {
+export type WatchlistMovie = Movie & {
   watched:   boolean;
   addedAt:   string;
   userRating?: number;
-}
+};
 
 export interface MovieCredits {
   cast: CastMember[];
   crew: CrewMember[];
 }
 
-export interface MovieDetails extends Movie {
+export type MovieDetails = Movie & {
   credits:      MovieCredits;
   videos:       { results: Video[] };
   reviews:      { results: Review[] };
   similar:      { results: Movie[] };
-}
+};
 
 export interface MovieLog {
   id: string;

@@ -37,15 +37,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      const formatted = (data as any[]).map(n => ({
+      const formatted: Notification[] = data.map(n => ({
         id: n.id,
-        user_id: n.user_id,
         title: n.title,
         message: n.message,
-        type: n.type,
-        is_read: n.is_read,
-        movie_id: n.movie_id,
-        created_at: n.created_at
+        type: (n.type as 'info' | 'success' | 'warning') || 'info',
+        is_read: !!n.is_read,
+        movie_id: n.movie_id ?? undefined,
+        created_at: n.created_at || new Date().toISOString()
       }));
       setNotifications(formatted);
       setUnreadCount(formatted.filter(n => !n.is_read).length);

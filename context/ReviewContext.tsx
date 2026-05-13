@@ -37,20 +37,27 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       likedByMeIds = likes?.map(l => l.review_id) || [];
     }
 
-    return (data as any[]).map(r => ({
-      ...r,
-      likes_count: r.likes_count?.[0]?.count || 0,
-      is_liked_by_me: likedByMeIds.includes(r.id)
-    })) as ReviewItem[];
+    return (data || []).map(r => {
+      const row = r as any; // Temporary cast for nested join data which is complex for Supabase types
+      return {
+        ...row,
+        likes_count: row.likes_count?.[0]?.count || 0,
+        is_liked_by_me: likedByMeIds.includes(row.id)
+      } as ReviewItem;
+    });
   };
 
   const addReview = async (reviewData: Omit<ReviewItem, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => {
     if (!user) return false;
     const { error } = await typedFrom('reviews').upsert({
-      ...reviewData,
+      movie_id: reviewData.movie_id,
+      media_type: reviewData.media_type,
+      content: reviewData.content,
+      rating: reviewData.rating,
+      is_spoiler: reviewData.is_spoiler,
       user_id: user.id,
       created_at: new Date().toISOString()
-    } as any);
+    });
 
     if (error) {
       showToast(error.message, 'error');

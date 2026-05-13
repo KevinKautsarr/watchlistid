@@ -64,7 +64,7 @@ export default function ActivityFeed() {
 
       <TouchableOpacity 
         style={s.movieRow}
-        onPress={() => router.push(`/movie/${item.movie_id}` as any)}
+        onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.movie_id.toString() } })}
       >
         <Image 
           source={`https://image.tmdb.org/t/p/w200${item.poster_path}`} 
@@ -112,7 +112,7 @@ export default function ActivityFeed() {
           <Text style={s.emptySubtitle}>Follow your friends to see what they're watching!</Text>
           <TouchableOpacity 
             style={s.exploreBtn}
-            onPress={() => router.push('/search-users' as any)}
+            onPress={() => router.push('/search-users')}
           >
             <Text style={s.exploreText}>Find Friends</Text>
           </TouchableOpacity>

@@ -111,7 +111,7 @@ export default function RegisterScreen() {
           <Text style={s.successSub} allowFontScaling={false}>
             {t('checkEmailVerification')}
           </Text>
-          <TouchableOpacity style={s.btn} onPress={() => router.replace('/auth/login' as any)}>
+          <TouchableOpacity style={s.btn} onPress={() => router.replace('/auth/login')}>
             <Text style={s.btnText} allowFontScaling={false}>{t('backToLogin')}</Text>
           </TouchableOpacity>
         </View>

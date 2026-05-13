@@ -99,7 +99,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
                   accessibilityRole="button"
                   accessibilityLabel={t('clickToReveal')}
                 >
-                  <EyeOff size={IconSize.sm} color={Colors.primary} style={{ marginBottom: 4 }} />
+                  <EyeOff size={IconSize.sm} color={Colors.primary} style={styles.spoilerIcon} />
                   <Text style={styles.spoilerText} allowFontScaling={false}>
                     {t('clickToReveal')}
                   </Text>
@@ -234,6 +234,9 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.primary,
     fontWeight: FontWeight.bold,
+  },
+  spoilerIcon: {
+    marginBottom: 4,
   }
 });
 

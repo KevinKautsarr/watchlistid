@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, ViewStyle } from 'react-native';
 export const Colors = {
   background:   '#141414',
   surface:      '#202020',
@@ -100,28 +100,28 @@ export const Shadow = {
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
       android: { elevation: 2 },
-      web: { boxShadow: '0 2px 4px rgba(0,0,0,0.2)' } as any,
+      web: { boxShadow: '0 2px 4px rgba(0,0,0,0.2)' } as unknown as ViewStyle,
     })
   },
   md: {
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
       android: { elevation: 4 },
-      web: { boxShadow: '0 4px 8px rgba(0,0,0,0.3)' } as any,
+      web: { boxShadow: '0 4px 8px rgba(0,0,0,0.3)' } as unknown as ViewStyle,
     })
   },
   lg: {
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16 },
       android: { elevation: 8 },
-      web: { boxShadow: '0 8px 16px rgba(0,0,0,0.4)' } as any,
+      web: { boxShadow: '0 8px 16px rgba(0,0,0,0.4)' } as unknown as ViewStyle,
     })
   },
   primary: {
     ...Platform.select({
       ios: { shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
       android: { elevation: 6 },
-      web: { boxShadow: `0 4px 10px ${Colors.primary}66` } as any,
+      web: { boxShadow: `0 4px 10px ${Colors.primary}66` } as unknown as ViewStyle,
     })
   },
 } as const;
