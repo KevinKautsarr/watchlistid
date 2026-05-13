@@ -5,6 +5,8 @@ import { Home, Compass, Bookmark, User, Film } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomMobileTabBar from '../../components/navigation/CustomMobileTabBar';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import LoginPromptModal from '../../components/auth/LoginPromptModal';
 
 const PRIMARY  = '#E50914';
 const INACTIVE = 'rgba(255,255,255,0.45)';
@@ -22,8 +24,17 @@ const NAV_KEYS = [
 const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
   const router   = useRouter();
   const segments = useSegments();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const activeTab = segments[1] || 'index';
+
+  const handlePress = (name: string) => {
+    if (!user && (name === 'watchlist' || name === 'profile')) {
+      (global as any).showLoginPrompt();
+      return;
+    }
+    router.push(`/(tabs)/${name === 'index' ? '' : name}` as any);
+  };
 
   return (
     <View style={[styles.sidebar, collapsed && styles.sidebarCollapsed]}>
@@ -59,7 +70,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
               <TouchableOpacity
                 key={name}
                 style={[styles.navItem, active && styles.navItemActive]}
-                onPress={() => router.push(`/(tabs)/${name === 'index' ? '' : name}` as any)}
+                onPress={() => handlePress(name)}
                 activeOpacity={0.75}
               >
                 <Icon
@@ -101,6 +112,13 @@ export default function TabLayout() {
   const isDesktop = width >= 1100;
   const isLarge   = !isMobile;
   const collapsed = isTablet; // tablet = icon-only sidebar
+  const [loginPromptVisible, setLoginPromptVisible] = React.useState(false);
+
+  // Expose to global for ease of access from child components (temporary pattern for tab interception)
+  React.useEffect(() => {
+    (global as any).showLoginPrompt = () => setLoginPromptVisible(true);
+    return () => { delete (global as any).showLoginPrompt; };
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -116,6 +134,10 @@ export default function TabLayout() {
           <Tabs.Screen name="profile"   options={{ title: 'My Profile — WatchlistID' }} />
         </Tabs>
       </View>
+      <LoginPromptModal 
+        visible={loginPromptVisible} 
+        onClose={() => setLoginPromptVisible(false)} 
+      />
     </View>
   );
 }

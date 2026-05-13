@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { Home, Compass, Bookmark, User } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useAuth } from '../../context/AuthContext';
 
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
@@ -18,6 +19,7 @@ const BAR_BG = '#141414';      // Dark background
 const INACTIVE_TINT = '#808080'; // Grey for inactive icons
 
 export default function CustomMobileTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   
@@ -111,6 +113,11 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
             const isFocused = state.index === index;
 
             const onPress = () => {
+              if (!user && (route.name === 'watchlist' || route.name === 'profile')) {
+                (global as any).showLoginPrompt();
+                return;
+              }
+
               const event = navigation.emit({
                 type: 'tabPress',
                 target: route.key,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -107,17 +107,15 @@ function RootLayoutNav() {
   const router = useRouter();
   const colorScheme = useColorScheme();
 
+  const PROTECTED_ROUTES = ['watchlist', 'profile', 'notifications', 'search-users'];
+
   useEffect(() => {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    const segment0 = segments[0] as string;
-    const segment1 = segments[1] as string;
-    const isPublicTab = segment1 === 'index' || segment1 === 'search' || segment0 === 'index';
-    const isDetailScreen = segment0 === 'movie/[id]' || segment0 === 'person/[id]';
     
-    // Protected tabs (Watchlist & Profile)
-    const isProtectedRoute = segments[1] === 'watchlist' || segments[1] === 'profile';
+    // Check if ANY part of the current route is in the protected list
+    const isProtectedRoute = segments.some(s => PROTECTED_ROUTES.includes(s));
 
     if (!session && isProtectedRoute) {
       // Redirect to login only if trying to access protected routes while not logged in
@@ -127,6 +125,14 @@ function RootLayoutNav() {
       router.replace('/(tabs)');
     }
   }, [session, segments, isLoading]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#141414', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color="#E50914" size="large" />
+      </View>
+    );
+  }
 
   if (profileError) {
     return (
