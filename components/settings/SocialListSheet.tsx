@@ -152,6 +152,10 @@ const SocialListSheet: React.FC<SocialListSheetProps> = ({
               keyExtractor={item => item.id}
               contentContainerStyle={s.listContent}
               showsVerticalScrollIndicator={false}
+              windowSize={5}
+              maxToRenderPerBatch={10}
+              initialNumToRender={8}
+              removeClippedSubviews={true}
               ListEmptyComponent={
                 <View style={s.emptyContainer}>
                   <User size={48} color="rgba(255,255,255,0.1)" strokeWidth={1.5} />

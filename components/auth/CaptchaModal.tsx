@@ -12,7 +12,7 @@ try {
     WebView = require('react-native-webview').WebView;
   }
 } catch (e) {
-  console.log('WebView not available');
+  // WebView not available on this platform
 }
 
 interface CaptchaModalProps {
@@ -101,7 +101,6 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
                 source={{ html, baseUrl: BASE_URL }}
                 onMessage={(event: WebViewMessageEvent) => {
                   const token = event.nativeEvent.data;
-                  console.log('[Captcha] Token received:', token ? 'YES' : 'NO');
                   if (token) onVerify(token);
                 }}
                 javaScriptEnabled={true}

@@ -45,7 +45,7 @@ export default function LoginScreen() {
     const err = await signIn(email.trim().toLowerCase(), password, token);
     setLoading(false);
     if (err) {
-      setError(err);
+      setError(err); // This is now already mapped from AuthContext
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } else {
       // Auth state listener in _layout.tsx handles redirect automatically

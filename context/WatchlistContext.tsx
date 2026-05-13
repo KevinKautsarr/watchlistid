@@ -263,7 +263,7 @@ function useWatchlistProviderLogic() {
     try { await Promise.all([AsyncStorage.removeItem('@watchlist'), AsyncStorage.removeItem('@userRatings'), AsyncStorage.removeItem('@recentlyViewed')]); } catch (e) { console.error(e); }
   };
 
-  const prevUserIdRef = useRef<string | null>(undefined as any);
+  const prevUserIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLoaded) return;
     if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== null && !userId) clearData();
@@ -287,6 +287,7 @@ function useWatchlistProviderLogic() {
     isLoading: isSyncing || !isLoaded,
     toast,
     hideToast,
+    clearData,
   };
 }
 

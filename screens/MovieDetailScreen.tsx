@@ -577,13 +577,13 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.6)' },
 
   communityRatingCard: {
-    backgroundColor: 'rgba(63, 114, 175, 0.08)',
-    marginHorizontal: 20,
+    backgroundColor: `${Colors.accentBlue}14`, // 0.08 alpha
+    marginHorizontal: Spacing.xl,
     marginTop: 20,
     borderRadius: Radius.xl,
-    padding: 20,
+    padding: Spacing.xl,
     borderWidth: 1,
-    borderColor: 'rgba(63, 114, 175, 0.2)',
+    borderColor: `${Colors.accentBlue}33`, // 0.2 alpha
   },
   communityHeader: {
     flexDirection: 'row',
@@ -598,8 +598,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   communitySub: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 12,
+    color: Colors.text.secondary,
+    fontSize: FontSize.xs,
     marginTop: 2,
   },
   scoreBox: {
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#F5C518',
+    backgroundColor: Colors.ratingGold,
     borderRadius: Radius.full,
   },
 });

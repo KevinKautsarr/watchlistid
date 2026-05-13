@@ -102,7 +102,7 @@ function WebHead() {
 }
 
 function RootLayoutNav() {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, profileError } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -127,6 +127,22 @@ function RootLayoutNav() {
       router.replace('/(tabs)');
     }
   }, [session, segments, isLoading]);
+
+  if (profileError) {
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="error" options={{ 
+            title: 'Sistem Bermasalah',
+            headerShown: true,
+            headerStyle: { backgroundColor: '#141414' },
+            headerTintColor: '#fff'
+          }} />
+        </Stack>
+        <StatusBar style="light" />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

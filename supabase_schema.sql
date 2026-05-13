@@ -104,6 +104,21 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Fix 7: Forbidden Usernames Trigger
+CREATE OR REPLACE FUNCTION check_forbidden_username()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF LOWER(NEW.username) = ANY(ARRAY['admin','root','watchlistid','system','moderator','owner','official','support','staff']) THEN
+    RAISE EXCEPTION 'Username tidak diizinkan untuk alasan keamanan.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER enforce_forbidden_usernames
+BEFORE INSERT OR UPDATE ON profiles
+FOR EACH ROW EXECUTE FUNCTION check_forbidden_username();
+
 
 -- 5. Create Movie Logs Table (Diary)
 create table public.movie_logs (
@@ -191,3 +206,160 @@ alter table public.review_likes enable row level security;
 
 create policy "Likes are viewable by everyone" on review_likes for select using (true);
 create policy "Users can manage their own likes" on review_likes for all using (auth.uid() = user_id);
+
+
+-- ========================================================
+-- PHASE 2: PERFORMANCE, SECURITY & FEATURE ADDITIONS
+-- Run these statements against your LIVE Supabase database
+-- via the SQL Editor after the initial schema is set up.
+-- ========================================================
+
+-- ─── C1: PERFORMANCE INDEXES ──────────────────────────────────────────────
+create index if not exists idx_movie_logs_user_id    on public.movie_logs(user_id);
+create index if not exists idx_movie_logs_watched_at on public.movie_logs(watched_at desc);
+create index if not exists idx_follows_follower_id   on public.follows(follower_id);
+create index if not exists idx_follows_following_id  on public.follows(following_id);
+create index if not exists idx_reviews_movie_id      on public.reviews(movie_id);
+create index if not exists idx_watchlist_user_id     on public.watchlist(user_id);
+create index if not exists idx_recently_viewed_user  on public.recently_viewed(user_id);
+-- text_pattern_ops enables efficient ilike prefix searches on username
+create index if not exists idx_profiles_username     on public.profiles(username text_pattern_ops);
+
+
+-- ─── M6a: Add bio column to profiles ──────────────────────────────────────
+alter table public.profiles add column if not exists bio text;
+
+
+-- ─── M6b: Add updated_at to all mutable tables ────────────────────────────
+alter table public.profiles     add column if not exists updated_at timestamp with time zone default now();
+alter table public.watchlist    add column if not exists updated_at timestamp with time zone default now();
+alter table public.movie_logs   add column if not exists updated_at timestamp with time zone default now();
+alter table public.reviews      add column if not exists updated_at timestamp with time zone default now();
+alter table public.user_ratings add column if not exists updated_at timestamp with time zone default now();
+
+
+-- ─── M6c: moddatetime triggers (auto-update updated_at on every UPDATE) ───
+-- moddatetime is a pre-installed Postgres extension on all Supabase projects
+create extension if not exists moddatetime schema extensions;
+
+create or replace trigger handle_updated_at_profiles
+  before update on public.profiles
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+create or replace trigger handle_updated_at_watchlist
+  before update on public.watchlist
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+create or replace trigger handle_updated_at_movie_logs
+  before update on public.movie_logs
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+create or replace trigger handle_updated_at_reviews
+  before update on public.reviews
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+create or replace trigger handle_updated_at_user_ratings
+  before update on public.user_ratings
+  for each row execute procedure extensions.moddatetime(updated_at);
+
+
+-- ─── M7: Fix Reviews RLS — replace broad 'for all' with explicit policies ─
+drop policy if exists "Users can manage their own reviews" on public.reviews;
+
+create policy "Users can insert own reviews"
+  on public.reviews for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own reviews"
+  on public.reviews for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own reviews"
+  on public.reviews for delete
+  using (auth.uid() = user_id);
+
+
+-- ─── C2: notifications Table ──────────────────────────────────────────────
+create table if not exists public.notifications (
+  id         uuid default gen_random_uuid() primary key,
+  user_id    uuid references public.profiles(id) on delete cascade not null,
+  title      text not null,
+  message    text not null,
+  type       text not null default 'info' check (type in ('info', 'success', 'warning')),
+  is_read    boolean not null default false,
+  movie_id   integer,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.notifications enable row level security;
+
+-- Indexes for fast per-user notification queries
+create index if not exists idx_notifications_user_id
+  on public.notifications(user_id);
+create index if not exists idx_notifications_unread
+  on public.notifications(user_id, is_read)
+  where is_read = false;
+
+-- RLS: users can only read and update their own notifications
+create policy "Users can view own notifications"
+  on public.notifications for select
+  using (auth.uid() = user_id);
+
+create policy "Users can update own notifications"
+  on public.notifications for update
+  using (auth.uid() = user_id);
+
+-- Notifications are created by backend triggers / Edge Functions (service role)
+-- Uncomment the policy below if you use Edge Functions with the anon key:
+-- create policy "Service role can insert notifications"
+--   on public.notifications for insert with check (true);
+
+
+-- ─── M1: get_avg_rating — Postgres aggregate RPC ──────────────────────────
+-- Replaces JS-side computation in SocialContext.getAverageRating()
+create or replace function public.get_avg_rating(p_movie_id integer)
+returns table(average numeric, count bigint)
+language sql
+stable
+security definer
+as $$
+  select
+    coalesce(round(avg(rating)::numeric, 2), 0) as average,
+    count(*)::bigint                             as count
+  from public.reviews
+  where movie_id = p_movie_id
+    and rating is not null;
+$$;
+
+
+-- ─── M4: toggle_review_like — atomic like/unlike RPC ──────────────────────
+-- Replaces the SELECT-then-INSERT/DELETE race condition in SocialContext
+create or replace function public.toggle_review_like(p_review_id uuid)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+  v_user_id uuid;
+begin
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  -- Attempt DELETE first (unlike). FOUND is true if a row was deleted.
+  delete from public.review_likes
+  where user_id = v_user_id and review_id = p_review_id;
+
+  if found then
+    return false; -- was liked → now unliked
+  end if;
+
+  -- No existing like found → insert (like)
+  insert into public.review_likes (user_id, review_id)
+  values (v_user_id, p_review_id);
+
+  return true; -- now liked
+end;
+$$;
+

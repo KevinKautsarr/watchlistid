@@ -553,35 +553,35 @@ const s = StyleSheet.create({
   },
   badgeText: {
     fontSize: 9,
-    fontWeight: '900',
-    color: '#fff',
+    fontWeight: FontWeight.black,
+    color: Colors.white,
   },
-  avatar:  { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
-  avatarTxt: { fontSize: 16, color: '#fff', fontWeight: '700' },
+  avatar:  { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.dark, alignItems: 'center', justifyContent: 'center' },
+  avatarTxt: { fontSize: FontSize.lg, color: Colors.white, fontWeight: FontWeight.bold },
 
   // Hero
   heroContent: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 28, paddingBottom: 36, alignItems: 'center',
+    paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, alignItems: 'center',
   },
   heroTitle: {
-    fontSize: 36, fontWeight: '900', color: '#fff',
-    letterSpacing: -0.5, lineHeight: 42, marginBottom: 8, textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 12,
+    fontSize: FontSize.h1 * 1.1, fontWeight: FontWeight.black, color: Colors.white,
+    letterSpacing: -0.5, lineHeight: 42, marginBottom: Spacing.sm, textAlign: 'center',
+    textShadowColor: Colors.overlay.dark, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 12,
   },
   heroMeta:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(245,197,24,0.18)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  ratingScore:{ fontSize: 13, fontWeight: '700', color: '#F5C518' },
+  ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(245,197,24,0.18)', borderRadius: Radius.full, paddingHorizontal: Spacing.sm, paddingVertical: 3 },
+  ratingScore:{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.ratingGold },
   heroYear:   { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
   heroButtons:{ flexDirection: 'row', gap: 10, width: '100%', justifyContent: 'center', marginBottom: 16 },
-  playBtn:    { flex: 1, maxWidth: 165, height: 46, backgroundColor: '#fff', borderRadius: Radius.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  playBtnText:{ fontSize: 15, fontWeight: '700', color: '#000' },
+  playBtn:    { flex: 1, maxWidth: 165, height: 46, backgroundColor: Colors.white, borderRadius: Radius.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  playBtnText:{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.dark },
   wlBtn:      { flex: 1, maxWidth: 150, height: 46, backgroundColor: 'rgba(40,40,40,0.85)', borderRadius: Radius.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  wlBtnActive:{ backgroundColor: 'rgba(229,9,20,0.85)' },
-  wlBtnText:  { fontSize: 15, fontWeight: '700', color: '#fff' },
+  wlBtnActive:{ backgroundColor: Colors.primary + 'D9' },
+  wlBtnText:  { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
   dots:       { flexDirection: 'row', gap: 5, alignItems: 'center' },
   dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)' },
-  dotActive:  { width: 22, height: 6, borderRadius: 3, backgroundColor: '#E50914' },
+  dotActive:  { width: 22, height: 6, borderRadius: 3, backgroundColor: Colors.primary },
   arrow: {
     position: 'absolute', top: '42%',
     width: 38, height: 38, borderRadius: 19,
@@ -590,9 +590,9 @@ const s = StyleSheet.create({
   },
 
   // Body
-  body:        { paddingTop: 8 },
-  browseTitle: { fontSize: 30, fontWeight: '900', color: '#fff', letterSpacing: -0.3 },
-  browseSub:   { fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 4 },
+  body:        { paddingTop: Spacing.sm, paddingHorizontal: Spacing.xl },
+  browseTitle: { fontSize: FontSize.h1, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: -0.3 },
+  browseSub:   { fontSize: FontSize.base, color: 'rgba(255,255,255,0.45)', marginTop: Spacing.xs },
 
   tabSwitcher: {
     flexDirection: 'row',
@@ -623,8 +623,8 @@ const s = StyleSheet.create({
   card: { borderRadius: Radius.md, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: Colors.surface },
   cardMeta:      { padding: 8 },
   cardRating:    { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 3 },
-  cardRatingTxt: { fontSize: 11, fontWeight: '700', color: '#F5C518' },
-  cardTitle:     { fontWeight: '700', color: '#fff', lineHeight: 15 },
+  cardRatingTxt: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.ratingGold },
+  cardTitle:     { fontWeight: FontWeight.bold, color: Colors.white, lineHeight: 15 },
 
   // Genre
   genreName: { fontSize: 13, fontWeight: '900', color: '#fff', letterSpacing: 0.4 },

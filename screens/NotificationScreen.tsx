@@ -167,6 +167,10 @@ const NotificationScreen: React.FC = () => {
         renderItem={renderItem}
         contentContainerStyle={[s.listContent, { paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}
+        windowSize={5}
+        maxToRenderPerBatch={10}
+        initialNumToRender={8}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
         }

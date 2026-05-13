@@ -119,6 +119,8 @@ export default function ActivityFeed() {
         </View>
       }
       scrollEnabled={false} // Since it's inside HomeScreen's ScrollView
+      maxToRenderPerBatch={10}
+      initialNumToRender={8}
     />
   );
 }
@@ -160,7 +162,7 @@ const s = StyleSheet.create({
   },
   time: {
     color: Colors.text.secondary,
-    fontSize: 11,
+    fontSize: FontSize.xs,
   },
   movieRow: {
     flexDirection: 'row',
@@ -180,7 +182,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   watchedText: {
-    color: 'rgba(255,255,255,0.7)',
+    color: Colors.text.secondary,
     fontSize: FontSize.xs,
   },
   movieTitle: {
@@ -200,14 +202,14 @@ const s = StyleSheet.create({
   },
   ratingText: {
     color: Colors.white,
-    fontSize: 10,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
   reviewText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
+    color: Colors.text.secondary,
+    fontSize: FontSize.xs,
     fontStyle: 'italic',
-    marginTop: 6,
+    marginTop: Spacing.xs,
   },
   center: {
     padding: Spacing.xxxl,
@@ -218,10 +220,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.xxxl,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    backgroundColor: Colors.overlay.light,
     borderRadius: Radius.xxl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: Colors.overlay.light,
     borderStyle: 'dashed',
     marginTop: Spacing.xl,
   },

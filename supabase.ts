@@ -24,7 +24,8 @@ const ExpoProvider = {
   },
 };
 
-export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey, {
+// C4 note: Switched to createClient<Database> after successful type generation.
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: ExpoProvider,
     autoRefreshToken: true,
@@ -35,12 +36,16 @@ export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey, {
 
 export type TableNames = keyof Database['public']['Tables'];
 
-import type { PostgrestQueryBuilder } from '@supabase/supabase-js';
-
 /**
- * Type-safe query builder wrapper around supabase.from()
- * Prevents querying non-existent tables automatically via Database types.
+ * Type-safe query builder wrapper around supabase.from().
+ * Enforces valid table names at compile time — prevents typos like
+ * typedFrom('notificaitons') from compiling.
+ *
+ * This is the primary table-name safety mechanism for this project.
+ * Column-level type safety will be fully unlocked after running:
+ *   npx supabase gen types typescript --project-id <ref>
  */
 export const typedFrom = <T extends TableNames>(table: T) => {
-  return supabase.from(table as string);
+  return supabase.from(table);
 };
+

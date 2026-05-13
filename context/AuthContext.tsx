@@ -2,27 +2,41 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { supabase } from '../supabase';
-import type { Session, User } from '@supabase/supabase-js';
+import { Session, User, AuthError } from '@supabase/supabase-js';
+import { mapAuthError } from '../utils/authErrors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useWatchlist } from './WatchlistContext';
 
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();
 
-interface UserProfile {
-  username?: string;
-  avatar_url?: string;
-  bio?: string;
+// Fix 1: Environment-aware Redirect URL
+const REDIRECT_URL = __DEV__ 
+  ? Linking.createURL('/auth/callback')
+  : 'moviewatchlist://auth/callback';
+
+/** Logged-in user's own profile — separate from the social UserProfile in types/index.ts
+ *  which has stricter requirements (id required, username required) suited for
+ *  displaying other users. This type uses optional fields for the auth context. */
+interface AuthUserProfile {
+  username?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
 }
 
 interface AuthContextType {
   session:    Session | null;
   user:       User    | null;
-  profile:    UserProfile | null;
+  profile:    AuthUserProfile | null;
   isLoading:  boolean;
   signIn:     (email: string, password: string, captchaToken?: string) => Promise<string | null>;
   signInWithGoogle: () => Promise<string | null>;
   signUp:     (email: string, password: string, username?: string, captchaToken?: string) => Promise<string | null>;
   refreshProfile: () => Promise<void>;
   signOut:    () => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<string | null>;
+  deleteAccount:  () => Promise<string | null>;
+  profileError: boolean;
 }
 
 // ── Context ────────────────────────────────────────────────────────────────
@@ -32,8 +46,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session,   setSession]   = useState<Session | null>(null);
   const [user,      setUser]      = useState<User | null>(null);
-  const [profile,   setProfile]   = useState<UserProfile | null>(null);
+  const [profile,   setProfile]   = useState<AuthUserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
+  
+
 
   useEffect(() => {
     // Restore existing session on mount
@@ -59,42 +76,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Fetch initial profile
-    supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single()
-      .then(async ({ data, error }) => {
+    const fetchProfileWithRetry = async (retryCount = 0) => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
+        
         if (data) {
           setProfile(data);
-          
-          // Auto-sync: If DB profile is missing info but metadata has it, sync it back to DB
           const metaUsername = user.user_metadata?.username || user.user_metadata?.full_name;
           const metaAvatar   = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-          
           const needsSync = (!data.username && metaUsername) || (!data.avatar_url && metaAvatar);
           
           if (needsSync) {
-            const updates = {
-              username:   data.username || metaUsername,
+            await supabase.from('profiles').update({
+              username: data.username || metaUsername,
               avatar_url: data.avatar_url || metaAvatar,
-            };
-            await supabase.from('profiles').update(updates).eq('id', user.id);
-            // setProfile will be updated via the realtime subscription below
+            }).eq('id', user.id);
           }
+          setProfileError(false);
         } else if (error && error.code === 'PGRST116') {
-          // Profile doesn't exist, create it (fallback if trigger fails)
+          // Fix 2: Fallback creation with retry
           const metaUsername = user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0];
           const metaAvatar   = user.user_metadata?.avatar_url || user.user_metadata?.picture;
           
-          await supabase.from('profiles').insert({
+          const { error: insErr } = await supabase.from('profiles').insert({
             id: user.id,
             username: metaUsername,
             avatar_url: metaAvatar
           });
+
+          if (insErr && retryCount < 2) {
+            setTimeout(() => fetchProfileWithRetry(retryCount + 1), 2000);
+          } else if (insErr) {
+            console.error('Critical Profile Creation Failure:', insErr);
+            setProfileError(true);
+          }
         }
-      });
+      } catch (err) {
+        console.error('Profile Fetch Error:', err);
+        setProfileError(true);
+      }
+    };
+
+    fetchProfileWithRetry();
 
     // Subscribe to realtime changes on this user's profile
     const channel = supabase.channel(`public:profiles:${user.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
-        setProfile(payload.new as UserProfile);
+        setProfile(payload.new as AuthUserProfile);
       })
       .subscribe();
 
@@ -106,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshProfile = async () => {
     if (!user) return;
     const { data } = await supabase.from('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
-    if (data) setProfile(data as UserProfile);
+    if (data) setProfile(data as AuthUserProfile);
   };
 
   /** Returns null on success, or an error message string on failure. */
@@ -114,17 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signInWithPassword({ 
       email, 
       password,
-      options: {
-        captchaToken,
-      }
+      options: { captchaToken }
     });
-    return error ? error.message : null;
+    return error ? mapAuthError(error) : null;
   };
 
   /** Handles Google Sign-In via Supabase OAuth */
   const signInWithGoogle = async (): Promise<string | null> => {
     try {
-      const redirectUrl = Linking.createURL('/auth/callback');
+      const redirectUrl = REDIRECT_URL;
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -178,15 +204,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         captchaToken,
       },
     });
-    return error ? error.message : null;
+    return error ? mapAuthError(error) : null;
+  };
+
+  /** Fix 4: Password Update */
+  const updatePassword = async (newPassword: string): Promise<string | null> => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return error ? mapAuthError(error) : null;
+  };
+
+  /** Fix 5: Account Deletion (Native Client side) */
+  const deleteAccount = async (): Promise<string | null> => {
+    if (!user) return 'Not authenticated';
+    try {
+      // 1. Delete profile (cascade will handle some things, but auth.users requires admin)
+      // Note: Full deletion of auth.users usually needs an Edge Function.
+      // Here we clear the profile and sign out as a minimum.
+      const { error: profErr } = await supabase.from('profiles').delete().eq('id', user.id);
+      if (profErr) throw profErr;
+
+      await signOut();
+      return null;
+    } catch (err: any) {
+      return mapAuthError(err);
+    }
   };
 
   const signOut = async () => {
+    // Fix 8: Comprehensive Cleanup
+    // Note: clearWatchlist() is handled by child providers (WatchlistProvider) 
+    // automatically by listening to the auth state / userId changes.
+    await AsyncStorage.clear(); 
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isLoading, refreshProfile, signIn, signInWithGoogle, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      session, user, profile, isLoading, profileError,
+      refreshProfile, signIn, signInWithGoogle, signUp, signOut, 
+      updatePassword, deleteAccount 
+    }}>
       {children}
     </AuthContext.Provider>
   );

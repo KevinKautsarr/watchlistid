@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, Platform, ScrollView
 } from 'react-native';
@@ -16,6 +16,9 @@ import { useLanguage } from '../context/LanguageContext';
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
 
+// Fixed row height for getItemLayout optimization (image + meta + padding)
+const ITEM_HEIGHT = 100;
+
 const WatchlistScreen: React.FC = () => {
   const router = useRouter();
   const { watchlist, toggleWatched, removeFromWatchlist, userRatings } = useWatchlist();
@@ -24,6 +27,21 @@ const WatchlistScreen: React.FC = () => {
   const [isAscending, setIsAscending] = useState(false);
   const bp = useBreakpoint();
   const { t } = useLanguage();
+
+  // M5: Stable callbacks — prevent renderItem from re-creating fns on every render
+  const handlePress = useCallback((id: number, mediaType: string) => {
+    router.push({ pathname: '/movie/[id]', params: { id: id.toString(), type: mediaType } } as any);
+  }, [router]);
+
+  const handleToggleWatched = useCallback((id: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    toggleWatched(id);
+  }, [toggleWatched]);
+
+  const handleRemove = useCallback((id: number) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    removeFromWatchlist(id);
+  }, [removeFromWatchlist]);
 
   // Filter based on Tab
   const filteredList = useMemo(() => {
@@ -152,23 +170,26 @@ const WatchlistScreen: React.FC = () => {
         renderItem={({ item, index }) => (
           <MovieListItem
             movie={item}
-            onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.id.toString(), type: item.mediaType } } as any)}
+            onPress={() => handlePress(item.id, item.mediaType)}
             showWatched={true}
             watched={item.status === WATCHLIST_STATUS.COMPLETED}
             inWatchlist={true}
-            onToggleWatched={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              toggleWatched(item.id);
-            }}
-            onRemove={() => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              removeFromWatchlist(item.id);
-            }}
+            onToggleWatched={() => handleToggleWatched(item.id)}
+            onRemove={() => handleRemove(item.id)}
             rank={index + 1}
           />
         )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        getItemLayout={(_, index) => ({
+          length: ITEM_HEIGHT,
+          offset: ITEM_HEIGHT * index,
+          index,
+        })}
+        windowSize={5}
+        maxToRenderPerBatch={10}
+        initialNumToRender={8}
+        removeClippedSubviews={true}
         ListEmptyComponent={(
           <View style={styles.empty}>
             <View style={styles.emptyIconWrap}>

@@ -54,9 +54,6 @@ export const useTopRatedTV = () =>
 export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') =>
   useAsync(() => type === 'movie' ? api.getFullMovieDetails(id) : api.getFullTVDetails(id), [id, type]);
 
-export const useMovieDetails = (id: number) =>
-  useAsync(() => api.getFullMovieDetails(id), [id]);
-
 export const usePersonDetails = (id: number) =>
   useAsync(
     () => Promise.all([

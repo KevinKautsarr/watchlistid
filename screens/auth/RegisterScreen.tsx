@@ -42,6 +42,14 @@ export default function RegisterScreen() {
       setError(t('passwordsDontMatch'));
       return;
     }
+    
+    // Fix 6: Email Regex Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Format email tidak valid.');
+      return;
+    }
+
     if (password.length < 6) {
       setError(t('passwordTooShort'));
       return;

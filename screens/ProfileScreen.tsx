@@ -46,8 +46,8 @@ const s = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, height: 70 },
   topBarLeft: { width: 80, alignItems: 'flex-start' },
   topBarCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  topBarRight: { width: 80, alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
-  topBarTitle: { color: Colors.white, fontSize: 20, fontWeight: FontWeight.black, letterSpacing: -0.5 },
+  topBarRight: { width: 80, alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.lg },
+  topBarTitle: { color: Colors.white, fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5 },
   topBarIcon: { padding: 4 },
   headerBadge: { position: 'absolute', top: 0, right: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary, borderWidth: 2, borderColor: Colors.background },
 
@@ -67,23 +67,23 @@ const s = StyleSheet.create({
   fieldLabel: { color: Colors.primary, fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1.5, marginBottom: 4, textTransform: 'uppercase' },
   charCount: { color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: FontWeight.bold },
   
-  displayName: { color: '#fff', fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5, textAlign: 'center' },
-  nameInput: { color: '#fff', fontSize: FontSize.lg, fontWeight: FontWeight.bold, borderBottomWidth: 1, borderBottomColor: Colors.primary, paddingVertical: 8, textAlign: 'center' },
+  displayName: { color: Colors.white, fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5, textAlign: 'center' },
+  nameInput: { color: Colors.white, fontSize: FontSize.lg, fontWeight: FontWeight.bold, borderBottomWidth: 1, borderBottomColor: Colors.primary, paddingVertical: Spacing.sm, textAlign: 'center' },
   
-  bioText: { color: 'rgba(255,255,255,0.85)', fontSize: FontSize.sm, lineHeight: 20, textAlign: 'center', marginTop: 6, paddingHorizontal: 20 },
-  bioInput: { color: 'rgba(255,255,255,0.9)', fontSize: FontSize.sm, lineHeight: 22, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)', paddingVertical: 8, textAlign: 'center', minHeight: 44 },
-  bioPlaceholder: { color: 'rgba(255,255,255,0.5)', fontSize: FontSize.sm, fontStyle: 'italic', marginTop: 6 },
+  bioText: { color: Colors.text.secondary, fontSize: FontSize.sm, lineHeight: 20, textAlign: 'center', marginTop: Spacing.xs, paddingHorizontal: Spacing.xl },
+  bioInput: { color: Colors.text.primary, fontSize: FontSize.sm, lineHeight: 22, borderBottomWidth: 1, borderBottomColor: Colors.overlay.light, paddingVertical: Spacing.sm, textAlign: 'center', minHeight: 44 },
+  bioPlaceholder: { color: Colors.text.secondary, fontSize: FontSize.sm, fontStyle: 'italic', marginTop: Spacing.xs },
 
-  statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 40, marginTop: 24, width: '100%' },
+  statsRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.xxxl, marginTop: Spacing.xl, width: '100%' },
   statItem: { alignItems: 'center' },
-  statCount: { fontSize: 18, fontWeight: FontWeight.black, color: Colors.white },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: FontWeight.bold, textTransform: 'uppercase' },
+  statCount: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white },
+  statLabel: { fontSize: FontSize.xs, color: Colors.text.secondary, marginTop: 2, fontWeight: FontWeight.bold, textTransform: 'uppercase' },
 
-  actionRow: { flexDirection: 'row', gap: 10, marginTop: 24, width: '100%' },
-  primaryBtn: { flex: 1, height: 36, backgroundColor: Colors.primary, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold },
-  secondaryBtn: { flex: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
-  secondaryBtnText: { color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold },
+  actionRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xl, width: '100%' },
+  primaryBtn: { flex: 1, height: 40, backgroundColor: Colors.accentBlue, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
+  primaryBtnText: { color: Colors.white, fontSize: FontSize.base, fontWeight: FontWeight.bold },
+  secondaryBtn: { flex: 1, height: 40, backgroundColor: Colors.overlay.light, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
+  secondaryBtnText: { color: Colors.white, fontSize: FontSize.base, fontWeight: FontWeight.bold },
   followingBtn: { backgroundColor: 'rgba(255,255,255,0.1)' },
 
   /* Tabs */
@@ -108,15 +108,15 @@ const s = StyleSheet.create({
   emptyText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.3)', textAlign: 'center' },
 
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
-  modalCard: { width: '100%', maxWidth: 320, backgroundColor: '#1C1C1E', borderRadius: Radius.xxl, padding: 28, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  modalIconBox: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(220,53,69,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
-  modalTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white, marginBottom: 8, textAlign: 'center' },
-  modalSub: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 22, marginBottom: 28 },
-  modalActions: { flexDirection: 'row', gap: 12, width: '100%' },
-  btnSecondary: { flex: 1, height: 48, borderRadius: Radius.lg, backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center' },
-  btnSecondaryText: { fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white },
-  btnDanger: { flex: 1, height: 48, borderRadius: Radius.lg, backgroundColor: '#DC3545', justifyContent: 'center', alignItems: 'center' },
-  btnDangerText: { fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white },
+  modalCard: { width: '100%', maxWidth: 320, backgroundColor: Colors.surface, borderRadius: Radius.xxl, padding: Spacing.xxl, alignItems: 'center', borderWidth: 1, borderColor: Colors.overlay.light },
+  modalIconBox: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(220,53,69,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.xl },
+  modalTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white, marginBottom: Spacing.xs, textAlign: 'center' },
+  modalSub: { fontSize: FontSize.base, color: Colors.text.secondary, textAlign: 'center', lineHeight: 22, marginBottom: Spacing.xxl },
+  modalActions: { flexDirection: 'row', gap: Spacing.md, width: '100%' },
+  btnSecondary: { flex: 1, height: 48, borderRadius: Radius.lg, backgroundColor: Colors.overlay.light, justifyContent: 'center', alignItems: 'center' },
+  btnSecondaryText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
+  btnDanger: { flex: 1, height: 48, borderRadius: Radius.lg, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
+  btnDangerText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.white },
 
   socialUserRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
   socialUserAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12, overflow: 'hidden' },
@@ -140,6 +140,10 @@ const ProfileScreen: React.FC = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
   const [showSettingsSheet, setShowSettingsSheet] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState<ContentTab>('Diary');
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
   
@@ -148,6 +152,7 @@ const ProfileScreen: React.FC = () => {
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
+  const { updatePassword, deleteAccount } = useAuth();
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const [isSocialModalVisible, setIsSocialModalVisible] = useState(false);
@@ -175,8 +180,8 @@ const ProfileScreen: React.FC = () => {
       setTargetProfile(prev => ({ ...prev, status: 'loading' }));
       if (!isOwner) {
         try {
-          const { data, error } = await typedFrom('profiles').select('id, username, avatar_url, bio, followers_count, following_count').eq('id', targetUserId).single();
-          if (data) setTargetProfile({ status: 'success', data: data as UserProfile, error: null });
+          const { data, error } = await typedFrom('profiles').select('id, username, avatar_url, bio').eq('id', targetUserId).single();
+          if (data) setTargetProfile({ status: 'success', data: { ...data, followers_count: 0, following_count: 0 } as UserProfile, error: null });
           else if (error) setTargetProfile({ status: 'error', data: null, error: error.message });
         } catch (e) {
           setTargetProfile({ status: 'error', data: null, error: (e as Error).message });
@@ -343,7 +348,40 @@ const ProfileScreen: React.FC = () => {
   };
 
   const handleCancel = () => { setEditName(displayName); setEditAvatar(avatarUrl || ''); setEditBio(displayBio); setIsEditing(false); };
-  const handleSignOut = async () => { await signOut(); router.replace('/auth/login' as any); };
+  const handleSignOut = async () => { 
+    await signOut(); 
+    // Navigation is handled by RootLayout state listener, but replace is safer
+    router.replace('/auth/login' as any); 
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword.length < 6) {
+      alert('Password minimal 6 karakter');
+      return;
+    }
+    const err = await updatePassword(newPassword);
+    if (!err) {
+      setShowPasswordModal(false);
+      setNewPassword('');
+      alert('Password berhasil diperbarui');
+    } else {
+      alert(err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'HAPUS') {
+      alert('Silakan ketik HAPUS untuk mengonfirmasi');
+      return;
+    }
+    const err = await deleteAccount();
+    if (err) {
+      alert(err);
+    } else {
+      setShowDeleteModal(false);
+      // Redirect handled by auth state change
+    }
+  };
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -653,6 +691,66 @@ const ProfileScreen: React.FC = () => {
         </View>
       </ScrollView>
 
+      {/* Fix 4: Password Change Modal */}
+      <Modal visible={showPasswordModal} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={s.modalCard}>
+            <View style={[s.modalIconBox, { backgroundColor: 'rgba(66,133,244,0.1)' }]}>
+              <SettingsIcon size={24} color="#4285F4" />
+            </View>
+            <Text style={s.modalTitle} allowFontScaling={false}>Ganti Password</Text>
+            <Text style={s.modalSub} allowFontScaling={false}>Masukkan password baru kamu (minimal 6 karakter).</Text>
+            <TextInput
+              style={{ width: '100%', marginBottom: 24, backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', padding: 12, borderRadius: 8, height: 50 }}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="Password baru"
+              placeholderTextColor="rgba(255,255,255,0.3)"
+              secureTextEntry
+              allowFontScaling={false}
+            />
+            <View style={s.modalActions}>
+              <TouchableOpacity style={s.btnSecondary} onPress={() => setShowPasswordModal(false)} activeOpacity={0.7}>
+                <Text style={s.btnSecondaryText} allowFontScaling={false}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.btnDanger, { backgroundColor: '#4285F4' }]} onPress={handleUpdatePassword} activeOpacity={0.8}>
+                <Text style={s.btnDangerText} allowFontScaling={false}>Simpan</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Fix 5: Account Deletion Modal */}
+      <Modal visible={showDeleteModal} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={s.modalCard}>
+            <View style={s.modalIconBox}>
+              <Trash2 size={24} color={Colors.primary} />
+            </View>
+            <Text style={s.modalTitle} allowFontScaling={false}>Hapus Akun?</Text>
+            <Text style={s.modalSub} allowFontScaling={false}>Tindakan ini permanen. Semua watchlist, diary, dan profil kamu akan dihapus. Ketik HAPUS untuk melanjutkan.</Text>
+            <TextInput
+              style={{ width: '100%', marginBottom: 24, backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center', height: 50 }}
+              value={deleteConfirmText}
+              onChangeText={setDeleteConfirmText}
+              placeholder="HAPUS"
+              placeholderTextColor="rgba(255,255,255,0.2)"
+              autoCapitalize="characters"
+              allowFontScaling={false}
+            />
+            <View style={s.modalActions}>
+              <TouchableOpacity style={s.btnSecondary} onPress={() => setShowDeleteModal(false)} activeOpacity={0.7}>
+                <Text style={s.btnSecondaryText} allowFontScaling={false}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.btnDanger} onPress={handleDeleteAccount} activeOpacity={0.8}>
+                <Text style={s.btnDangerText} allowFontScaling={false}>Hapus Akun</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={showLogoutModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={s.modalCard}>
@@ -667,7 +765,17 @@ const ProfileScreen: React.FC = () => {
         </View>
       </Modal>
 
-      <SettingsSheet visible={showSettingsSheet} onClose={() => setShowSettingsSheet(false)} onLanguagePress={() => setShowLangModal(true)} onLogoutPress={() => setShowLogoutModal(true)} onNotificationsPress={() => router.push('/notifications' as any)} onAboutPress={() => router.push('/about' as any)} onExportPress={handleExport} />
+      <SettingsSheet 
+        visible={showSettingsSheet} 
+        onClose={() => setShowSettingsSheet(false)} 
+        onLanguagePress={() => setShowLangModal(true)} 
+        onLogoutPress={() => setShowLogoutModal(true)} 
+        onNotificationsPress={() => router.push('/notifications' as any)} 
+        onAboutPress={() => router.push('/about' as any)} 
+        onExportPress={handleExport}
+        onPasswordPress={() => setShowPasswordModal(true)}
+        onDeletePress={() => setShowDeleteModal(true)}
+      />
       <LanguageSheet visible={showLangModal} onClose={() => setShowLangModal(false)} />
       <DeleteConfirmModal visible={!!logToDelete} onClose={() => setLogToDelete(null)} onConfirm={() => { if (logToDelete) deleteLog(logToDelete); }} title={t('deleteLogTitle')} message={t('deleteLogDesc')} />
       <SocialListSheet 

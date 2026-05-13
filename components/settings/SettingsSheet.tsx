@@ -6,7 +6,7 @@ import {
 import { 
   Globe, LogOut, Info, Settings, 
   ChevronRight, Shield, Bell, HelpCircle, 
-  Moon, Download, UserCircle
+  Moon, Download, UserCircle, Key, Trash2
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -21,10 +21,13 @@ interface SettingsSheetProps {
   onNotificationsPress?: () => void;
   onAboutPress?: () => void;
   onExportPress?: () => void;
+  onPasswordPress?: () => void;
+  onDeletePress?: () => void;
 }
 
 const SettingsSheet: React.FC<SettingsSheetProps> = ({
-  visible, onClose, onLanguagePress, onLogoutPress, onNotificationsPress, onAboutPress, onExportPress
+  visible, onClose, onLanguagePress, onLogoutPress, onNotificationsPress, onAboutPress, onExportPress,
+  onPasswordPress, onDeletePress
 }) => {
   const { t } = useLanguage();
 
@@ -56,6 +59,13 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
       icon: Info, 
       color: '#9061F9',
       onPress: () => { onClose(); onAboutPress?.(); } 
+    },
+    { 
+      id: 'password', 
+      label: 'Ganti Password', 
+      icon: Key, 
+      color: '#E50914',
+      onPress: () => { onClose(); onPasswordPress?.(); } 
     },
   ];
 
@@ -94,21 +104,35 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
               ))}
             </View>
 
-            <View style={[s.section, { marginTop: 12 }]}>
-              <TouchableOpacity 
-                style={s.menuItem}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onClose();
-                  onLogoutPress();
-                }}
-              >
-                <View style={[s.iconBox, { backgroundColor: 'rgba(220,53,69,0.1)' }]}>
-                  <LogOut size={20} color="#DC3545" strokeWidth={2} />
-                </View>
-                <Text style={[s.menuLabel, { color: '#DC3545' }]}>{t('signOut')}</Text>
-              </TouchableOpacity>
+        <View style={[s.section, { marginTop: 12 }]}>
+          <TouchableOpacity 
+            style={s.menuItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onClose();
+              onDeletePress?.();
+            }}
+          >
+            <View style={[s.iconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+              <Trash2 size={20} color="rgba(255,255,255,0.4)" strokeWidth={2} />
             </View>
+            <Text style={[s.menuLabel, { color: 'rgba(255,255,255,0.4)' }]}>Hapus Akun</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={s.menuItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onClose();
+              onLogoutPress();
+            }}
+          >
+            <View style={[s.iconBox, { backgroundColor: 'rgba(220,53,69,0.1)' }]}>
+              <LogOut size={20} color="#DC3545" strokeWidth={2} />
+            </View>
+            <Text style={[s.menuLabel, { color: '#DC3545' }]}>{t('signOut')}</Text>
+          </TouchableOpacity>
+        </View>
             
             <View style={s.footer}>
               <Text style={s.versionText}>WATCHLISTID v1.0.0</Text>

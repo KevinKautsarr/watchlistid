@@ -155,8 +155,8 @@ const s = StyleSheet.create({
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 197, 24, 0.1)',
-    paddingHorizontal: 8,
+    backgroundColor: `${Colors.ratingGold}1A`, // 0.1 alpha
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: Radius.full,
     gap: 4,
@@ -170,9 +170,9 @@ const s = StyleSheet.create({
     marginVertical: Spacing.sm,
   },
   spoilerPlaceholder: {
-    backgroundColor: 'rgba(63, 114, 175, 0.05)',
-    borderRadius: Radius.md,
-    padding: Spacing.xl,
+    backgroundColor: `${Colors.accentBlue}0D`, // 0.05 alpha
+    borderRadius: Radius.lg,
+    padding: Spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -236,7 +236,7 @@ const s = StyleSheet.create({
 
 const markdownStyles = {
   body: {
-    color: 'rgba(255,255,255,0.9)',
+    color: Colors.text.primary,
     fontSize: FontSize.base,
     lineHeight: 22,
   },

@@ -13,7 +13,7 @@ interface SocialContextType {
   deleteLog: (logId: string) => Promise<boolean>;
   refreshLogs: () => Promise<void>;
   getReviews: (movieId: number) => Promise<ReviewItem[]>;
-  addReview: (review: Omit<ReviewItem, 'id' | 'created_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => Promise<boolean>;
+  addReview: (review: Omit<ReviewItem, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => Promise<boolean>;
   toggleLikeReview: (reviewId: string) => Promise<boolean>;
   
   // Social Engine
@@ -167,7 +167,7 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     })) as ReviewItem[];
   };
 
-  const addReview = async (reviewData: Omit<ReviewItem, 'id' | 'created_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => {
+  const addReview = async (reviewData: Omit<ReviewItem, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => {
     if (!user) return false;
     
     const { error } = await typedFrom('reviews').upsert({
@@ -185,27 +185,15 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const toggleLikeReview = async (reviewId: string) => {
     if (!user) return false;
-
-    // Check if already liked
-    const { data: existingLike } = await typedFrom('review_likes')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('review_id', reviewId)
-      .single();
-
-    if (existingLike) {
-      const { error } = await typedFrom('review_likes')
-        .delete()
-        .eq('id', existingLike.id);
-      return !error;
-    } else {
-      const { error } = await typedFrom('review_likes')
-        .insert({
-          user_id: user.id,
-          review_id: reviewId
-        } as any);
-      return !error;
+    // M4: Single atomic RPC — eliminates SELECT+INSERT race condition
+    const { data, error } = await supabase.rpc('toggle_review_like', {
+      p_review_id: reviewId,
+    });
+    if (error) {
+      console.error('Error toggling like:', error);
+      return false;
     }
+    return data as boolean;
   };
 
   const searchUsers = async (query: string): Promise<UserProfile[]> => {
@@ -291,21 +279,20 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const getAverageRating = async (movieId: number) => {
-    const { data, error } = await typedFrom('reviews')
-      .select('rating')
-      .eq('movie_id', movieId);
+    // M1: Delegate computation to Postgres — single aggregate query
+    const { data, error } = await supabase.rpc('get_avg_rating', {
+      p_movie_id: movieId,
+    });
 
-    if (error || !data || data.length === 0) {
+    if (error || !data || (Array.isArray(data) && data.length === 0)) {
       return { average: 0, count: 0 };
     }
 
-    const ratings = data.map(r => r.rating).filter((r): r is number => r !== null);
-    if (ratings.length === 0) return { average: 0, count: 0 };
-
-    const sum = ratings.reduce((acc, curr) => acc + curr, 0);
-    const average = sum / ratings.length;
-
-    return { average, count: ratings.length };
+    const row = Array.isArray(data) ? data[0] : data;
+    return {
+      average: Number(row?.average ?? 0),
+      count:   Number(row?.count   ?? 0),
+    };
   };
 
   return (
