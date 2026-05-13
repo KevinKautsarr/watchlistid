@@ -5,9 +5,9 @@ import { Star, Heart, MessageSquare, AlertTriangle, Eye, EyeOff } from 'lucide-r
 import Markdown from 'react-native-markdown-display';
 import * as Haptics from 'expo-haptics';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import { ReviewItem } from '../../types/review';
-import { useSocial } from '../../context/SocialContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { ReviewItem } from '@/types/review';
+import { useSocial } from '@/context/SocialContext';
 
 interface ReviewCardProps {
   review: ReviewItem;

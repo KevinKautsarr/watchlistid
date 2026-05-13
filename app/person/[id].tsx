@@ -1,4 +1,4 @@
-import PersonDetailScreen from '../../screens/PersonDetailScreen';
+import PersonDetailScreen from '@/screens/PersonDetailScreen';
 import { useLocalSearchParams as useExpoLocalSearchParams, useNavigation as useExpoNavigation } from 'expo-router';
 
 export default function PersonDetailRoute() {

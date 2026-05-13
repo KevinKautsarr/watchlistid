@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { typedFrom } from '../supabase';
 import { useAuth } from './AuthContext';
-import { MovieLog } from '../types';
-import Toast from '../components/common/Toast';
+import { MovieLog } from '@/types';
+import Toast from '@/components/common/Toast';
 
 interface LogContextType {
   userLogs: MovieLog[];

@@ -11,20 +11,20 @@ import {
   ArrowLeft, Award, ChevronDown, Clock, Flame,
   Search, SearchX, Star, TrendingUp, User, X,
 } from "lucide-react-native";
-import MovieListItem from "../components/movie/MovieListItem";
-import { Colors, FontSize, FontWeight, IconSize, Radius, Shadow, Spacing, TMDB_IMAGE_SIZES } from "../constants/theme";
-import { webHover, cursorPointer } from "../utils/webStyles";
-import { useWatchlist } from "../context/WatchlistContext";
-import { useLanguage } from "../context/LanguageContext";
-import { useDebounce } from "../hooks/useDebounce";
-import { useBreakpoint } from "../hooks/useBreakpoint";
+import MovieListItem from '@/components/movie/MovieListItem';
+import { Colors, FontSize, FontWeight, IconSize, Radius, Shadow, Spacing, TMDB_IMAGE_SIZES } from '@/constants/theme';
+import { webHover, cursorPointer } from '@/utils/webStyles';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import {
   discoverMovies, getPopularMovies, getPopularPeople,
   getTopRatedMovies, getTopRatedTV, getTrendingMovies,
   getTrendingTV, getTrendingAll, searchMovies, searchPeople, searchTV, searchMulti,
   discoverAnime, discoverAnimation,
-} from "../services/api";
-import { MediaItem, FetchState } from "../types";
+} from '@/services/api';
+import { MediaItem, FetchState } from '@/types';
 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

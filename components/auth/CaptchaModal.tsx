@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
-import { Colors, Radius, Spacing, Shadow, FontSize, FontWeight } from '../../constants/theme';
+import { Colors, Radius, Spacing, Shadow, FontSize, FontWeight } from '@/constants/theme';
 
 import type { WebView as WebViewType, WebViewMessageEvent } from 'react-native-webview';
 

@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Check, Circle, Trash2, Plus, Eye } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '../../constants/theme';
-import { cursorPointer } from '../../utils/webStyles';
-import { MediaItem } from '../../types/tmdb';
-import { WatchlistItem } from '../../types/watchlist';
-import RatingBadge from '../common/RatingBadge';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
+import { MediaItem } from '@/types/tmdb';
+import { WatchlistItem } from '@/types/watchlist';
+import RatingBadge from '@/components/common/RatingBadge';
 
 interface MovieListItemProps {
   movie:        MediaItem | WatchlistItem;

@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
 import { supabase, typedFrom } from '../supabase';
 import { useAuth } from './AuthContext';
-import { ReviewItem } from '../types/review';
-import Toast from '../components/common/Toast';
+import { ReviewItem } from '@/types/review';
+import Toast from '@/components/common/Toast';
 
 interface ReviewContextType {
   getReviews: (movieId: number) => Promise<ReviewItem[]>;

@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { X, Check, RotateCcw } from 'lucide-react-native';
-import { Colors, Radius, FontWeight } from '../../constants/theme';
+import { Colors, Radius, FontWeight } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CROP_SIZE = SCREEN_WIDTH * 0.8;

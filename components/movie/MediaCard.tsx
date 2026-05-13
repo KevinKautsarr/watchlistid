@@ -3,8 +3,8 @@ import { TouchableOpacity, Text, View, Animated, StyleSheet, Platform } from 're
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Star } from 'lucide-react-native';
-import { TMDB_IMAGE_SIZES, Radius, Colors, IconSize, FontSize, FontWeight } from '../../constants/theme';
-import { cursorPointer } from '../../utils/webStyles';
+import { TMDB_IMAGE_SIZES, Radius, Colors, IconSize, FontSize, FontWeight } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface BaseCardProps {

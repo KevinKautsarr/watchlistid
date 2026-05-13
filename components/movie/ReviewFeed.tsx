@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
 import { MessageSquare, SortAsc, SortDesc, Filter } from 'lucide-react-native';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../../constants/theme';
-import { ReviewItem, FetchState } from '../../types/review';
-import { useSocial } from '../../context/SocialContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { ReviewItem, FetchState } from '@/types/review';
+import { useSocial } from '@/context/SocialContext';
 import ReviewCard from './ReviewCard';
 
 interface ReviewFeedProps {

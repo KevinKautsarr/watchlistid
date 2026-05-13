@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform } from 'react-native';
 import { LogIn, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
 interface LoginPromptModalProps {
   visible: boolean;

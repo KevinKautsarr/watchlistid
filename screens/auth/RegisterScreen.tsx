@@ -11,10 +11,10 @@ import * as Haptics from 'expo-haptics';
 import { Mail, Lock, Eye, EyeOff, User, UserPlus } from 'lucide-react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
-import { useAuth } from '../../context/AuthContext';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import CaptchaModal from '../../components/auth/CaptchaModal';
-import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import CaptchaModal from '@/components/auth/CaptchaModal';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function RegisterScreen() {
   const router = useRouter();

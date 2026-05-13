@@ -11,8 +11,8 @@ import * as Haptics from 'expo-haptics';
 import { Mail, ArrowLeft, Send } from 'lucide-react-native';
 
 import { supabase } from '../../supabase';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import { useLanguage } from '../../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();

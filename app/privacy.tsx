@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Stack, useRouter } from 'expo-router';
 import { ChevronLeft, Shield, Eye, Lock, Trash2, Globe } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
 export default function PrivacyScreen() {
   const router = useRouter();

@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, typedFrom } from '../supabase';
-import { Movie, TVShow, MediaItem } from '../types/tmdb';
-import { WatchlistMap, WatchlistItem, WATCHLIST_STATUS, StorageSchema } from '../types/watchlist';
-import Toast from '../components/common/Toast';
+import { Movie, TVShow, MediaItem } from '@/types/tmdb';
+import { WatchlistMap, WatchlistItem, WATCHLIST_STATUS, StorageSchema } from '@/types/watchlist';
+import Toast from '@/components/common/Toast';
 
 // ── Supabase helpers ───────────────────────────────────────────────────────
 function toSupabaseRow(item: WatchlistItem, userId: string) {

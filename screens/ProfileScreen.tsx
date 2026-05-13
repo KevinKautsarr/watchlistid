@@ -20,30 +20,30 @@ function decode(base64: string): ArrayBuffer {
 }
 
 import { supabase, typedFrom } from '../supabase';
-import { UserProfile, FetchState } from '../types';
+import { UserProfile, FetchState } from '@/types';
 
 import {
   ArrowLeft, SearchX, Settings as SettingsIcon,
 } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '../constants/theme';
-import { useWatchlist } from '../context/WatchlistContext';
-import { useAuth } from '../context/AuthContext';
-import { useSocial } from '../context/SocialContext';
-import { useNotifications } from '../context/NotificationContext';
-import { useLanguage } from '../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { useAuth } from '@/context/AuthContext';
+import { useSocial } from '@/context/SocialContext';
+import { useNotifications } from '@/context/NotificationContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { cursorPointer } from '../utils/webStyles';
-import DiaryCard from '../components/movie/DiaryCard';
-import MovieListItem from '../components/movie/MovieListItem';
-import ImageCropModal from '../components/common/ImageCropModal';
-import SettingsSheet from '../components/settings/SettingsSheet';
+import { cursorPointer } from '@/utils/webStyles';
+import DiaryCard from '@/components/movie/DiaryCard';
+import MovieListItem from '@/components/movie/MovieListItem';
+import ImageCropModal from '@/components/common/ImageCropModal';
+import SettingsSheet from '@/components/settings/SettingsSheet';
 
 // New specialized components
-import ProfileHeader from '../components/profile/ProfileHeader';
-import ProfileStats from '../components/profile/ProfileStats';
-import ProfileActions from '../components/profile/ProfileActions';
-import ProfileTabs from '../components/profile/ProfileTabs';
-import ProfileEditModal from '../components/profile/ProfileEditModal';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileStats from '@/components/profile/ProfileStats';
+import ProfileActions from '@/components/profile/ProfileActions';
+import ProfileTabs from '@/components/profile/ProfileTabs';
+import ProfileEditModal from '@/components/profile/ProfileEditModal';
 
 type ContentTab = 'Diary' | 'Watched' | 'Watchlist';
 

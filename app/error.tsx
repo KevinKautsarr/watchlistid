@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { ShieldAlert, Mail } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../constants/theme';
-import { useAuth } from '../context/AuthContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ErrorScreen() {
   const { signOut } = useAuth();

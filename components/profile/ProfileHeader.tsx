@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Avatar from '../common/Avatar';
-import { Colors, Spacing, FontSize, FontWeight } from '../../constants/theme';
+import Avatar from '@/components/common/Avatar';
+import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
 
 interface ProfileHeaderProps {
   displayName: string;

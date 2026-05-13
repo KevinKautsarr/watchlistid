@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Star, StarHalf } from 'lucide-react-native';
-import { Colors } from '../../constants/theme';
+import { Colors } from '@/constants/theme';
 
 interface StarRatingProps {
   rating: number; // 0 to 5

@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { User } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '../../constants/theme';
-import { cursorPointer } from '../../utils/webStyles';
-import { CastMember } from '../../types';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
+import { CastMember } from '@/types';
 
 interface CastCardProps {
   cast:     CastMember;

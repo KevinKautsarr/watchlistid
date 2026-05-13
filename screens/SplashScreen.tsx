@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Film } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, FontSize, FontWeight } from '../constants/theme';
+import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
 
 const SplashScreen: React.FC = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;

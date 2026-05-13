@@ -4,8 +4,8 @@ import {
   StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform 
 } from 'react-native';
 import { X, Camera, Check } from 'lucide-react-native';
-import Avatar from '../common/Avatar';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../../constants/theme';
+import Avatar from '@/components/common/Avatar';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
 interface ProfileEditModalProps {
   visible: boolean;

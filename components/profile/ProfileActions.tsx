@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { UserPlus, UserMinus, Edit3 } from 'lucide-react-native';
 
 interface ProfileActionsProps {

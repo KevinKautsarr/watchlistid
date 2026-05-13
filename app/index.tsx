@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import SplashScreen from '../screens/SplashScreen';
+import SplashScreen from '@/screens/SplashScreen';
 import { Stack, Redirect } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AppEntry() {
   const { session, isLoading } = useAuth();

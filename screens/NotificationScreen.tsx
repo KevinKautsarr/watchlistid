@@ -8,10 +8,10 @@ import { useRouter } from 'expo-router';
 import { Bell, BellOff, CheckCircle2, Info, AlertTriangle, ChevronLeft, Trash2, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../constants/theme';
-import { useNotifications, Notification } from '../context/NotificationContext';
-import { useLanguage } from '../context/LanguageContext';
-import { cursorPointer } from '../utils/webStyles';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
+import { useNotifications, Notification } from '@/context/NotificationContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { cursorPointer } from '@/utils/webStyles';
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },

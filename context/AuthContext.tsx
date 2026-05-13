@@ -3,8 +3,8 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { supabase, typedFrom } from '../supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
-import { mapAuthError } from '../utils/authErrors';
-import { FetchState } from '../types';
+import { mapAuthError } from '@/utils/authErrors';
+import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWatchlist } from './WatchlistContext';
 

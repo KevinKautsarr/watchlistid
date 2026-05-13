@@ -9,10 +9,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
 import { ChevronLeft, Calendar, Globe, TrendingUp } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '../constants/theme';
-import { usePersonDetails } from '../hooks/useMovies';
-import PosterCard from '../components/common/PosterCard';
-import { useLanguage } from '../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '@/constants/theme';
+import { usePersonDetails } from '@/hooks/useMovies';
+import PosterCard from '@/components/common/PosterCard';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface PersonDetailScreenProps {
   route: { params: { id: string, name?: string } };

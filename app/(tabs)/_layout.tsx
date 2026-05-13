@@ -3,11 +3,11 @@ import { View, Text, Platform, useWindowDimensions, TouchableOpacity, StyleSheet
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Home, Compass, Bookmark, User, Film } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomMobileTabBar from '../../components/navigation/CustomMobileTabBar';
-import { useLanguage } from '../../context/LanguageContext';
-import { useAuth } from '../../context/AuthContext';
-import LoginPromptModal from '../../components/auth/LoginPromptModal';
-import { Colors } from '../../constants/theme';
+import CustomMobileTabBar from '@/components/navigation/CustomMobileTabBar';
+import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import LoginPromptModal from '@/components/auth/LoginPromptModal';
+import { Colors } from '@/constants/theme';
 
 const PRIMARY  = Colors.primary;
 const INACTIVE = Colors.overlay.light50;

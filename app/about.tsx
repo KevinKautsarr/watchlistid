@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Share, P
 import { Stack, useRouter } from 'expo-router';
 import { ChevronLeft, Globe, Twitter, Shield, FileText, Heart, Film, Github, ExternalLink } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../constants/theme';
-import { useLanguage } from '../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AboutScreen() {
   const router = useRouter();

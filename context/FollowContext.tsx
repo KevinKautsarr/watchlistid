@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { typedFrom } from '../supabase';
 import { useAuth } from './AuthContext';
-import { UserProfile, MovieLog } from '../types';
+import { UserProfile, MovieLog } from '@/types';
 
 interface FollowContextType {
   searchUsers: (query: string) => Promise<UserProfile[]>;

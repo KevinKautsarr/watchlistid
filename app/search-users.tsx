@@ -18,9 +18,9 @@ function debounce<T extends (...args: string[]) => void>(func: T, wait: number):
   };
 }
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
-import { useSocial } from '../context/SocialContext';
-import { UserProfile, FetchState } from '../types';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { useSocial } from '@/context/SocialContext';
+import { UserProfile, FetchState } from '@/types';
 
 export default function UserSearchScreen() {
   const router = useRouter();

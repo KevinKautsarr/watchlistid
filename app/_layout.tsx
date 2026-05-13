@@ -6,12 +6,12 @@ import { Platform, Text, View, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider, useAuth } from '../context/AuthContext';
-import { WatchlistProvider } from '../context/WatchlistContext';
-import { NotificationProvider } from '../context/NotificationContext';
-import { SocialProvider } from '../context/SocialContext';
-import { LanguageProvider } from '../context/LanguageContext';
-import ErrorBoundary from '../components/ErrorBoundary';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { WatchlistProvider } from '@/context/WatchlistContext';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { SocialProvider } from '@/context/SocialContext';
+import { LanguageProvider } from '@/context/LanguageContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Global Polish: Enable font scaling but recommend max multipliers for layout-critical text
 // Note: individual components will be updated to use maxFontSizeMultiplier where necessary

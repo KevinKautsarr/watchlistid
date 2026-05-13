@@ -10,8 +10,8 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import { useLanguage } from '../../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface SettingsSheetProps {
   visible: boolean;

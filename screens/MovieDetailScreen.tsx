@@ -15,29 +15,29 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { 
   ChevronLeft, BookmarkPlus, BookmarkCheck, Share2, Star, TrendingUp, Calendar, Clock, Globe, Info, Play
 } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES, Shadow } from '../constants/theme';
-import { cursorPointer } from '../utils/webStyles';
-import { Video, CastMember, Movie } from '../types';
-import { useWatchlist } from '../context/WatchlistContext';
-import { useAuth } from '../context/AuthContext';
-import { useContentDetails } from '../hooks/useMovies';
-import { useBreakpoint } from '../hooks/useBreakpoint';
-import TrailerCard from '../components/movie/TrailerCard';
-import CastCard from '../components/movie/CastCard';
-import MovieDetailTable from '../components/movie/MovieDetailTable';
-import PosterCard from '../components/common/PosterCard';
-import RatingBadge from '../components/common/RatingBadge';
-import LogModal from '../components/movie/LogModal';
-import ReviewFeed from '../components/movie/ReviewFeed';
-import { useLanguage } from '../context/LanguageContext';
-import { useSocial } from '../context/SocialContext';
-import StarRating from '../components/common/StarRating';
-import { getSupplementaryMovieDetails, getSupplementaryTVDetails } from '../services/api';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES, Shadow } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
+import { Video, CastMember, Movie } from '@/types';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { useAuth } from '@/context/AuthContext';
+import { useContentDetails } from '@/hooks/useMovies';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
+import TrailerCard from '@/components/movie/TrailerCard';
+import CastCard from '@/components/movie/CastCard';
+import MovieDetailTable from '@/components/movie/MovieDetailTable';
+import PosterCard from '@/components/common/PosterCard';
+import RatingBadge from '@/components/common/RatingBadge';
+import LogModal from '@/components/movie/LogModal';
+import ReviewFeed from '@/components/movie/ReviewFeed';
+import { useLanguage } from '@/context/LanguageContext';
+import { useSocial } from '@/context/SocialContext';
+import StarRating from '@/components/common/StarRating';
+import { getSupplementaryMovieDetails, getSupplementaryTVDetails } from '@/services/api';
 
 
 const { width } = Dimensions.get('window');
 
-import { FetchState } from '../types';
+import { FetchState } from '@/types';
 
 interface MovieDetailScreenProps {
   route: { params: { id: string, type: 'movie' | 'tv' } };

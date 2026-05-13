@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Animated } from 'react-native';
-import { Colors, Radius } from '../constants/theme';
+import { Colors, Radius } from '@/constants/theme';
 
 interface SkeletonProps {
   width?:        number | string;

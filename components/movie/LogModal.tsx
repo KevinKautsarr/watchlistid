@@ -8,13 +8,13 @@ import * as Haptics from 'expo-haptics';
 import { Alert } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../../constants/theme';
-import { cursorPointer } from '../../utils/webStyles';
-import { useLanguage } from '../../context/LanguageContext';
-import { useSocial } from '../../context/SocialContext';
-import { useWatchlist } from '../../context/WatchlistContext';
-import { Movie, MovieLog } from '../../types';
-import StarRating from '../common/StarRating';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
+import { useLanguage } from '@/context/LanguageContext';
+import { useSocial } from '@/context/SocialContext';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { Movie, MovieLog } from '@/types';
+import StarRating from '@/components/common/StarRating';
 
 interface LogModalProps {
   visible: boolean;

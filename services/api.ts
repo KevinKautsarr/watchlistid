@@ -1,5 +1,5 @@
 import { TMDB_API_KEY, TMDB_BASE_URL } from '../config';
-import type { Movie, Person, Genre } from '../types';
+import type { Movie, Person, Genre } from '@/types';
 
 // ── In-memory cache with TTL to avoid redundant TMDB fetches ─────────────────
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes

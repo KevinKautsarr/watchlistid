@@ -7,13 +7,13 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 import { ArrowUpDown, Film, Check, Trash2, ArrowUp, ArrowDown } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../constants/theme';
-import { useWatchlist } from '../context/WatchlistContext';
-import { WATCHLIST_STATUS } from '../types/watchlist';
-import MovieListItem from '../components/movie/MovieListItem';
-import { useBreakpoint } from '../hooks/useBreakpoint';
-import { cursorPointer } from '../utils/webStyles';
-import { useLanguage } from '../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { WATCHLIST_STATUS } from '@/types/watchlist';
+import MovieListItem from '@/components/movie/MovieListItem';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { cursorPointer } from '@/utils/webStyles';
+import { useLanguage } from '@/context/LanguageContext';
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
 

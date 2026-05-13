@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Star, Film, Trash2, Eye, EyeOff } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../../constants/theme';
-import { cursorPointer } from '../../utils/webStyles';
-import { MovieLog } from '../../types';
-import { useLanguage } from '../../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
+import { MovieLog } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DiaryCardProps {
   log: MovieLog;

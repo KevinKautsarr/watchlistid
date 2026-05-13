@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 
 interface GenrePillProps {
   label:    string;

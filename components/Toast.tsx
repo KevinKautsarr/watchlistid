@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { Colors, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
+import { Colors, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
 
 interface ToastProps {
   message: string;

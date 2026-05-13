@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LayoutGrid, Play, Bookmark } from 'lucide-react-native';
-import { Colors, FontWeight } from '../../constants/theme';
+import { Colors, FontWeight } from '@/constants/theme';
 
 type ContentTab = 'Diary' | 'Watched' | 'Watchlist';
 

@@ -7,8 +7,8 @@ import { Check, Globe, Languages } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 // import { BlurView } from 'expo-blur'; // Temporarily disabled
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import { useLanguage } from '../../context/LanguageContext';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface LanguageSheetProps {
   visible: boolean;

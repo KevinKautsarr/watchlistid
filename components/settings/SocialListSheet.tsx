@@ -7,9 +7,9 @@ import {
 import { Image } from 'expo-image';
 import { Search, UserPlus, UserMinus, X, ChevronRight, User } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import { useLanguage } from '../../context/LanguageContext';
-import Avatar from '../common/Avatar';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { useLanguage } from '@/context/LanguageContext';
+import Avatar from '@/components/common/Avatar';
 
 interface SocialUser {
   id: string;

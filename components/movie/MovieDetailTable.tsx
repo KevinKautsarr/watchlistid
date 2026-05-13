@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Calendar, Clock, Globe, Info, DollarSign, Activity, Building2 } from 'lucide-react-native';
-import { Colors, Spacing, FontSize, FontWeight, Radius } from '../../constants/theme';
-import { Movie, IconProps } from '../../types';
-import { useLanguage } from '../../context/LanguageContext';
+import { Colors, Spacing, FontSize, FontWeight, Radius } from '@/constants/theme';
+import { Movie, IconProps } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface MovieDetailTableProps {
   movie: Movie;

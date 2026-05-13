@@ -5,9 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { Home, Compass, Bookmark, User } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
-import { Colors } from '../../constants/theme';
+import { Colors } from '@/constants/theme';
 
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 

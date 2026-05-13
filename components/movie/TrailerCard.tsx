@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Play, Film, Eye, Scissors, Video as VideoIcon, Camera } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../../constants/theme';
-import { cursorPointer, webHover } from '../../utils/webStyles';
-import { Video } from '../../types';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
+import { cursorPointer, webHover } from '@/utils/webStyles';
+import { Video } from '@/types';
 
 interface TrailerCardProps {
   video:    Video;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import * as api from '../services/api';
-import type { Movie } from '../types';
+import * as api from '@/services/api';
+import type { Movie } from '@/types';
 
 interface UseMoviesState<T> {
   data:       T | null;

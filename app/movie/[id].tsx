@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import MovieDetailScreen from '../../screens/MovieDetailScreen';
+import MovieDetailScreen from '@/screens/MovieDetailScreen';
 import React from 'react';
-import ScreenErrorBoundary from '../../components/common/ScreenErrorBoundary';
+import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 
 export default function MovieDetailRoute() {
   const params = useLocalSearchParams();

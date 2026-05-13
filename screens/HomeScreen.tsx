@@ -10,18 +10,18 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 import { Bell, Play, Plus, Star, Flame, Award, Clock, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import SectionHeader from '../components/common/SectionHeader';
-import Avatar from '../components/common/Avatar';
-import ActivityFeed from '../components/movie/ActivityFeed';
-import { MediaCard } from '../components/movie/MediaCard';
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '../constants/theme';
-import { webHover, cursorPointer } from '../utils/webStyles';
-import { useWatchlist } from '../context/WatchlistContext';
-import { useAuth } from '../context/AuthContext';
-import { useTrending, usePopular, useTopRated, useTrendingTV, useTopRatedTV } from '../hooks/useMovies';
-import { useBreakpoint } from '../hooks/useBreakpoint';
-import { useLanguage } from '../context/LanguageContext';
-import { Movie } from '../types';
+import SectionHeader from '@/components/common/SectionHeader';
+import Avatar from '@/components/common/Avatar';
+import ActivityFeed from '@/components/movie/ActivityFeed';
+import { MediaCard } from '@/components/movie/MediaCard';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
+import { webHover, cursorPointer } from '@/utils/webStyles';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { useAuth } from '@/context/AuthContext';
+import { useTrending, usePopular, useTopRated, useTrendingTV, useTopRatedTV } from '@/hooks/useMovies';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { useLanguage } from '@/context/LanguageContext';
+import { Movie } from '@/types';
 
 // ─── Sidebar widths (must match _layout.tsx) ─────────────────────────────────
 const SIDEBAR_FULL = 240;
@@ -40,28 +40,7 @@ const GENRES = [
 ] as const;
 
 // ─── Skeleton shimmer ─────────────────────────────────────────────────────────
-function SkeletonRow({ cardWidth, pad }: { cardWidth: number; pad: number }) {
-  const shimmer = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [shimmer]);
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.25] });
-  const cardHeight = Math.round(cardWidth * 1.5);
-  return (
-    <Animated.View style={{ flexDirection: 'row', paddingLeft: pad, opacity, minHeight: cardHeight }}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <View key={i} style={{ width: cardWidth, height: cardHeight, borderRadius: Radius.md, backgroundColor: Colors.surface, marginRight: 10 }} />
-      ))}
-    </Animated.View>
-  );
-}
+import { MovieSkeleton } from '@/components/common/MovieSkeleton';
 
 function HeroSkeleton({ width, height }: { width: number; height: number }) {
   return (
@@ -484,7 +463,11 @@ export default function HomeScreen() {
           actionLabel={item.category ? t('seeAll') : undefined} 
           onAction={item.category ? () => router.push(`/(tabs)/search?category=${item.category}` as any) : undefined} 
         />
-        {loading ? <SkeletonRow cardWidth={CARD} pad={PAD} /> : <MediaRow {...rowProps} data={item.data.slice(0, N)} />}
+        {loading ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: PAD, paddingRight: PAD, paddingBottom: 4, gap: 10 }}>
+             <MovieSkeleton layout="horizontal" count={6} />
+          </ScrollView>
+        ) : <MediaRow {...rowProps} data={item.data.slice(0, N)} />}
       </View>
     );
   };

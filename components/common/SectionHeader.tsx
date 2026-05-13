@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ChevronRight } from 'lucide-react-native';
-import { Colors, Spacing, FontSize, FontWeight } from '../../constants/theme';
-import { IconProps } from '../../types';
+import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
+import { IconProps } from '@/types';
 
 interface SectionHeaderProps {
   title:        string;

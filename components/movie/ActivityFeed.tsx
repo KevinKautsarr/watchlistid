@@ -5,10 +5,10 @@ import { MessageSquare, Clock, Heart, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
-import { MovieLog } from '../../types';
-import { useSocial } from '../../context/SocialContext';
-import Avatar from '../common/Avatar';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { MovieLog } from '@/types';
+import { useSocial } from '@/context/SocialContext';
+import Avatar from '@/components/common/Avatar';
 
 export default function ActivityFeed() {
   const router = useRouter();
