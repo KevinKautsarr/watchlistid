@@ -13,12 +13,8 @@ import { SocialProvider } from '../context/SocialContext';
 import { LanguageProvider } from '../context/LanguageContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-// Global Polish: Prevent font scaling
-if ((Text as any).defaultProps) {
-  (Text as any).defaultProps.allowFontScaling = false;
-} else {
-  (Text as any).defaultProps = { allowFontScaling: false };
-}
+// Global Polish: Enable font scaling but recommend max multipliers for layout-critical text
+// Note: individual components will be updated to use maxFontSizeMultiplier where necessary
 
 export const unstable_settings = {
   anchor: '(tabs)',

@@ -7,11 +7,12 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 import { ArrowUpDown, Film, Check, Trash2, ArrowUp, ArrowDown } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
 import { WATCHLIST_STATUS } from '../types/watchlist';
 import MovieListItem from '../components/movie/MovieListItem';
 import { useBreakpoint } from '../hooks/useBreakpoint';
+import { cursorPointer } from '../utils/webStyles';
 import { useLanguage } from '../context/LanguageContext';
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
@@ -104,8 +105,11 @@ const WatchlistScreen: React.FC = () => {
       {/* ── IMDb Style Tabs ── */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Watchlist' && styles.tabActive]} 
+          style={[styles.tab, activeTab === 'Watchlist' && styles.tabActive, cursorPointer]} 
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watchlist'); }}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'Watchlist' }}
+          accessibilityLabel={t('tabWatchlist')}
         >
           <Text style={[styles.tabText, activeTab === 'Watchlist' && styles.tabTextActive]}>
             {t('tabWatchlist')}
@@ -116,8 +120,11 @@ const WatchlistScreen: React.FC = () => {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Rated' && styles.tabActive]} 
+          style={[styles.tab, activeTab === 'Rated' && styles.tabActive, cursorPointer]} 
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Rated'); }}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'Rated' }}
+          accessibilityLabel={t('rated')}
         >
           <Text style={[styles.tabText, activeTab === 'Rated' && styles.tabTextActive]}>
             {t('rated')}
@@ -131,18 +138,21 @@ const WatchlistScreen: React.FC = () => {
       {/* ── Sort chips ── */}
       <View style={styles.sortRow}>
         <TouchableOpacity 
-          style={styles.sortHeaderBtn} 
+          style={[styles.sortHeaderBtn, cursorPointer]} 
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setIsAscending(!isAscending);
           }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Sort direction: ${isAscending ? 'ascending' : 'descending'}`}
+          accessibilityHint="Toggles sort order"
         >
           <Text style={styles.sortByLbl}>Sort</Text>
           {isAscending ? (
-            <ArrowUp size={14} color={Colors.primary} strokeWidth={3} />
+            <ArrowUp size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
           ) : (
-            <ArrowDown size={14} color={Colors.primary} strokeWidth={3} />
+            <ArrowDown size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
           )}
         </TouchableOpacity>
         
@@ -152,7 +162,10 @@ const WatchlistScreen: React.FC = () => {
               key={s}
               activeOpacity={0.75}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
-              style={[styles.sortChip, activeSort === s && styles.sortChipActive]}
+              style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
+              accessibilityRole="button"
+              accessibilityLabel={`Sort by ${s}`}
+              accessibilityState={{ selected: activeSort === s }}
             >
               <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} allowFontScaling={false}>
                 {s}
@@ -193,7 +206,7 @@ const WatchlistScreen: React.FC = () => {
         ListEmptyComponent={(
           <View style={styles.empty}>
             <View style={styles.emptyIconWrap}>
-              <Film size={40} color={Colors.primary} strokeWidth={1.5} />
+              <Film size={IconSize.xl} color={Colors.primary} strokeWidth={1.5} />
             </View>
             <Text style={styles.emptyTitle} allowFontScaling={false}>
               {activeTab === 'Watchlist' ? t('emptyWatchlistTitle') : 'No ratings yet'}
@@ -222,7 +235,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: FontSize.xl,
     fontWeight: FontWeight.black,
     color: Colors.text.primary,
     letterSpacing: -0.5,
@@ -252,7 +265,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tabActive: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: Colors.overlay.light,
   },
   tabText: {
     fontSize: FontSize.sm,
@@ -264,7 +277,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   tabBadge: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: Colors.overlay.light5,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -272,11 +285,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabBadgeActive: {
-    backgroundColor: 'rgba(229,9,20,0.2)',
+    backgroundColor: Colors.danger,
   },
   tabBadgeText: {
     color: Colors.white,
-    fontSize: 10,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
 
@@ -298,7 +311,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: Colors.overlay.light5,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: Radius.sm,
@@ -309,11 +322,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: Colors.overlay.light5,
   },
   sortChipActive: {
-    backgroundColor: 'rgba(229,9,20,0.1)',
-    borderColor: 'rgba(229,9,20,0.3)',
+    backgroundColor: Colors.overlay.light20,
+    borderColor: Colors.danger,
   },
   sortChipText: {
     fontSize: FontSize.sm,

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Check, Circle, Trash2, Plus, Eye } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '../../constants/theme';
+import { cursorPointer } from '../../utils/webStyles';
 import { MediaItem } from '../../types/tmdb';
 import { WatchlistItem } from '../../types/watchlist';
 import RatingBadge from '../common/RatingBadge';
@@ -51,7 +52,7 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
     <View style={styles.container}>
 
       <TouchableOpacity 
-        style={styles.posterWrap}
+        style={[styles.posterWrap, cursorPointer]}
         activeOpacity={0.8}
         onPress={onPress}
       >
@@ -89,34 +90,40 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
         {showWatched ? (
           <>
             <TouchableOpacity 
-              style={[styles.actionBtn, watched ? styles.watchedBtn : styles.unwatchedBtn]}
+              style={[styles.actionBtn, watched ? styles.watchedBtn : styles.unwatchedBtn, cursorPointer]}
               activeOpacity={0.75}
               onPress={onToggleWatched}
+              accessibilityRole="button"
+              accessibilityLabel={watched ? "Mark as unwatched" : "Mark as watched"}
             >
               {watched ? (
-                <Check size={18} color={Colors.primary} strokeWidth={3} />
+                <Check size={IconSize.md} color={Colors.primary} strokeWidth={3} />
               ) : (
-                <Eye size={18} color={Colors.white} strokeWidth={2} />
+                <Eye size={IconSize.md} color={Colors.white} strokeWidth={2} />
               )}
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.deleteBtn}
+              style={[styles.deleteBtn, cursorPointer]}
               activeOpacity={0.75}
               onPress={onRemove}
+              accessibilityRole="button"
+              accessibilityLabel="Remove from watchlist"
             >
-              <Trash2 size={16} color={Colors.text.secondary} strokeWidth={2} />
+              <Trash2 size={IconSize.sm} color={Colors.text.secondary} strokeWidth={2} />
             </TouchableOpacity>
           </>
         ) : (
           <TouchableOpacity 
-            style={[styles.wlCircle, inWatchlist && styles.wlCircleActive]}
+            style={[styles.wlCircle, inWatchlist && styles.wlCircleActive, cursorPointer]}
             activeOpacity={0.75}
             onPress={onAdd}
+            accessibilityRole="button"
+            accessibilityLabel={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
           >
             {inWatchlist ? (
-              <Check size={18} color={Colors.white} strokeWidth={3} />
+              <Check size={IconSize.md} color={Colors.white} strokeWidth={3} />
             ) : (
-              <Plus size={18} color={Colors.primary} strokeWidth={2.5} />
+              <Plus size={IconSize.md} color={Colors.primary} strokeWidth={2.5} />
             )}
           </TouchableOpacity>
         )}
@@ -138,7 +145,7 @@ const styles = StyleSheet.create({
     position: 'absolute', 
     top: 0, 
     left: 0, 
-    backgroundColor: 'rgba(229,9,20,0.95)', 
+    backgroundColor: Colors.danger + 'F2', // 95% opacity
     paddingHorizontal: 5, 
     paddingVertical: 2, 
     borderBottomRightRadius: Radius.sm,

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Play, Film, Eye, Scissors, Video as VideoIcon, Camera } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../../constants/theme';
+import { cursorPointer, webHover } from '../../utils/webStyles';
 import { Video } from '../../types';
 
 interface TrailerCardProps {
@@ -47,7 +48,11 @@ const TrailerCard: React.FC<TrailerCardProps> = ({ video, onPress, featured }) =
       style={[
         styles.container,
         featured ? styles.featuredContainer : styles.standardContainer,
+        cursorPointer,
+        webHover
       ]}
+      accessibilityRole="button"
+      accessibilityLabel={`Play ${video.type}: ${video.name}`}
     >
       <View style={[styles.thumbnailWrap, { height: thumbHeight }]}>
         {/* Thumbnail image — CORS-safe URL for web, default for native */}
@@ -63,14 +68,14 @@ const TrailerCard: React.FC<TrailerCardProps> = ({ video, onPress, featured }) =
         ) : (
           /* Fallback: dark placeholder with YouTube red accent when image fails */
           <View style={[StyleSheet.absoluteFill, styles.fallbackBg]}>
-            <Play size={32} color={Colors.white} fill={Colors.white} strokeWidth={0} />
+            <Play size={IconSize.lg} color={Colors.white} fill={Colors.white} strokeWidth={0} />
           </View>
         )}
 
         {/* Semi-transparent play overlay */}
         <View style={styles.playOverlay}>
           <View style={styles.playCircle}>
-            <Play size={20} color={Colors.white} fill={Colors.white} strokeWidth={0} />
+            <Play size={IconSize.md} color={Colors.white} fill={Colors.white} strokeWidth={0} />
           </View>
         </View>
 
@@ -110,7 +115,7 @@ const styles = StyleSheet.create({
     ...Shadow.sm,
   },
   fallbackBg: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.dark,
     justifyContent: 'center',
     alignItems: 'center',
   },

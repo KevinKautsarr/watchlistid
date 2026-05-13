@@ -3,11 +3,13 @@ import {
   Modal, View, Text, StyleSheet, TouchableOpacity, 
   TextInput, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator
 } from 'react-native';
-import { X, Star, Calendar, AlertTriangle, Check } from 'lucide-react-native';
+import { X, Star, Calendar, AlertTriangle, Check, Eye } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Alert } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../../constants/theme';
+import { cursorPointer } from '../../utils/webStyles';
 import { useLanguage } from '../../context/LanguageContext';
 import { useSocial } from '../../context/SocialContext';
 import { useWatchlist } from '../../context/WatchlistContext';
@@ -28,6 +30,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
   const [reviewText, setReviewText] = useState('');
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Simplified date handling for cross-platform
   const today = new Date().toISOString().split('T')[0];
@@ -100,16 +103,18 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
         <View style={s.container}>
           {/* Header */}
           <View style={s.header}>
-            <TouchableOpacity style={s.closeBtn} onPress={onClose}>
-              <X size={24} color={Colors.white} />
+            <TouchableOpacity style={[s.closeBtn, cursorPointer]} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close modal">
+              <X size={IconSize.lg} color={Colors.white} />
             </TouchableOpacity>
             <Text style={s.title} allowFontScaling={false}>
               {movie.media_type === 'tv' ? t('logShow') : t('logMovie')}
             </Text>
             <TouchableOpacity 
-              style={[s.saveBtn, (rating === 0 || loading) && s.saveBtnDisabled]} 
+              style={[s.saveBtn, (rating === 0 || loading) && s.saveBtnDisabled, cursorPointer]} 
               onPress={handleSave}
               disabled={rating === 0 || loading}
+              accessibilityRole="button"
+              accessibilityLabel="Save review"
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -120,19 +125,19 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
-            <Star size={24} color={Colors.primary} fill={Colors.primary} />
+            <Star size={IconSize.lg} color={Colors.primary} fill={Colors.primary} />
             <Text style={s.movieTitle} allowFontScaling={false}>{movie.title || ('name' in movie ? (movie as { name: string }).name : 'Title')}</Text>
             <Text style={s.movieYear} allowFontScaling={false}>{movie.release_date?.split('-')[0]}</Text>
 
             {/* Date Picker (Simplified) */}
             <View style={s.section}>
               <View style={s.labelRow}>
-                <Calendar size={16} color={Colors.text.secondary} />
+                <Calendar size={IconSize.sm} color={Colors.text.secondary} />
                 <Text style={s.label} allowFontScaling={false}>{t('watchedOn')}</Text>
               </View>
               <View style={s.dateOptions}>
                 <TouchableOpacity 
-                  style={[s.dateBtn, watchedDate === today && s.dateBtnActive]}
+                  style={[s.dateBtn, watchedDate === today && s.dateBtnActive, cursorPointer]}
                   onPress={() => setWatchedDate(today)}
                 >
                   <Text style={[s.dateBtnText, watchedDate === today && s.dateBtnTextActive]}>Today</Text>
@@ -167,17 +172,39 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
 
             {/* Review Input */}
             <View style={s.section}>
-              <Text style={s.label} allowFontScaling={false}>{t('reviewOptional')}</Text>
-              <TextInput
-                style={s.textArea}
-                placeholder={t('reviewPlaceholder')}
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                multiline
-                textAlignVertical="top"
-                value={reviewText}
-                onChangeText={setReviewText}
-                allowFontScaling={false}
-              />
+              <View style={s.labelRow}>
+                <Text style={s.label} allowFontScaling={false}>{t('reviewOptional')}</Text>
+                <TouchableOpacity 
+                  style={[s.previewToggle, cursorPointer]} 
+                  onPress={() => setShowPreview(!showPreview)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Toggle markdown preview"
+                >
+                  <Eye size={14} color={showPreview ? Colors.primary : Colors.text.secondary} />
+                  <Text style={[s.previewToggleTxt, showPreview && s.previewToggleTxtActive]}>Preview</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {showPreview ? (
+                <View style={s.previewArea}>
+                  {reviewText.trim() ? (
+                    <Markdown style={markdownStyles}>{reviewText}</Markdown>
+                  ) : (
+                    <Text style={s.previewPholder}>Type something to see preview...</Text>
+                  )}
+                </View>
+              ) : (
+                <TextInput
+                  style={s.textArea}
+                  placeholder={t('reviewPlaceholder')}
+                  placeholderTextColor={Colors.overlay.light30}
+                  multiline
+                  textAlignVertical="top"
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                  allowFontScaling={false}
+                />
+              )}
             </View>
 
             {/* Spoiler Toggle */}
@@ -191,9 +218,9 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                 }}
               >
                 <View style={[s.checkbox, isSpoiler && s.checkboxActive]}>
-                  {isSpoiler && <Check size={14} color="#000" strokeWidth={3} />}
+                  {isSpoiler && <Check size={IconSize.xs} color={Colors.dark} strokeWidth={3} />}
                 </View>
-                <AlertTriangle size={16} color={isSpoiler ? Colors.primary : Colors.text.secondary} />
+                <AlertTriangle size={IconSize.sm} color={isSpoiler ? Colors.primary : Colors.text.secondary} />
                 <Text style={[s.spoilerText, isSpoiler && s.spoilerTextActive]} allowFontScaling={false}>
                   {t('containsSpoiler')}
                 </Text>
@@ -214,7 +241,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
 const s = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: Colors.overlay.dark85,
     justifyContent: 'flex-end',
   },
   container: {
@@ -231,7 +258,7 @@ const s = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: Colors.overlay.light5,
   },
   title: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
   closeBtn: { padding: 4 },
@@ -255,18 +282,18 @@ const s = StyleSheet.create({
   dateOptions: { flexDirection: 'row', gap: 10 },
   dateBtn: { 
     flex: 1, 
-    backgroundColor: 'rgba(255,255,255,0.05)', 
+    backgroundColor: Colors.overlay.light5, 
     borderRadius: Radius.md, 
     alignItems: 'center', 
     justifyContent: 'center',
     height: 44,
   },
-  dateBtnActive: { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  dateBtnActive: { backgroundColor: Colors.overlay.light15, borderWidth: 1, borderColor: Colors.overlay.light30 },
   dateBtnText: { color: Colors.text.secondary, fontWeight: FontWeight.bold },
   dateBtnTextActive: { color: Colors.white },
   dateInput: { 
     flex: 1, 
-    backgroundColor: 'rgba(255,255,255,0.05)', 
+    backgroundColor: Colors.overlay.light5, 
     borderRadius: Radius.md, 
     height: 44, 
     color: Colors.white, 
@@ -282,10 +309,10 @@ const s = StyleSheet.create({
   ratingHint: { textAlign: 'center', color: Colors.text.secondary, fontSize: FontSize.sm, marginTop: 4 },
 
   textArea: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: Colors.overlay.light3,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: Colors.overlay.light8,
     padding: Spacing.lg,
     color: Colors.white,
     fontSize: FontSize.base,
@@ -294,9 +321,30 @@ const s = StyleSheet.create({
 
   spoilerSection: { marginTop: 4 },
   spoilerBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.overlay.light20, alignItems: 'center', justifyContent: 'center' },
   spoilerText: { flex: 1, color: Colors.text.secondary, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   spoilerTextActive: { color: Colors.accentBlue },
   checkboxActive: { backgroundColor: Colors.accentBlue, borderColor: Colors.accentBlue },
-  spoilerDesc: { fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 16, marginLeft: 32 },
+  spoilerDesc: { fontSize: FontSize.xs, color: Colors.overlay.light40, lineHeight: 16, marginLeft: 32 },
+
+  previewToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
+  previewToggleTxt: { fontSize: FontSize.xs, color: Colors.text.secondary, fontWeight: FontWeight.bold },
+  previewToggleTxtActive: { color: Colors.primary },
+  previewArea: {
+    backgroundColor: Colors.overlay.light3,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.overlay.light8,
+    padding: Spacing.lg,
+    minHeight: 120,
+  },
+  previewPholder: { color: Colors.overlay.light30, fontSize: FontSize.sm, fontStyle: 'italic' },
 });
+
+const markdownStyles = {
+  body: { color: Colors.white, fontSize: FontSize.base },
+  heading1: { color: Colors.primary, fontWeight: FontWeight.black, marginVertical: 10 },
+  heading2: { color: Colors.white, fontWeight: FontWeight.bold, marginVertical: 8 },
+  code_inline: { backgroundColor: Colors.overlay.light10, padding: 4, borderRadius: 4, color: Colors.primary },
+  blockquote: { borderLeftWidth: 4, borderLeftColor: Colors.primary, paddingLeft: 12, marginVertical: 10 },
+};

@@ -3,7 +3,8 @@ import { TouchableOpacity, Text, View, Animated, StyleSheet, Platform } from 're
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Star } from 'lucide-react-native';
-import { TMDB_IMAGE_SIZES, Radius, Colors } from '../../constants/theme';
+import { TMDB_IMAGE_SIZES, Radius, Colors, IconSize, FontSize, FontWeight } from '../../constants/theme';
+import { cursorPointer } from '../../utils/webStyles';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface BaseCardProps {
@@ -75,9 +76,10 @@ export const MediaCard = React.memo(function MediaCard({
             width,
             height,
             boxShadow: (isHovered 
-              ? '0 12px 30px rgba(229, 9, 20, 0.4)' // Red-ish glow on hover
+              ? `0 12px 30px ${Colors.danger}66` // Red-ish glow on hover
               : '0 8px 20px rgba(0,0,0,0.5)') as any,
           },
+          cursorPointer
         ]}
         activeOpacity={1}
         onPress={onPress}
@@ -105,7 +107,7 @@ export const MediaCard = React.memo(function MediaCard({
           {/* Rating badge */}
           {!!vote_average && vote_average > 0 && (
             <View style={styles.ratingBadge}>
-              <Star size={9} color="#F5C518" fill="#F5C518" strokeWidth={0} />
+              <Star size={IconSize.xs * 0.8} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
               <Text style={styles.ratingText} allowFontScaling={false}>
                 {vote_average.toFixed(1)}
               </Text>
@@ -114,7 +116,7 @@ export const MediaCard = React.memo(function MediaCard({
 
           {/* Title */}
           <Text
-            style={[styles.title, { fontSize: width >= 170 ? 13 : 11 }]}
+            style={[styles.title, { fontSize: width >= 170 ? FontSize.sm : FontSize.xs }]}
             numberOfLines={2}
             allowFontScaling={false}
           >
@@ -153,11 +155,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   ratingText: {
-    color: '#F5C518',
-    fontSize: 9,
-    fontWeight: '700',
+    color: Colors.ratingGold,
+    fontSize: FontSize.xs * 0.8,
+    fontWeight: FontWeight.bold,
     letterSpacing: 0.2,
-    // tabular-nums per building-native-ui for numeric counters
     fontVariant: ['tabular-nums'],
   },
   title: {

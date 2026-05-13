@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { User } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '../../constants/theme';
+import { cursorPointer } from '../../utils/webStyles';
 import { CastMember } from '../../types';
 
 interface CastCardProps {
@@ -16,9 +17,10 @@ const CastCard: React.FC<CastCardProps> = ({
 }) => {
   return (
     <TouchableOpacity
-      activeOpacity={0.75}
       onPress={onPress}
-      style={styles.container}
+      style={[styles.container, cursorPointer]}
+      accessibilityRole="button"
+      accessibilityLabel={`View profile of ${cast.name}`}
     >
       <View style={styles.avatarWrap}>
         {cast.profile_path ? (
@@ -29,7 +31,7 @@ const CastCard: React.FC<CastCardProps> = ({
             accessibilityLabel={`${cast.name} profile photo`}
           />
         ) : (
-          <User size={32} color={Colors.text.secondary} strokeWidth={1.5} />
+          <User size={IconSize.xl} color={Colors.text.secondary} strokeWidth={1.5} />
         )}
       </View>
       <Text style={styles.name} numberOfLines={1} allowFontScaling={false}>

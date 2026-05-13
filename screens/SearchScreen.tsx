@@ -12,7 +12,8 @@ import {
   Search, SearchX, Star, TrendingUp, User, X,
 } from "lucide-react-native";
 import MovieListItem from "../components/movie/MovieListItem";
-import { Colors, FontSize, FontWeight, Radius, Shadow, Spacing, TMDB_IMAGE_SIZES } from "../constants/theme";
+import { Colors, FontSize, FontWeight, IconSize, Radius, Shadow, Spacing, TMDB_IMAGE_SIZES } from "../constants/theme";
+import { webHover, cursorPointer } from "../utils/webStyles";
 import { useWatchlist } from "../context/WatchlistContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useDebounce } from "../hooks/useDebounce";
@@ -49,10 +50,10 @@ interface CatDef {
   defaultType?: 'movie' | 'tv';
 }
 const CATS: Record<CatKey, CatDef> = {
-  "trending-movies": { label: "trendingMovies",      subtitle: "catTrendingMoviesSub", Icon: Flame, iconColor: "#E50914", fetchFn: getTrendingMovies },
+  "trending-movies": { label: "trendingMovies",      subtitle: "catTrendingMoviesSub", Icon: Flame, iconColor: Colors.danger, fetchFn: getTrendingMovies },
   "trending-tv":     { label: "trendingShows",       subtitle: "catTrendingTVSub",     Icon: Flame, iconColor: "#FF6B35", fetchFn: getTrendingTV,     normalize: true },
-  "popular":         { label: "catPopularOn",        subtitle: "catPopularSub",        Icon: Star,  iconColor: "#F5C518", fetchFn: getPopularMovies },
-  "top-rated-movies":{ label: "topRatedMovies",      subtitle: "catTopRatedMoviesSub", Icon: Award, iconColor: "#4CAF50", fetchFn: getTopRatedMovies },
+  "popular":         { label: "catPopularOn",        subtitle: "catPopularSub",        Icon: Star,  iconColor: Colors.ratingGold, fetchFn: getPopularMovies },
+  "top-rated-movies":{ label: "topRatedMovies",      subtitle: "catTopRatedMoviesSub", Icon: Award, iconColor: Colors.success, fetchFn: getTopRatedMovies },
   "top-rated-tv":    { label: "topRatedShows",       subtitle: "catTopRatedTVSub",     Icon: Award, iconColor: "#2196F3", fetchFn: getTopRatedTV,    normalize: true },
 };
 
@@ -78,11 +79,11 @@ function LoadMoreBtn({ onPress, loading, page, total }: { onPress:()=>void; load
   const { t } = useLanguage();
   if (page >= total) return null;
   return (
-    <TouchableOpacity style={s.loadMore} onPress={onPress} activeOpacity={0.8} disabled={loading}>
+    <TouchableOpacity style={[s.loadMore, cursorPointer]} onPress={onPress} activeOpacity={0.8} disabled={loading} accessibilityRole="button" accessibilityLabel="Load more results">
       {loading
-        ? <ActivityIndicator size="small" color="#E50914" />
+        ? <ActivityIndicator size="small" color={Colors.danger} />
         : <>
-            <ChevronDown size={18} color="#fff" strokeWidth={2.5} />
+            <ChevronDown size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
             <Text style={s.loadMoreTxt} allowFontScaling={false}>{t('loadMore')}</Text>
             <Text style={s.loadMorePage} allowFontScaling={false}>
               {t('pageOf').replace('{page}', page.toString()).replace('{total}', total.toString())}
@@ -98,9 +99,9 @@ function PersonCard({ person, onPress }: { person: { profile_path?: string, name
   const { t } = useLanguage();
   const uri = person.profile_path ? `${TMDB_IMAGE_SIZES.small}${person.profile_path}` : null;
   return (
-    <TouchableOpacity style={s.personRow} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity style={[s.personRow, cursorPointer]} onPress={onPress} activeOpacity={0.75}>
       {uri ? <Image source={{uri}} style={s.personImg} />
-            : <View style={[s.personImg,s.personPholder]}><User size={22} color={Colors.primary} strokeWidth={1.5}/></View>}
+            : <View style={[s.personImg,s.personPholder]}><User size={IconSize.lg} color={Colors.primary} strokeWidth={1.5}/></View>}
       <View style={{flex:1}}>
         <Text style={s.personName} numberOfLines={1} allowFontScaling={false}>{person.name}</Text>
         <Text style={s.personDept} numberOfLines={1} allowFontScaling={false}>
@@ -339,9 +340,10 @@ export default function SearchScreen() {
   // ─── shared search bar ───────────────────────────────────────────────────────
   const SearchBar = (
     <Animated.View style={[s.searchWrap, { marginHorizontal: bp.contentPadding, transform:[{scale:inputScale}] }]}>
-      <Search size={18} color={Colors.primary} strokeWidth={2} />
+      <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
       <TextInput
         ref={inputRef} style={s.searchInput}
+        autoFocus={true}
         placeholder={activeCat ? t('searchIn').replace('{category}', t(CATS[activeCat]?.label as any)) : t('searchMoviesTVPeople')}
         placeholderTextColor={Colors.text.secondary}
         value={searchText} onChangeText={setSearchText}
@@ -350,8 +352,8 @@ export default function SearchScreen() {
         returnKeyType="search" allowFontScaling={false} autoCorrect={false}
       />
       {searchText.length>0 && (
-        <TouchableOpacity style={s.clearBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSearchText(""); }}>
-          <X size={13} color="#fff" strokeWidth={3} />
+        <TouchableOpacity style={[s.clearBtn, cursorPointer]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSearchText(""); }} accessibilityRole="button" accessibilityLabel="Clear search">
+          <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
         </TouchableOpacity>
       )}
     </Animated.View>
@@ -377,12 +379,12 @@ export default function SearchScreen() {
         <StatusBar barStyle="light-content" />
         {/* Header */}
         <View style={[s.catHeader, {paddingHorizontal: bp.contentPadding}]}>
-          <TouchableOpacity style={s.backBtn} onPress={exitCat} activeOpacity={0.75}>
-            <ArrowLeft size={20} color="#fff" strokeWidth={2.5} />
+          <TouchableOpacity style={[s.backBtn, cursorPointer]} onPress={exitCat} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Go back">
+            <ArrowLeft size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
           </TouchableOpacity>
           <View style={{flex:1}}>
             <View style={{flexDirection:"row", alignItems:"center", gap:8, marginBottom:3}}>
-              <def.Icon size={18} color={def.iconColor} strokeWidth={2.5} />
+              <def.Icon size={IconSize.sm} color={def.iconColor} strokeWidth={2.5} />
               <Text style={s.catTitle} allowFontScaling={false}>{t(def.label as any)}</Text>
             </View>
             <Text style={s.catSub} allowFontScaling={false}>{t(def.subtitle as any)}</Text>
@@ -443,7 +445,7 @@ export default function SearchScreen() {
           {FILTER_CHIPS.map(c => (
             <TouchableOpacity key={c.id} activeOpacity={0.75}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveFilter(c.id); }}
-              style={[s.chip, activeFilter===c.id && s.chipActive]}>
+              style={[s.chip, activeFilter===c.id && s.chipActive, cursorPointer]}>
               <Text style={[s.chipTxt, activeFilter===c.id && s.chipTxtActive]} allowFontScaling={false}>{t(c.labelKey as any)}</Text>
             </TouchableOpacity>
           ))}
@@ -498,8 +500,8 @@ export default function SearchScreen() {
                 <View style={{marginBottom: Spacing.xl}}>
                   <Text style={s.sectionLbl} allowFontScaling={false}>{t('recent')}</Text>
                   {recentSearches.map(t => (
-                    <TouchableOpacity key={t} style={s.recentRow} onPress={() => hitSearch(t)}>
-                      <Clock size={14} color={Colors.primary} strokeWidth={2}/>
+                    <TouchableOpacity key={t} style={[s.recentRow, cursorPointer]} onPress={() => hitSearch(t)}>
+                      <Clock size={IconSize.sm} color={Colors.primary} strokeWidth={2}/>
                       <Text style={s.recentTxt} allowFontScaling={false}>{t}</Text>
                     </TouchableOpacity>
                   ))}
@@ -510,8 +512,8 @@ export default function SearchScreen() {
                   <Text style={s.sectionLbl} allowFontScaling={false}>{t('trendingSearches')}</Text>
                   <View style={s.pills}>
                     {trendingKeywords.map(t => (
-                      <TouchableOpacity key={t} style={s.pill} onPress={() => hitSearch(t)}>
-                        <TrendingUp size={12} color={Colors.primary} strokeWidth={2.5}/>
+                      <TouchableOpacity key={t} style={[s.pill, cursorPointer]} onPress={() => hitSearch(t)}>
+                        <TrendingUp size={IconSize.xs} color={Colors.primary} strokeWidth={2.5}/>
                         <Text style={s.pillTxt} allowFontScaling={false}>{t}</Text>
                       </TouchableOpacity>
                     ))}
@@ -541,13 +543,13 @@ export default function SearchScreen() {
 const s = StyleSheet.create({
   root: { flex:1, backgroundColor: Colors.background },
   titleRow:  { paddingTop: Spacing.sm, paddingBottom: 4 },
-  pageTitle: { fontSize:20, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing:-0.5 },
-  pageSub:   { fontSize:13, color: Colors.text.secondary, marginTop:3, marginBottom: Spacing.lg },
+  pageTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing:-0.5 },
+  pageSub:   { fontSize: FontSize.sm, color: Colors.text.secondary, marginTop:3, marginBottom: Spacing.lg },
 
   catHeader: { flexDirection:"row", alignItems:"center", paddingTop: Spacing.md, paddingBottom: Spacing.lg, gap:14 },
-  backBtn:   { width:38, height:38, borderRadius:19, backgroundColor:"rgba(255,255,255,0.1)", alignItems:"center", justifyContent:"center" },
-  catTitle:  { fontSize:22, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing:-0.3 },
-  catSub:    { fontSize:13, color: Colors.text.secondary },
+  backBtn:   { width:38, height:38, borderRadius:19, backgroundColor: Colors.overlay.light, alignItems:"center", justifyContent:"center" },
+  catTitle:  { fontSize: FontSize.xxl, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing:-0.3 },
+  catSub:    { fontSize: FontSize.sm, color: Colors.text.secondary },
 
   searchWrap: { flexDirection:"row", alignItems:"center", gap: Spacing.md, marginBottom: Spacing.lg, height:52, backgroundColor: Colors.surface, borderRadius: Radius.lg, paddingHorizontal: Spacing.lg, ...Shadow.md },
   searchInput:{ flex:1, fontSize: FontSize.base, color: Colors.text.primary, minWidth:0 },
@@ -561,19 +563,19 @@ const s = StyleSheet.create({
 
   listContent:{ paddingBottom: Platform.OS==="ios" ? 100 : 80 },
 
-  resultCount: { fontSize:12, color: Colors.text.secondary, fontWeight: FontWeight.semibold, marginBottom:4 },
+  resultCount: { fontSize: FontSize.xs, color: Colors.text.secondary, fontWeight: FontWeight.semibold, marginBottom:4 },
 
   // Load More Button
   loadMore: {
     flexDirection:"row", alignItems:"center", gap:8,
     marginTop:12, marginHorizontal: Spacing.xl, marginBottom: Spacing.lg,
     height:48, borderRadius: Radius.lg,
-    backgroundColor:"rgba(229,9,20,0.12)",
-    borderWidth:1, borderColor:"rgba(229,9,20,0.35)",
+    backgroundColor: Colors.overlay.light,
+    borderWidth:1, borderColor: Colors.overlay.light20,
     justifyContent:"center",
   },
-  loadMoreTxt:  { fontSize:15, fontWeight: FontWeight.bold, color:"#E50914" },
-  loadMorePage: { fontSize:12, color:"rgba(229,9,20,0.65)", fontWeight: FontWeight.semibold },
+  loadMoreTxt:  { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.danger },
+  loadMorePage: { fontSize: FontSize.xs, color: Colors.overlay.light50, fontWeight: FontWeight.semibold },
 
   sectionLbl: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.text.primary, paddingHorizontal: Spacing.xl, marginBottom: Spacing.md },
   pills: { flexDirection:"row", flexWrap:"wrap", paddingHorizontal: Spacing.xl, gap: Spacing.sm },

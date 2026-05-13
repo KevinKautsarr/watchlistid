@@ -7,6 +7,8 @@ import { Home, Compass, Bookmark, User } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../context/AuthContext';
 
+import { Colors } from '../../constants/theme';
+
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
 const PILL_HEIGHT = 60;
@@ -14,9 +16,9 @@ const CIRCLE_SIZE = 48;
 const SVG_WIDTH = 2000;
 const DIP_CENTER = 1000;
 
-const ACTIVE_TINT = '#E50914'; // Netflix Red
-const BAR_BG = '#141414';      // Dark background
-const INACTIVE_TINT = '#808080'; // Grey for inactive icons
+const ACTIVE_TINT = Colors.primary;
+const BAR_BG = Colors.tabBarBackground;
+const INACTIVE_TINT = Colors.text.secondary;
 
 export default function CustomMobileTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { user } = useAuth();

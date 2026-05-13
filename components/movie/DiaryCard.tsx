@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Star, Film, Trash2, Eye, EyeOff } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../../constants/theme';
+import { cursorPointer } from '../../utils/webStyles';
 import { MovieLog } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -40,19 +41,23 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
         <View style={styles.headerRight}>
           <TouchableOpacity 
             onPress={() => onDelete?.(log.id)} 
-            style={styles.deleteBtn}
+            style={[styles.deleteBtn, cursorPointer]}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            accessibilityRole="button"
+            accessibilityLabel="Delete log"
           >
-            <Trash2 size={16} color="rgba(255,255,255,0.3)" />
+            <Trash2 size={IconSize.sm} color={Colors.overlay.light30} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.content}>
         <TouchableOpacity 
-          style={styles.posterContainer}
+          style={[styles.posterContainer, cursorPointer]}
           activeOpacity={0.8}
           onPress={() => onPressPoster?.(log.movie_id)}
+          accessibilityRole="button"
+          accessibilityLabel={`${log.movie_title} poster`}
         >
           {log.poster_path ? (
             <Image 
@@ -64,7 +69,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
             />
           ) : (
             <View style={styles.posterPlaceholder}>
-              <Film size={24} color="rgba(255,255,255,0.3)" />
+              <Film size={IconSize.lg} color={Colors.overlay.light30} />
             </View>
           )}
         </TouchableOpacity>
@@ -77,9 +82,9 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i} 
-                  size={12} 
-                  color="#F5C518" 
-                  fill={i < Math.floor(log.rating! / 2) ? "#F5C518" : "transparent"} 
+                  size={IconSize.xs * 0.8} 
+                  color={Colors.ratingGold} 
+                  fill={i < Math.floor(log.rating! / 2) ? Colors.ratingGold : "transparent"} 
                 />
               ))}
             </View>
@@ -88,11 +93,13 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
             <View style={styles.reviewWrapper}>
               {!isRevealed ? (
                 <TouchableOpacity 
-                  style={styles.spoilerOverlay} 
+                  style={[styles.spoilerOverlay, cursorPointer]} 
                   onPress={handleToggleSpoiler}
                   activeOpacity={0.9}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('clickToReveal')}
                 >
-                  <EyeOff size={16} color={Colors.primary} style={{ marginBottom: 4 }} />
+                  <EyeOff size={IconSize.sm} color={Colors.primary} style={{ marginBottom: 4 }} />
                   <Text style={styles.spoilerText} allowFontScaling={false}>
                     {t('clickToReveal')}
                   </Text>
@@ -103,7 +110,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
                     {log.review_text}
                   </Text>
                   {log.is_spoiler && (
-                    <TouchableOpacity onPress={handleToggleSpoiler} style={styles.hideBtn}>
+                    <TouchableOpacity onPress={handleToggleSpoiler} style={[styles.hideBtn, cursorPointer]} accessibilityRole="button" accessibilityLabel={t('hideSpoilers')}>
                       <Text style={styles.hideBtnText}>{t('hideSpoilers')}</Text>
                     </TouchableOpacity>
                   )}
@@ -131,7 +138,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: Colors.overlay.light5,
   },
   headerLeft: {
     flex: 1,
@@ -154,7 +161,7 @@ const styles = StyleSheet.create({
   rankText: {
     fontSize: FontSize.base,
     fontWeight: FontWeight.black,
-    color: 'rgba(255,255,255,0.2)',
+    color: Colors.overlay.light20,
     letterSpacing: 1,
   },
   deleteBtn: {
@@ -170,7 +177,7 @@ const styles = StyleSheet.create({
     minHeight: 105,
     borderRadius: Radius.sm,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: Colors.overlay.light5,
   },
   poster: {
     width: '100%',
@@ -200,18 +207,18 @@ const styles = StyleSheet.create({
   },
   review: {
     fontSize: FontSize.sm,
-    color: 'rgba(255,255,255,0.8)',
+    color: Colors.overlay.light85,
     lineHeight: 20,
   },
   spoilerOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: Colors.overlay.light3,
     borderRadius: Radius.sm,
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: Colors.overlay.light10,
   },
   spoilerText: {
     fontSize: FontSize.xs,

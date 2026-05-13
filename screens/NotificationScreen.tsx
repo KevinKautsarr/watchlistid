@@ -8,9 +8,10 @@ import { useRouter } from 'expo-router';
 import { Bell, BellOff, CheckCircle2, Info, AlertTriangle, ChevronLeft, Trash2, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '../constants/theme';
 import { useNotifications, Notification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
+import { cursorPointer } from '../utils/webStyles';
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
@@ -22,11 +23,11 @@ const s = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: Colors.overlay.light5,
     height: 100,
   },
   headerBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: -0.5 },
+  headerTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: -0.5 },
   
   listContent: { paddingVertical: Spacing.sm },
   item: {
@@ -36,7 +37,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
-  itemUnread: { backgroundColor: 'rgba(255,255,255,0.03)' },
+  itemUnread: { backgroundColor: Colors.overlay.light5 },
   
   itemLeft: { position: 'relative' },
   iconContainer: {
@@ -45,7 +46,7 @@ const s = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: Colors.overlay.light5,
   },
   unreadDot: {
     position: 'absolute',
@@ -60,21 +61,21 @@ const s = StyleSheet.create({
   },
   
   itemCenter: { flex: 1, gap: 2 },
-  itemTitle: { color: Colors.white, fontWeight: FontWeight.black, fontSize: 14.5 },
-  itemMessage: { fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 19 },
-  itemDate: { fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 2 },
+  itemTitle: { color: Colors.white, fontWeight: FontWeight.black, fontSize: FontSize.md },
+  itemMessage: { fontSize: FontSize.md, color: Colors.text.secondary, lineHeight: 19 },
+  itemDate: { fontSize: FontSize.xs, color: Colors.overlay.light30, marginTop: 2 },
   
   itemRight: { marginLeft: 4 },
 
   empty: { flex: 1, paddingTop: 120, alignItems: 'center', paddingHorizontal: 40 },
   emptyIconWrap: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    backgroundColor: Colors.overlay.light2,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: Spacing.xl,
   },
-  emptyTitle: { fontSize: 20, fontWeight: FontWeight.black, color: Colors.white, marginBottom: 8 },
-  emptySub: { fontSize: 15, color: 'rgba(255,255,255,0.4)', textAlign: 'center', lineHeight: 22 },
+  emptyTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.white, marginBottom: 8 },
+  emptySub: { fontSize: FontSize.base, color: Colors.overlay.light40, textAlign: 'center', lineHeight: 22 },
 });
 
 const NotificationScreen: React.FC = () => {
@@ -116,13 +117,16 @@ const NotificationScreen: React.FC = () => {
 
     return (
       <TouchableOpacity 
-        style={[s.item, isUnread && s.itemUnread]} 
+        style={[s.item, isUnread && s.itemUnread, cursorPointer]} 
         onPress={() => handleNotificationPress(item)}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}: ${item.message}`}
+        accessibilityState={{ expanded: false }}
       >
         <View style={s.itemLeft}>
           <View style={[s.iconContainer, { backgroundColor: `${iconColor}15` }]}>
-            <Icon size={20} color={iconColor} strokeWidth={2.5} />
+            <Icon size={IconSize.md} color={iconColor} strokeWidth={2.5} />
           </View>
           {isUnread && <View style={s.unreadDot} />}
         </View>
@@ -138,7 +142,7 @@ const NotificationScreen: React.FC = () => {
         </View>
 
         <View style={s.itemRight}>
-          <ChevronRight size={16} color="rgba(255,255,255,0.2)" />
+          <ChevronRight size={IconSize.sm} color={Colors.overlay.light20} />
         </View>
       </TouchableOpacity>
     );
@@ -150,14 +154,14 @@ const NotificationScreen: React.FC = () => {
       
       {/* ── HEADER ── */}
       <View style={[s.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={s.headerBtn} onPress={() => router.back()}>
-          <ChevronLeft size={24} color={Colors.white} strokeWidth={2.5} />
+        <TouchableOpacity style={[s.headerBtn, cursorPointer]} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
+          <ChevronLeft size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />
         </TouchableOpacity>
         
         <Text style={s.headerTitle} allowFontScaling={false}>{t('notifications')}</Text>
         
-        <TouchableOpacity style={s.headerBtn} onPress={handleMarkAllRead}>
-          <Trash2 size={20} color={Colors.primary} strokeWidth={2} />
+        <TouchableOpacity style={[s.headerBtn, cursorPointer]} onPress={handleMarkAllRead} accessibilityRole="button" accessibilityLabel="Clear all notifications">
+          <Trash2 size={IconSize.md} color={Colors.primary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
@@ -177,7 +181,7 @@ const NotificationScreen: React.FC = () => {
         ListEmptyComponent={(
           <View style={s.empty}>
             <View style={s.emptyIconWrap}>
-              <BellOff size={40} color="rgba(255,255,255,0.1)" strokeWidth={1.5} />
+              <BellOff size={IconSize.xl} color={Colors.overlay.light10} strokeWidth={1.5} />
             </View>
             <Text style={s.emptyTitle} allowFontScaling={false}>{t('allCaughtUp')}</Text>
             <Text style={s.emptySub} allowFontScaling={false}>

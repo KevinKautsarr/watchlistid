@@ -15,7 +15,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { 
   ChevronLeft, BookmarkPlus, BookmarkCheck, Share2, Star, TrendingUp, Calendar, Clock, Globe, Info, Play
 } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES, Shadow } from '../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES, Shadow } from '../constants/theme';
+import { cursorPointer } from '../utils/webStyles';
 import { Video, CastMember, Movie } from '../types';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
@@ -115,7 +116,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
     return (
       <View style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ color: 'rgba(255,255,255,0.5)', marginTop: 12 }} allowFontScaling={false}>{t('preparingExperience')}</Text>
+        <Text style={{ color: Colors.overlay.light50, marginTop: 12 }} allowFontScaling={false}>{t('preparingExperience')}</Text>
       </View>
     );
   }
@@ -124,17 +125,19 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
     return (
       <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
         <Info size={48} color={Colors.primary} strokeWidth={1.5} />
-        <Text style={{ color: Colors.white, fontSize: 20, fontWeight: 'bold', marginTop: 20, textAlign: 'center' }} allowFontScaling={false}>
+        <Text style={{ color: Colors.white, fontSize: FontSize.xl, fontWeight: FontWeight.bold, marginTop: 20, textAlign: 'center' }} allowFontScaling={false}>
           {t('contentNotFound')}
         </Text>
-        <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 10, textAlign: 'center', lineHeight: 20 }} allowFontScaling={false}>
+        <Text style={{ color: Colors.overlay.light60, marginTop: 10, textAlign: 'center', lineHeight: 20 }} allowFontScaling={false}>
           {t('contentNotFoundDesc')}
         </Text>
         <TouchableOpacity 
-          style={{ marginTop: 30, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
+          style={[{ marginTop: 30, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: Radius.md }, cursorPointer]}
           onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel={t('goBack')}
         >
-          <Text style={{ color: Colors.white, fontWeight: 'bold' }}>{t('goBack')}</Text>
+          <Text style={{ color: Colors.white, fontWeight: FontWeight.bold }}>{t('goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -204,22 +207,26 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
       <StatusBar barStyle="light-content" />
       
       <TouchableOpacity 
-        style={[styles.backBtn, { top: insets.top + 10 }]} 
+        style={[styles.backBtn, { top: insets.top + 10 }, cursorPointer]} 
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           navigation.goBack();
         }}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
       >
-        <ChevronLeft size={24} color={Colors.white} strokeWidth={2.5} />
+        <ChevronLeft size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={[styles.shareBtn, { top: insets.top + 10 }]} 
+        style={[styles.shareBtn, { top: insets.top + 10 }, cursorPointer]} 
         onPress={handleShare}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Share content"
       >
-        <Share2 size={20} color={Colors.white} strokeWidth={2} />
+        <Share2 size={IconSize.sm} color={Colors.white} strokeWidth={2} />
       </TouchableOpacity>
 
       <Animated.ScrollView 
@@ -245,7 +252,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           {/* User Rating Badge Overlay */}
           {userRating && !bp.isLarge && (
             <Animated.View style={styles.userRatingOverlayBadge}>
-              <Star size={14} color="#F5C518" fill="#F5C518" />
+              <Star size={14} color={Colors.ratingGold} fill={Colors.ratingGold} />
               <Text style={styles.userRatingOverlayText}>{userRating}</Text>
             </Animated.View>
           )}
@@ -258,7 +265,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             {bp.isLarge && (
               <Image 
                 source={{ uri: `${TMDB_IMAGE_SIZES.large}${movie.poster_path}` }} 
-                style={{ width: 300, height: 450, borderRadius: Radius.lg, marginTop: -200, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', boxShadow: '0 12px 30px rgba(0,0,0,0.8)' } as any} 
+                style={{ width: 300, height: 450, borderRadius: Radius.lg, marginTop: -200, borderWidth: 1, borderColor: Colors.overlay.light10, boxShadow: `0 12px 30px ${Colors.overlay.dark85}` } as any} 
                 contentFit="cover" 
               />
             )}
@@ -269,7 +276,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           <View style={styles.ratingCol}>
             <Text style={styles.ratingLabel} allowFontScaling={false}>{t('imdbRating')}</Text>
             <View style={styles.scoreRow}>
-              <Star size={28} color="#F5C518" fill="#F5C518" strokeWidth={0} />
+              <Star size={28} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
               <Text style={styles.scoreVal} allowFontScaling={false}>{movie.vote_average?.toFixed(1)}</Text>
               <Text style={styles.scoreMax} allowFontScaling={false}>/10</Text>
             </View>
@@ -278,12 +285,12 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
           <View style={styles.vDivider} />
           <View style={styles.ratingCol}>
             <Text style={styles.ratingLabel} allowFontScaling={false}>{t('popularity')}</Text>
-            <TrendingUp size={24} color={Colors.primary} strokeWidth={2} />
+            <TrendingUp size={IconSize.md} color={Colors.primary} strokeWidth={2} />
             <Text style={styles.popScore} allowFontScaling={false}>{movie.popularity?.toFixed(0)}</Text>
           </View>
           <View style={styles.vDivider} />
           <TouchableOpacity 
-            style={styles.ratingCol} 
+            style={[styles.ratingCol, cursorPointer]} 
             activeOpacity={0.7}
             onPress={() => {
               if (!session) {
@@ -292,16 +299,18 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
               }
               setShowLogModal(true);
             }}
+            accessibilityRole="button"
+            accessibilityLabel={userRating ? `Your rating: ${userRating}` : "Rate this content"}
           >
             <Text style={styles.ratingLabel} allowFontScaling={false}>{t('yourRatingLabel')}</Text>
             {userRating ? (
               <>
-                <Star size={24} color={Colors.primary} fill={Colors.primary} strokeWidth={0} />
+                <Star size={IconSize.md} color={Colors.primary} fill={Colors.primary} strokeWidth={0} />
                 <Text style={styles.userRateScore} allowFontScaling={false}>{userRating}/10</Text>
               </>
             ) : (
               <>
-                <Star size={24} color={Colors.surface} strokeWidth={1.5} />
+                <Star size={IconSize.md} color={Colors.surface} strokeWidth={1.5} />
                 <Text style={styles.rateTextAction} allowFontScaling={false}>{t('log')}</Text>
               </>
             )}
@@ -332,30 +341,34 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
         <View style={styles.actionRow}>
           {featuredTrailer && (
             <TouchableOpacity 
-              style={styles.btnPlay}
+              style={[styles.btnPlay, cursorPointer]}
               onPress={() => openTrailer(featuredTrailer.key)}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('playTrailer')}
             >
-              <Play size={22} color={Colors.white} fill={Colors.white} strokeWidth={0} />
+              <Play size={IconSize.md} color={Colors.white} fill={Colors.white} strokeWidth={0} />
               <Text style={styles.btnPlayText} allowFontScaling={false}>{t('playTrailer')}</Text>
             </TouchableOpacity>
           )}
           <View style={styles.actionSubRow}>
             <TouchableOpacity 
-              style={[styles.btnWatchlist, !!inWatchlist && styles.btnWatchlistActive]}
+              style={[styles.btnWatchlist, !!inWatchlist && styles.btnWatchlistActive, cursorPointer]}
             onPress={handleWatchlist}
+            accessibilityRole="button"
+            accessibilityLabel={inWatchlist ? t('inWatchlist') : t('addToWatchlist')}
           >
             {inWatchlist ? (
-              <BookmarkCheck size={22} color={Colors.white} fill={Colors.white} strokeWidth={0} />
+              <BookmarkCheck size={IconSize.md} color={Colors.white} fill={Colors.white} strokeWidth={0} />
             ) : (
-              <BookmarkPlus size={22} color={Colors.white} strokeWidth={2} />
+              <BookmarkPlus size={IconSize.md} color={Colors.white} strokeWidth={2} />
             )}
             <Text style={[styles.btnWatchlistText, !!inWatchlist && styles.btnWatchlistTextActive]} allowFontScaling={false}>
               {inWatchlist ? t('inWatchlist') : t('addToWatchlist')}
             </Text>
           </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.btnRate, !!userRating && styles.btnRateActive]}
+              style={[styles.btnRate, !!userRating && styles.btnRateActive, cursorPointer]}
               onPress={() => {
                 if (!session) {
                   router.push('/auth/login' as any);
@@ -363,8 +376,10 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
                 }
                 setShowLogModal(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={userRating ? `${t('log')}ed` : t('log')}
             >
-              <Star size={16} color={userRating ? "#F5C518" : Colors.primary} fill={userRating ? "#F5C518" : "transparent"} strokeWidth={2} />
+              <Star size={IconSize.xs} color={userRating ? Colors.ratingGold : Colors.primary} fill={userRating ? Colors.ratingGold : "transparent"} strokeWidth={2} />
               <Text style={[styles.btnRateText, !!userRating && styles.btnRateTextActive]} allowFontScaling={false}>
                 {userRating ? `${t('log')}ed` : t('log')}
               </Text>
@@ -416,7 +431,7 @@ const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({ route, navigation
             {movie.overview}
           </Text>
           {movie.overview?.length > 100 && (
-            <TouchableOpacity onPress={() => setExpandedStory(!expandedStory)}>
+            <TouchableOpacity onPress={() => setExpandedStory(!expandedStory)} style={cursorPointer}>
               <Text style={styles.readMore} allowFontScaling={false}>{expandedStory ? t('less') : t('readMore')}</Text>
             </TouchableOpacity>
           )}
@@ -519,7 +534,7 @@ const styles = StyleSheet.create({
   tagline: { marginTop: Spacing.md, fontSize: FontSize.md, color: Colors.primary, fontStyle: 'italic' },
   ratingBlock: {
     backgroundColor: Colors.background, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg,
-    flexDirection: 'row', borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+    flexDirection: 'row', borderBottomWidth: 1, borderColor: Colors.overlay.light10
   },
   ratingCol: { flex: 1, alignItems: 'center' },
   ratingLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginBottom: 4 },
@@ -531,7 +546,7 @@ const styles = StyleSheet.create({
   popScore: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white },
   userRateScore: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.bold, marginTop: 4 },
   rateTextAction: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.bold, marginTop: 4 },
-  actionRow: { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', gap: Spacing.md },
+  actionRow: { paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg, borderBottomWidth: 1, borderColor: Colors.overlay.light10, gap: Spacing.md },
   actionSubRow: { flexDirection: 'row', gap: Spacing.sm },
   btnPlay: { height: 48, borderRadius: Radius.md, backgroundColor: Colors.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
   btnPlayText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
@@ -539,10 +554,10 @@ const styles = StyleSheet.create({
   btnWatchlistActive: { backgroundColor: Colors.primary },
   btnWatchlistText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
   btnWatchlistTextActive: { color: Colors.white },
-  btnRate: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
-  btnRateActive: { backgroundColor: 'rgba(245, 197, 24, 0.15)', borderWidth: 1, borderColor: 'rgba(245, 197, 24, 0.3)' },
+  btnRate: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: Colors.overlay.light10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  btnRateActive: { backgroundColor: `${Colors.ratingGold}26`, borderWidth: 1, borderColor: `${Colors.ratingGold}4D` },
   btnRateText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
-  btnRateTextActive: { color: '#F5C518' },
+  btnRateTextActive: { color: Colors.ratingGold },
   userRatingOverlayBadge: {
     position: 'absolute',
     bottom: 20,
@@ -550,40 +565,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: Colors.overlay.dark60,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    backdropFilter: 'blur(10px)',
+    borderColor: Colors.overlay.light20,
   } as any,
   userRatingOverlayText: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: FontSize.md,
     fontWeight: FontWeight.black,
   },
-  trailerSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  trailerSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: Colors.overlay.light10 },
   sectionHeader: { paddingHorizontal: Spacing.xl, marginBottom: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.extrabold, color: Colors.white },
-  sectionSubtitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  sectionSubtitle: { fontSize: FontSize.sm, color: Colors.overlay.light60, marginTop: 2 },
   hScroll: { paddingHorizontal: Spacing.xl, gap: Spacing.md },
-  storySection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  overviewText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.85)', lineHeight: 24 },
+  storySection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, paddingBottom: Spacing.lg, borderBottomWidth: 1, borderColor: Colors.overlay.light10 },
+  overviewText: { fontSize: FontSize.base, color: Colors.overlay.light85, lineHeight: 24 },
   readMore: { color: Colors.primary, fontSize: FontSize.md, fontWeight: FontWeight.semibold, marginTop: Spacing.sm },
   keywordsRow: { marginTop: Spacing.lg, flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  keywordPill: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: Radius.sm, paddingHorizontal: Spacing.md, paddingVertical: 6 },
+  keywordPill: { backgroundColor: Colors.overlay.light10, borderRadius: Radius.sm, paddingHorizontal: Spacing.md, paddingVertical: 6 },
   keywordText: { fontSize: FontSize.md, color: Colors.white, fontWeight: FontWeight.medium },
-  castSection: { paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: Spacing.xl },
-  detailsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: Spacing.lg },
-  reviewsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingBottom: Spacing.lg },
+  castSection: { paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: Colors.overlay.light10, paddingBottom: Spacing.xl },
+  detailsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: Colors.overlay.light10, paddingBottom: Spacing.lg },
+  reviewsSection: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.xl, borderBottomWidth: 1, borderColor: Colors.overlay.light10, paddingBottom: Spacing.lg },
   reviewCard: { backgroundColor: Colors.surface, borderRadius: Radius.lg, padding: Spacing.lg, marginBottom: Spacing.md, ...Shadow.md },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  reviewAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
+  reviewAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.overlay.light10, justifyContent: 'center', alignItems: 'center' },
   reviewAvatarText: { fontSize: FontSize.lg, color: Colors.primary, fontWeight: FontWeight.bold },
   reviewAuthor: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
-  reviewDate: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
-  reviewText: { marginTop: Spacing.md, fontSize: FontSize.md, color: 'rgba(255,255,255,0.85)', lineHeight: 22 },
+  reviewDate: { fontSize: FontSize.sm, color: Colors.overlay.light50, marginTop: 2 },
+  reviewText: { marginTop: Spacing.md, fontSize: FontSize.md, color: Colors.overlay.light85, lineHeight: 22 },
   similarSection: { paddingTop: Spacing.xl, paddingBottom: Spacing.xl },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
   modalSheet: { width: 340, backgroundColor: Colors.surface, borderRadius: Radius.xxl, padding: 28, ...Shadow.lg },
@@ -594,7 +608,7 @@ const styles = StyleSheet.create({
   confirmBtn: { marginTop: Spacing.xxl, backgroundColor: Colors.primary, height: 50, borderRadius: Radius.lg, justifyContent: 'center', alignItems: 'center' },
   confirmBtnText: { fontSize: FontSize.lg, color: Colors.white, fontWeight: FontWeight.bold },
   cancelBtn: { marginTop: Spacing.md, justifyContent: 'center', alignItems: 'center', height: 40 },
-  cancelBtnText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.6)' },
+  cancelBtnText: { fontSize: FontSize.base, color: Colors.overlay.light60 },
 
   communityRatingCard: {
     backgroundColor: `${Colors.accentBlue}14`, // 0.08 alpha
@@ -643,7 +657,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: Colors.overlay.light5,
     borderRadius: Radius.full,
     overflow: 'hidden',
   },

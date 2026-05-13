@@ -25,13 +25,14 @@ import { UserProfile, FetchState } from '../types';
 import {
   ArrowLeft, SearchX, Settings as SettingsIcon,
 } from 'lucide-react-native';
-import { Colors, Spacing, Radius, FontSize, FontWeight } from '../constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '../constants/theme';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { cursorPointer } from '../utils/webStyles';
 import DiaryCard from '../components/movie/DiaryCard';
 import MovieListItem from '../components/movie/MovieListItem';
 import ImageCropModal from '../components/common/ImageCropModal';
@@ -59,13 +60,13 @@ const s = StyleSheet.create({
   topBarTitle: { color: Colors.white, fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5 },
   
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  errorTitle: { color: Colors.white, fontSize: 20, fontWeight: FontWeight.black, marginTop: 20 },
+  errorTitle: { color: Colors.white, fontSize: FontSize.xl, fontWeight: FontWeight.black, marginTop: 20 },
   errorSub: { color: Colors.text.secondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
   retryBtn: { marginTop: 30, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: Radius.md },
   retryBtnText: { color: Colors.white, fontWeight: FontWeight.bold },
 
   emptyWrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 16 },
-  emptyText: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.3)', textAlign: 'center' },
+  emptyText: { fontSize: FontSize.base, color: Colors.overlay.light30, textAlign: 'center' },
 });
 
 export default function ProfileScreen() {
@@ -239,7 +240,7 @@ export default function ProfileScreen() {
         <SearchX size={48} color={Colors.primary} />
         <Text style={s.errorTitle}>{t('profileNotFound')}</Text>
         <Text style={s.errorSub}>{t('profileNotFoundDesc')}</Text>
-        <TouchableOpacity style={s.retryBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={[s.retryBtn, cursorPointer]} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={t('goBack')}>
           <Text style={s.retryBtnText}>{t('goBack')}</Text>
         </TouchableOpacity>
       </View>
@@ -258,8 +259,8 @@ export default function ProfileScreen() {
       <View style={[s.topBar, { paddingTop: insets.top }]}>
         <View style={s.topBarLeft}>
           {!isOwner && (
-            <TouchableOpacity onPress={() => router.back()}>
-              <ArrowLeft color={Colors.white} size={24} />
+            <TouchableOpacity onPress={() => router.back()} style={cursorPointer} accessibilityRole="button" accessibilityLabel="Go back">
+              <ArrowLeft color={Colors.white} size={IconSize.md} />
             </TouchableOpacity>
           )}
         </View>
@@ -271,8 +272,8 @@ export default function ProfileScreen() {
 
         <View style={s.topBarRight}>
           {isOwner && (
-            <TouchableOpacity onPress={() => setShowSettingsSheet(true)}>
-              <SettingsIcon color={Colors.white} size={22} />
+            <TouchableOpacity onPress={() => setShowSettingsSheet(true)} style={cursorPointer} accessibilityRole="button" accessibilityLabel="Open settings">
+              <SettingsIcon color={Colors.white} size={IconSize.md} />
             </TouchableOpacity>
           )}
         </View>

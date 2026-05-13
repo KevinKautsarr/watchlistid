@@ -7,10 +7,11 @@ import CustomMobileTabBar from '../../components/navigation/CustomMobileTabBar';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import LoginPromptModal from '../../components/auth/LoginPromptModal';
+import { Colors } from '../../constants/theme';
 
-const PRIMARY  = '#E50914';
-const INACTIVE = 'rgba(255,255,255,0.45)';
-const BAR_BG   = '#0F0F0F';
+const PRIMARY  = Colors.primary;
+const INACTIVE = Colors.overlay.light50;
+const BAR_BG   = Colors.tabBarBackground;
 
 // ─── Nav items keys ──────────────────────────────────────────────────────────
 const NAV_KEYS = [
@@ -149,9 +150,9 @@ const styles = StyleSheet.create({
   // Sidebar
   sidebar: {
     width: 240,
-    backgroundColor: BAR_BG,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: Colors.tabBarBackground,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     ...Platform.select({
       ios:     { shadowColor: '#000', shadowOffset: { width: 4, height: 0 }, shadowOpacity: 0.4, shadowRadius: 16 },
       android: { elevation: 12 },
