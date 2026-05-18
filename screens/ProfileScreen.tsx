@@ -16,6 +16,7 @@ import { useSocial } from '@/context/SocialContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { MediaItem } from '@/types';
 import { useProfileData } from '@/hooks/useProfileData';
+import { exportWatchlistToCSV } from '@/utils/exportWatchlist';
 
 // Components
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -26,6 +27,9 @@ import ProfileEditModal from '@/components/profile/ProfileEditModal';
 import { ProfileContentList } from '@/components/profile/ProfileContentList';
 import ImageCropModal from '@/components/common/ImageCropModal';
 import SettingsSheet from '@/components/settings/SettingsSheet';
+import LanguageSheet from '@/components/settings/LanguageSheet';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import ChangePasswordModal from '@/components/common/ChangePasswordModal';
 
 type ContentTab = 'Diary' | 'Watched' | 'Watchlist';
 
@@ -33,7 +37,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
-  const { signOut } = useAuth();
+  const { signOut, deleteAccount, profile } = useAuth();
   const { watchlist, toggleWatched, removeFromWatchlist } = useWatchlist();
   const { userLogs, deleteLog } = useSocial();
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -59,12 +63,43 @@ export default function ProfileScreen() {
 
   const [activeTab, setActiveTab] = useState<ContentTab>('Diary');
 
-  const profileData = targetProfile.data;
-  const userLogsList = useMemo(() => userLogs.filter((l: any) => l.user_id === targetUserId), [userLogs, targetUserId]);
-  const watchedMovies = useMemo(() => watchlist.filter(m => m.status === 'completed'), [watchlist]);
+  // ── Dialog state ────────────────────────────────────────────────────────
+  const [showSignOutConfirm,  setShowSignOutConfirm]  = useState(false);
+  const [showDeleteConfirm,   setShowDeleteConfirm]   = useState(false);
+  const [showPasswordModal,   setShowPasswordModal]   = useState(false);
+  const [showLangSheet,       setShowLangSheet]       = useState(false);
+  const [isDeleting,          setIsDeleting]          = useState(false);
+
+  const profileData    = targetProfile.data;
+  const userLogsList   = useMemo(() => userLogs.filter((l: any) => l.user_id === targetUserId), [userLogs, targetUserId]);
+  const watchedMovies  = useMemo(() => watchlist.filter(m => m.status === 'completed'), [watchlist]);
   const watchlistMovies = useMemo(() => watchlist.filter(m => m.status === 'plan_to_watch'), [watchlist]);
 
-  if (targetProfile.status === 'loading') {
+  // ── Handlers ────────────────────────────────────────────────────────────
+  const handleSignOut = async () => {
+    setShowSignOutConfirm(false);
+    await signOut();
+    router.replace('/auth/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    setShowDeleteConfirm(false);
+    setIsDeleting(true);
+    const err = await deleteAccount();
+    setIsDeleting(false);
+    if (!err) router.replace('/auth/login');
+  };
+
+  const handleExport = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    exportWatchlistToCSV(
+      watchlist,
+      userLogsList,
+      profile.data?.username ?? 'user',
+    );
+  };
+
+  if (targetProfile.status === 'loading' || isDeleting) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -193,15 +228,56 @@ export default function ProfileScreen() {
         onSave={(uri) => handleUpdateAvatar(uri, t)}
       />
 
+      {/* Settings Sheet */}
       <SettingsSheet 
         visible={showSettingsSheet}
         onClose={() => setShowSettingsSheet(false)}
-        onLanguagePress={() => setShowSettingsSheet(false)}
-        onLogoutPress={async () => {
-          await signOut();
+        onLanguagePress={() => {
           setShowSettingsSheet(false);
-          router.replace('/auth/login');
+          setShowLangSheet(true);
         }}
+        onNotificationsPress={() => router.push('/notifications')}
+        onAboutPress={() => router.push('/about')}
+        onExportPress={handleExport}
+        onPasswordPress={() => setShowPasswordModal(true)}
+        onDeletePress={() => setShowDeleteConfirm(true)}
+        onLogoutPress={() => setShowSignOutConfirm(true)}
+      />
+
+      {/* Language Sheet */}
+      <LanguageSheet
+        visible={showLangSheet}
+        onClose={() => setShowLangSheet(false)}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        visible={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
+
+      {/* Sign Out Confirm Dialog */}
+      <ConfirmDialog
+        visible={showSignOutConfirm}
+        title="Sign Out?"
+        message="Kamu akan keluar dari akunmu. Kamu bisa login kembali kapan saja."
+        confirmLabel="Sign Out"
+        cancelLabel="Batal"
+        variant="warning"
+        onConfirm={handleSignOut}
+        onCancel={() => setShowSignOutConfirm(false)}
+      />
+
+      {/* Delete Account Confirm Dialog */}
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        title="Hapus Akun?"
+        message="Tindakan ini tidak bisa dibatalkan. Semua data kamu termasuk watchlist dan diary akan dihapus permanen."
+        confirmLabel="Hapus Akun"
+        cancelLabel="Batal"
+        variant="danger"
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setShowDeleteConfirm(false)}
       />
     </View>
   );
