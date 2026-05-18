@@ -20,7 +20,7 @@ interface MovieListItemProps {
   inWatchlist?: boolean;
 }
 
-const MovieListItem: React.FC<MovieListItemProps> = ({
+const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
   movie,
   onPress,
   onAdd,
@@ -134,7 +134,7 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: { 

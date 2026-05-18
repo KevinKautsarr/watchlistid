@@ -15,7 +15,7 @@ interface PosterCardProps {
   onPress?:    () => void;
 }
 
-const PosterCard: React.FC<PosterCardProps> = ({ 
+const PosterCard: React.FC<PosterCardProps> = React.memo(({ 
   movie, 
   width = 110, 
   showRank, 
@@ -24,14 +24,19 @@ const PosterCard: React.FC<PosterCardProps> = ({
   textColor,
   onPress 
 }) => {
+  const containerStyle = React.useMemo(() => [
+    styles.container, 
+    { width },
+    showBorder && styles.goldBorder
+  ], [width, showBorder]);
+
+  const textColorStyle = React.useMemo(() => (textColor ? { color: textColor } : {}), [textColor]);
+  const textColorOpacityStyle = React.useMemo(() => (textColor ? { color: textColor, opacity: 0.7 } : {}), [textColor]);
+
   return (
     <TouchableOpacity 
       activeOpacity={0.8} 
-      style={[
-        styles.container, 
-        { width },
-        showBorder && styles.goldBorder
-      ]} 
+      style={containerStyle} 
       onPress={onPress}
     >
       <View style={styles.posterWrap}>
@@ -52,19 +57,19 @@ const PosterCard: React.FC<PosterCardProps> = ({
       </View>
       <View style={styles.infoRow}>
         <Star size={12} color="#F5C518" fill="#F5C518" strokeWidth={0} />
-        <Text style={[styles.ratingText, textColor ? { color: textColor } : {}]} allowFontScaling={false}>
+        <Text style={[styles.ratingText, textColorStyle]} allowFontScaling={false}>
           {movie.vote_average?.toFixed(1)}
         </Text>
       </View>
-      <Text style={[styles.title, textColor ? { color: textColor } : {}]} numberOfLines={2} allowFontScaling={false}>
+      <Text style={[styles.title, textColorStyle]} numberOfLines={2} allowFontScaling={false}>
         {('title' in movie) ? movie.title : (movie as any).name}
       </Text>
-      <Text style={[styles.year, textColor ? { color: textColor, opacity: 0.7 } : {}]} allowFontScaling={false}>
+      <Text style={[styles.year, textColorOpacityStyle]} allowFontScaling={false}>
         {('release_date' in movie) ? movie.release_date?.split('-')[0] : (movie as any).first_air_date?.split('-')[0]}
       </Text>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

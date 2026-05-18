@@ -10,38 +10,24 @@ import { MovieLog } from '@/types';
 import { useSocial } from '@/context/SocialContext';
 import Avatar from '@/components/common/Avatar';
 
-export default function ActivityFeed() {
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
+};
+
+const ActivityFeedItem = React.memo(({ item }: { item: MovieLog }) => {
   const router = useRouter();
-  const { getActivityFeed } = useSocial();
-  const [logs, setLogs] = useState<MovieLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadFeed = async () => {
-    setIsLoading(true);
-    const data = await getActivityFeed();
-    setLogs(data);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    loadFeed();
-  }, []);
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(mins / 60);
-    const days = Math.floor(hours / 24);
-
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  const renderItem = ({ item }: { item: MovieLog }) => (
+  
+  return (
     <View style={s.card}>
       <View style={s.cardHeader}>
         <TouchableOpacity 
@@ -93,6 +79,28 @@ export default function ActivityFeed() {
       </TouchableOpacity>
     </View>
   );
+});
+
+export default function ActivityFeed() {
+  const router = useRouter();
+  const { getActivityFeed } = useSocial();
+  const [logs, setLogs] = useState<MovieLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadFeed = async () => {
+    setIsLoading(true);
+    const data = await getActivityFeed();
+    setLogs(data);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    loadFeed();
+  }, []);
+
+  const renderItem = React.useCallback(({ item }: { item: MovieLog }) => (
+    <ActivityFeedItem item={item} />
+  ), []);
 
   if (isLoading) {
     return (
