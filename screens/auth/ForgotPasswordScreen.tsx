@@ -31,9 +31,12 @@ export default function ForgotPasswordScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
+    const resetRedirect = Platform.OS === 'web'
+      ? (__DEV__ ? 'http://localhost:8081/auth/reset-password' : 'https://watchlistid.vercel.app/auth/reset-password')
+      : 'moviewatchlist://reset-password';
     const { error: err } = await supabase.auth.resetPasswordForEmail(
       email.trim().toLowerCase(),
-      { redirectTo: 'watchlistid://reset-password' },
+      { redirectTo: resetRedirect },
     );
     setLoading(false);
     if (err) {

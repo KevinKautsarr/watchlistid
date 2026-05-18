@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 import { supabase, typedFrom } from '../supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '@/utils/authErrors';
@@ -11,10 +12,18 @@ import { useWatchlist } from './WatchlistContext';
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();
 
-// Fix 1: Environment-aware Redirect URL
-const REDIRECT_URL = __DEV__ 
-  ? Linking.createURL('/auth/callback')
-  : 'moviewatchlist://auth/callback';
+// Platform-aware redirect URL:
+// - Web (dev):        http://localhost:8081/auth/callback  (via Linking.createURL)
+// - Web (production): https://watchlistid.vercel.app/auth/callback
+// - Native:           moviewatchlist://auth/callback
+const PROD_WEB_URL = 'https://watchlistid.vercel.app';
+const REDIRECT_URL = Platform.OS === 'web'
+  ? (__DEV__
+      ? Linking.createURL('/auth/callback')
+      : `${PROD_WEB_URL}/auth/callback`)
+  : (__DEV__
+      ? Linking.createURL('/auth/callback')
+      : 'moviewatchlist://auth/callback');
 
 /** Logged-in user's own profile — separate from the social UserProfile in types/index.ts
  *  which has stricter requirements (id required, username required) suited for
