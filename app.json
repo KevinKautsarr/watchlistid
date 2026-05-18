@@ -32,6 +32,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png",
       "name": "WatchlistID — Track Movies & TV Shows",

@@ -67,6 +67,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             priority="high"
+            accessibilityLabel="Hero banner backdrop loading"
+            alt="Hero banner backdrop loading"
           />
           <LinearGradient
             colors={[Colors.overlay.dark, 'rgba(20,20,20,0.45)', Colors.background]}
@@ -83,6 +85,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 priority={i === 0 ? 'high' : 'low'}
+                accessibilityLabel={`Hero banner backdrop ${m.title || m.name}`}
+                alt={`Hero banner backdrop ${m.title || m.name}`}
               />
               <LinearGradient
                 colors={['rgba(20,20,20,0.02)', 'rgba(20,20,20,0.45)', '#141414']}

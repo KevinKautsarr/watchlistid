@@ -61,6 +61,7 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
           style={StyleSheet.absoluteFill} 
           contentFit="cover"
           accessibilityLabel={`${title} poster`}
+          alt={`${title} poster`}
         />
         {rank != null && (
           <View style={styles.rankBadge}>

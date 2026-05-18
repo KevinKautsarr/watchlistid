@@ -36,6 +36,7 @@ const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 40, style, textStyle,
           transition={200}
           priority={priority}
           accessibilityLabel={name ? `${name}'s avatar` : 'User avatar'}
+          alt={name ? `${name}'s avatar` : 'User avatar'}
         />
       </View>
     );

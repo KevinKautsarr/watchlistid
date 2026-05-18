@@ -93,6 +93,7 @@ export const MediaCard = React.memo(function MediaCard({
           contentFit="cover"
           transition={200}
           accessibilityLabel={title || name || 'Movie poster'}
+          alt={title || name || 'Movie poster'}
         />
 
         {/* Rich two-stop gradient for legible metadata overlay */}

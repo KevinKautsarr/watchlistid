@@ -1,27 +1,19 @@
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import MovieDetailScreen from '@/screens/MovieDetailScreen';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 
+const MovieDetailScreenLazy = lazy(() => import('@/screens/MovieDetailScreen'));
+
 export default function MovieDetailRoute() {
-  const params = useLocalSearchParams();
-  const navigation = useNavigation();
-
-  // Extract ID from segment 'id' or query param 'movieId'
-  const movieId = params.id || params.movieId;
-  const movieTitle = params.title || params.movieTitle;
-
-  const route = {
-    params: {
-      movieId,
-      movieTitle,
-      type: params.type || 'movie',
-    }
-  };
-
   return (
     <ScreenErrorBoundary screenName="Detail Film">
-      <MovieDetailScreen />
+      <Suspense fallback={
+        <View style={{ flex: 1, backgroundColor: '#141414', justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator color="#E50914" size="large" />
+        </View>
+      }>
+        <MovieDetailScreenLazy />
+      </Suspense>
     </ScreenErrorBoundary>
   );
 }
