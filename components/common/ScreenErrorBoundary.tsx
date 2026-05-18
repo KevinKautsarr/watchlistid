@@ -50,12 +50,10 @@ export default class ScreenErrorBoundary extends Component<Props, State> {
             <Text style={s.retryText}>Coba Lagi</Text>
           </TouchableOpacity>
 
-          {__DEV__ && (
-            <View style={s.debugBox}>
-              <Text style={s.debugTitle}>Debug Info:</Text>
-              <Text style={s.debugText}>{this.state.error?.toString()}</Text>
-            </View>
-          )}
+          <View style={s.debugBox}>
+            <Text style={s.debugTitle}>Debug Info:</Text>
+            <Text style={s.debugText}>{this.state.error?.toString()}</Text>
+          </View>
         </View>
       );
     }

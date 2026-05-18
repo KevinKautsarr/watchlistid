@@ -14,14 +14,18 @@ interface MediaRowProps {
 export const MediaRow: React.FC<MediaRowProps> = ({ data, type = 'movie', cardWidth, pad, onPress }) => {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: pad, paddingRight: pad, paddingBottom: 4, gap: 10 }}>
-      {data.map((item) => (
-        <PosterCard 
-          key={item.id} 
-          movie={item} 
-          width={cardWidth}
-          onPress={() => onPress(item.id, type)} 
-        />
-      ))}
+      {data.map((item) => {
+        // Safe type extraction
+        const itemType = (item as any).media_type || (item as any).mediaType || type;
+        return (
+          <PosterCard 
+            key={item.id} 
+            movie={item} 
+            width={cardWidth}
+            onPress={() => onPress(item.id, itemType as 'movie' | 'tv')} 
+          />
+        );
+      })}
     </ScrollView>
   );
 };

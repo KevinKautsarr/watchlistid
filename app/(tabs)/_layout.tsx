@@ -31,7 +31,7 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
 
   const handlePress = (name: string) => {
     if (!user && (name === 'watchlist' || name === 'profile')) {
-      showLoginPrompt?.();
+      (global as any).showLoginPrompt?.();
       return;
     }
     router.push(`/(tabs)/${name === 'index' ? '' : name}` as any);
@@ -117,8 +117,8 @@ export default function TabLayout() {
 
   // Expose to global for ease of access from child components (temporary pattern for tab interception)
   React.useEffect(() => {
-    showLoginPrompt = () => setLoginPromptVisible(true);
-    return () => { showLoginPrompt = undefined; };
+    (global as any).showLoginPrompt = () => setLoginPromptVisible(true);
+    return () => { (global as any).showLoginPrompt = undefined; };
   }, []);
 
   return (

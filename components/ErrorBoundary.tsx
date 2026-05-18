@@ -1,5 +1,5 @@
 import React, { ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Colors, Radius, FontSize, FontWeight } from '@/constants/theme';
 
 interface Props {
@@ -8,16 +8,17 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error: Error | null;
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
   
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -31,9 +32,12 @@ class ErrorBoundary extends React.Component<Props, State> {
           <Text style={styles.emoji}>😕</Text>
           <Text style={styles.title}>Something went wrong</Text>
           <Text style={styles.subtitle}>Our cinematic experience hit a snag.</Text>
+          <View style={styles.debugBox}>
+            <Text style={styles.debugText}>{this.state.error?.toString()}</Text>
+          </View>
           <TouchableOpacity 
             style={styles.retryBtn} 
-            onPress={() => this.setState({ hasError: false })}
+            onPress={() => this.setState({ hasError: false, error: null })}
           >
             <Text style={styles.retry}>Try Again</Text>
           </TouchableOpacity>
@@ -78,6 +82,18 @@ const styles = StyleSheet.create({
     color: Colors.background,
     fontWeight: FontWeight.bold,
     fontSize: FontSize.lg,
+  },
+  debugBox: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f8d7da',
+    borderRadius: 5,
+    width: '100%',
+  },
+  debugText: {
+    color: '#721c24',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
   }
 });
 

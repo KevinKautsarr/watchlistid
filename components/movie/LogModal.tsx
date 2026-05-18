@@ -126,8 +126,12 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
             <Star size={IconSize.lg} color={Colors.primary} fill={Colors.primary} />
-            <Text style={s.movieTitle} allowFontScaling={false}>{'title' in movie ? movie.title : movie.name}</Text>
-            <Text style={s.movieYear} allowFontScaling={false}>{('release_date' in movie ? movie.release_date : movie.first_air_date)?.split('-')[0]}</Text>
+            <Text style={s.movieTitle} allowFontScaling={false}>
+              {movie.media_type === 'tv' ? movie.name : movie.title}
+            </Text>
+            <Text style={s.movieYear} allowFontScaling={false}>
+              {(movie.media_type === 'tv' ? movie.first_air_date : movie.release_date)?.split('-')[0]}
+            </Text>
 
             {/* Date Picker (Simplified) */}
             <View style={s.section}>

@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   StatusBar, ActivityIndicator,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, SearchX, Settings as SettingsIcon } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -33,8 +34,8 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { signOut } = useAuth();
-  const { watchlist } = useWatchlist();
-  const { userLogs } = useSocial();
+  const { watchlist, toggleWatched, removeFromWatchlist } = useWatchlist();
+  const { userLogs, deleteLog } = useSocial();
   const { userId } = useLocalSearchParams<{ userId: string }>();
 
   const {
@@ -153,6 +154,19 @@ export default function ProfileScreen() {
           watchedMovies={watchedMovies as unknown as MediaItem[]}
           watchlistMovies={watchlistMovies as unknown as MediaItem[]}
           t={t as any}
+          isOwner={isOwner}
+          onToggleWatched={(id) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            toggleWatched(id);
+          }}
+          onRemove={(id) => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            removeFromWatchlist(id);
+          }}
+          onDeleteLog={(id) => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            deleteLog(id);
+          }}
         />
       </ScrollView>
 

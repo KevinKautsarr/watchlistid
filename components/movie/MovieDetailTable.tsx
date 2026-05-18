@@ -37,7 +37,11 @@ const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
     <View style={styles.grid}>
       <DetailCard 
         label={t('metaReleaseDate')} 
-        value={('release_date' in movie ? movie.release_date : movie.first_air_date) ? new Date(('release_date' in movie ? movie.release_date : movie.first_air_date)!).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} 
+        value={
+          (movie.media_type === 'movie' ? movie.release_date : movie.first_air_date) 
+            ? new Date((movie.media_type === 'movie' ? movie.release_date : movie.first_air_date)!).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
+            : undefined
+        } 
         Icon={Calendar}
       />
       <DetailCard 
@@ -47,7 +51,7 @@ const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
       />
       <DetailCard 
         label={t('metaRuntime')} 
-        value={movie.runtime ? `${movie.runtime} ${t('minutes')}` : undefined} 
+        value={movie.media_type === 'movie' && movie.runtime ? `${movie.runtime} ${t('minutes')}` : undefined} 
         Icon={Clock}
       />
       <DetailCard 
@@ -57,12 +61,12 @@ const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
       />
       <DetailCard 
         label={t('metaBudget')} 
-        value={movie.budget ? `$${(movie.budget / 1000000).toFixed(1)}M` : undefined} 
+        value={movie.media_type === 'movie' && movie.budget ? `$${(movie.budget / 1000000).toFixed(1)}M` : undefined} 
         Icon={DollarSign}
       />
       <DetailCard 
         label={t('metaRevenue')} 
-        value={movie.revenue ? `$${(movie.revenue / 1000000).toFixed(1)}M` : undefined} 
+        value={movie.media_type === 'movie' && movie.revenue ? `$${(movie.revenue / 1000000).toFixed(1)}M` : undefined} 
         Icon={DollarSign}
       />
       <View style={styles.fullWidthCard}>

@@ -1,4 +1,4 @@
-import { TMDB_API_KEY, TMDB_BASE_URL } from '../config';
+import { TMDB_BASE_URL } from '../config';
 import type { Movie, Person, Genre } from '@/types';
 
 // ── In-memory cache with TTL to avoid redundant TMDB fetches ─────────────────
@@ -16,11 +16,14 @@ async function tmdbGet<T>(
 ): Promise<T> {
   // Safe by default: exclude adult content from all discovery/trending/general calls
   const defaultParams = { 
-    api_key: TMDB_API_KEY, 
     include_adult: 'false' 
   };
-  const query = new URLSearchParams({ ...defaultParams, ...params }).toString();
-  const cacheKey = `${endpoint}?${query}`;
+  const queryParams = new URLSearchParams({ ...defaultParams, ...params });
+  // Pass the target TMDB endpoint as a query parameter for the Supabase Edge Function proxy
+  queryParams.set('endpoint', endpoint);
+  
+  const queryString = queryParams.toString();
+  const cacheKey = `${endpoint}?${queryString}`;
 
   // Return cached result if still fresh
   const cached = memCache.get(cacheKey);
@@ -30,7 +33,7 @@ async function tmdbGet<T>(
   if (inflight.has(cacheKey)) return inflight.get(cacheKey) as Promise<T>;
 
   const promise = (async () => {
-    const res = await fetch(`${TMDB_BASE_URL}${endpoint}?${query}`);
+    const res = await fetch(`${TMDB_BASE_URL}?${queryString}`);
     if (!res.ok) throw new Error(`TMDB error ${res.status}: ${endpoint}`);
     const data = await res.json() as T;
     memCache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS });

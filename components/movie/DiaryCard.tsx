@@ -10,7 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 interface DiaryCardProps {
   log: MovieLog;
   onDelete?: (id: string) => void;
-  onPressPoster?: (movieId: number) => void;
+  onPressPoster?: (movieId: number, mediaType: 'movie' | 'tv') => void;
   rank?: number;
   priority?: 'low' | 'normal' | 'high';
 }
@@ -55,7 +55,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
         <TouchableOpacity 
           style={[styles.posterContainer, cursorPointer]}
           activeOpacity={0.8}
-          onPress={() => onPressPoster?.(log.movie_id)}
+          onPress={() => onPressPoster?.(log.movie_id, log.media_type || 'movie')}
           accessibilityRole="button"
           accessibilityLabel={`${log.movie_title} poster`}
         >

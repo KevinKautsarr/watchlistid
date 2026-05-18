@@ -96,13 +96,17 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
       {/* Overlay content */}
       <View style={s.heroContent}>
-        <Text style={s.heroTitle} numberOfLines={2} allowFontScaling={false}>{cur ? ('title' in cur ? cur.title : cur.name) : ''}</Text>
+        <Text style={s.heroTitle} numberOfLines={2} allowFontScaling={false}>
+          {cur ? (cur.media_type === 'movie' ? cur.title : cur.name) : ''}
+        </Text>
         <View style={s.heroMeta}>
           <View style={s.ratingPill}>
             <Star size={IconSize.xs} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
             <Text style={s.ratingScore} allowFontScaling={false}>{cur?.vote_average?.toFixed(1)}</Text>
           </View>
-          <Text style={s.heroYear} allowFontScaling={false}>{('release_date' in cur ? cur.release_date : cur.first_air_date)?.split('-')[0]}</Text>
+          <Text style={s.heroYear} allowFontScaling={false}>
+            {cur ? (cur.media_type === 'movie' ? cur.release_date : cur.first_air_date)?.split('-')[0] : ''}
+          </Text>
         </View>
         <View style={s.heroButtons}>
           <TouchableOpacity 

@@ -1,3 +1,3 @@
-export const TMDB_API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY || "";
-export const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+
+export const TMDB_BASE_URL = "https://xwdgpsvmqzilcmcbibvp.supabase.co/functions/v1/tmdb-proxy";
 export const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w500";

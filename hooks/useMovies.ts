@@ -57,19 +57,19 @@ function useAsync<T>(
 }
 
 export const useTrending = () =>
-  useAsync(() => api.getTrendingMovies().then(r => r.results.slice(0, 15)), [], 'trending');
+  useAsync(() => api.getTrendingMovies().then(r => (r.results || []).slice(0, 15).map(m => ({ ...m, media_type: 'movie' }))), [], 'trending');
 
 export const usePopular = () =>
-  useAsync(() => api.getPopularMovies().then(r => r.results.slice(0, 12)), [], 'popular');
+  useAsync(() => api.getPopularMovies().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'movie' }))), [], 'popular');
 
 export const useTopRated = () =>
-  useAsync(() => api.getTopRatedMovies().then(r => r.results.slice(0, 12)), [], 'top-rated');
+  useAsync(() => api.getTopRatedMovies().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'movie' }))), [], 'top-rated');
 
 export const useTrendingTV = () =>
-  useAsync(() => api.getTrendingTV().then(r => r.results.slice(0, 12)), [], 'trending-tv');
+  useAsync(() => api.getTrendingTV().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'tv' }))), [], 'trending-tv');
 
 export const useTopRatedTV = () =>
-  useAsync(() => api.getTopRatedTV().then(r => r.results.slice(0, 12)), [], 'top-rated-tv');
+  useAsync(() => api.getTopRatedTV().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'tv' }))), [], 'top-rated-tv');
 
 export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') => {
   const cacheKey = `details-${type}-${id}`;

@@ -14,18 +14,31 @@ interface ProfileContentListProps {
   watchedMovies: MediaItem[];
   watchlistMovies: MediaItem[];
   t: (key: string) => string;
+  isOwner?: boolean;
+  onToggleWatched?: (id: number) => void;
+  onRemove?: (id: number) => void;
+  onDeleteLog?: (id: string) => void;
 }
 
 export const ProfileContentList: React.FC<ProfileContentListProps> = ({ 
-  activeTab, userLogsList, watchedMovies, watchlistMovies, t 
+  activeTab, userLogsList, watchedMovies, watchlistMovies, t,
+  isOwner, onToggleWatched, onRemove, onDeleteLog
 }) => {
   const router = useRouter();
+  const getMediaType = (item: any) => (item.mediaType || item.media_type || 'movie');
 
   return (
     <View style={styles.container}>
       {activeTab === 'Diary' && (
         userLogsList.length > 0 ? (
-          userLogsList.map((log: any) => <DiaryCard key={log.id} log={log} />)
+          userLogsList.map((log: any) => (
+            <DiaryCard 
+              key={log.id} 
+              log={log} 
+              onDelete={isOwner ? onDeleteLog : undefined}
+              onPressPoster={(movieId, mediaType) => router.push({ pathname: '/movie/[id]', params: { id: movieId.toString(), type: mediaType } } as any)}
+            />
+          ))
         ) : (
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyText}>{t('noLogsYet')}</Text>
@@ -39,7 +52,11 @@ export const ProfileContentList: React.FC<ProfileContentListProps> = ({
             <MovieListItem 
               key={movie.id} 
               movie={movie} 
-              onPress={() => router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type: movie.media_type || 'movie' } })}
+              onPress={() => router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type: getMediaType(movie) } } as any)}
+              showWatched={isOwner}
+              watched={true}
+              onToggleWatched={() => onToggleWatched?.(movie.id)}
+              onRemove={() => onRemove?.(movie.id)}
             />
           ))
         ) : (
@@ -55,7 +72,11 @@ export const ProfileContentList: React.FC<ProfileContentListProps> = ({
             <MovieListItem 
               key={movie.id} 
               movie={movie} 
-              onPress={() => router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type: movie.media_type || 'movie' } })}
+              onPress={() => router.push({ pathname: '/movie/[id]', params: { id: movie.id.toString(), type: getMediaType(movie) } } as any)}
+              showWatched={isOwner}
+              watched={false}
+              onToggleWatched={() => onToggleWatched?.(movie.id)}
+              onRemove={() => onRemove?.(movie.id)}
             />
           ))
         ) : (

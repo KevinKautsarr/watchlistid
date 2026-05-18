@@ -116,7 +116,7 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
 
             const onPress = () => {
               if (!user && (route.name === 'watchlist' || route.name === 'profile')) {
-                showLoginPrompt?.();
+                (global as any).showLoginPrompt?.();
                 return;
               }
 

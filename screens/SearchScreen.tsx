@@ -19,7 +19,10 @@ import { useWatchlist } from '@/context/WatchlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useSearchQuery } from '@/hooks/useSearchQuery';
-import { getTrendingMovies } from '@/services/api';
+import { 
+  getTrendingMovies, getTrendingTV, getPopularMovies, 
+  getTopRatedMovies, getTopRatedTV 
+} from '@/services/api';
 import { MediaItem } from '@/types';
 
 // Components
@@ -30,10 +33,10 @@ import { SearchEmptyState } from '@/components/search/SearchEmptyState';
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CATS: any = {
   "trending-movies": { label: "trendingMovies",      subtitle: "catTrendingMoviesSub", Icon: Flame, iconColor: Colors.danger, fetchFn: getTrendingMovies },
-  "trending-tv":     { label: "trendingShows",       subtitle: "catTrendingTVSub",     Icon: Flame, iconColor: "#FF6B35", fetchFn: getTrendingMovies, normalize: true },
-  "popular":         { label: "catPopularOn",        subtitle: "catPopularSub",        Icon: Star,  iconColor: Colors.ratingGold, fetchFn: getTrendingMovies },
-  "top-rated-movies":{ label: "topRatedMovies",      subtitle: "catTopRatedMoviesSub", Icon: Award, iconColor: Colors.success, fetchFn: getTrendingMovies },
-  "top-rated-tv":    { label: "topRatedShows",       subtitle: "catTopRatedTVSub",     Icon: Award, iconColor: "#2196F3", fetchFn: getTrendingMovies, normalize: true },
+  "trending-tv":     { label: "trendingShows",       subtitle: "catTrendingTVSub",     Icon: Flame, iconColor: "#FF6B35", fetchFn: getTrendingTV, normalize: true },
+  "popular":         { label: "catPopularOn",        subtitle: "catPopularSub",        Icon: Star,  iconColor: Colors.ratingGold, fetchFn: getPopularMovies },
+  "top-rated-movies":{ label: "topRatedMovies",      subtitle: "catTopRatedMoviesSub", Icon: Award, iconColor: Colors.success, fetchFn: getTopRatedMovies },
+  "top-rated-tv":    { label: "topRatedShows",       subtitle: "catTopRatedTVSub",     Icon: Award, iconColor: "#2196F3", fetchFn: getTopRatedTV, normalize: true },
 };
 
 const FILTER_CHIPS = [

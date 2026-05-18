@@ -74,7 +74,7 @@ function WebHead() {
         "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // RN web requires inline scripts
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
-        "img-src 'self' data: blob: https://image.tmdb.org https://*.supabase.co",
+        "img-src 'self' data: blob: https://image.tmdb.org https://*.supabase.co https://*.ytimg.com https://*.googleusercontent.com",
         "connect-src 'self' https://api.themoviedb.org https://*.supabase.co wss://*.supabase.co",
         "media-src 'self' https://www.youtube.com",
         "frame-src https://www.youtube.com",
@@ -125,7 +125,7 @@ function RootLayoutNav() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#141414', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator color="#E50914" size="large" />
+        <ActivityIndicator color="#E50914" size="large" accessibilityLabel="Loading aplikasi" aria-label="Loading aplikasi" />
       </View>
     );
   }

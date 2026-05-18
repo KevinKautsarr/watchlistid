@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import Head from 'expo-router/head';
 import { ChevronLeft, FileText, UserCheck, AlertTriangle, Copyright, Scale } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
@@ -33,6 +34,9 @@ export default function TermsScreen() {
 
   return (
     <View style={s.root}>
+      <Head>
+        <title>Terms of Service - WatchlistID</title>
+      </Head>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView edges={['top']} style={s.safeArea}>
         <View style={s.header}>

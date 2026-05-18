@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import SplashScreen from '@/screens/SplashScreen';
 import { Stack, Redirect } from 'expo-router';
+import Head from 'expo-router/head';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AppEntry() {
@@ -27,6 +28,9 @@ export default function AppEntry() {
   if (isLoading || showSplash) {
     return (
       <View style={styles.container}>
+        <Head>
+          <title>WatchlistID — Track, Rate, and Discover Movies &amp; TV Shows</title>
+        </Head>
         <Stack.Screen options={{ headerShown: false }} />
         <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
           <SplashScreen />
