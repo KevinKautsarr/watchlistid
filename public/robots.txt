@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://watchlistid-w96m-dngvl5ozd-i22066748-7164s-projects.vercel.app/sitemap.xml
+Sitemap: https://watchlistid.vercel.app/sitemap.xml
