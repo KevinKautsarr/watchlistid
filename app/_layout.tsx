@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Text, View, ActivityIndicator } from 'react-native';
+import { Platform, View, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -97,13 +97,14 @@ function WebHead() {
   return null;
 }
 
+// Routes that require authentication — defined at module level so they're stable
+const PROTECTED_ROUTES: string[] = ['watchlist', 'profile', 'notifications', 'search-users'];
+
 function RootLayoutNav() {
   const { session, isLoading, profileError } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
-
-  const PROTECTED_ROUTES = ['watchlist', 'profile', 'notifications', 'search-users'];
 
   useEffect(() => {
     if (isLoading) return;
@@ -120,7 +121,7 @@ function RootLayoutNav() {
       // Redirect to home if authenticated and trying to access auth screens
       router.replace('/(tabs)');
     }
-  }, [session, segments, isLoading]);
+  }, [session, segments, isLoading, router]);
 
   if (isLoading) {
     return (

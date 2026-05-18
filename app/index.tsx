@@ -6,7 +6,7 @@ import Head from 'expo-router/head';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AppEntry() {
-  const { session, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -22,6 +22,8 @@ export default function AppEntry() {
     }, 2500);
 
     return () => clearTimeout(timer);
+  // fadeAnim is a stable Animated.Value ref — intentionally excluded from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Still loading auth state or showing splash — wait

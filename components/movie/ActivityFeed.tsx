@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { MessageSquare, Clock, Heart, User } from 'lucide-react-native';
@@ -72,7 +72,7 @@ const ActivityFeedItem = React.memo(({ item }: { item: MovieLog }) => {
           )}
           {item.review_text && (
             <Text style={s.reviewText} numberOfLines={2}>
-              "{item.review_text}"
+              &ldquo;{item.review_text}&rdquo;
             </Text>
           )}
         </View>
@@ -81,22 +81,24 @@ const ActivityFeedItem = React.memo(({ item }: { item: MovieLog }) => {
   );
 });
 
+ActivityFeedItem.displayName = 'ActivityFeedItem';
+
 export default function ActivityFeed() {
   const router = useRouter();
   const { getActivityFeed } = useSocial();
   const [logs, setLogs] = useState<MovieLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadFeed = async () => {
+  const loadFeed = useCallback(async () => {
     setIsLoading(true);
     const data = await getActivityFeed();
     setLogs(data);
     setIsLoading(false);
-  };
+  }, [getActivityFeed]);
 
   useEffect(() => {
     loadFeed();
-  }, []);
+  }, [loadFeed]);
 
   const renderItem = React.useCallback(({ item }: { item: MovieLog }) => (
     <ActivityFeedItem item={item} />
@@ -120,7 +122,7 @@ export default function ActivityFeed() {
         <View style={s.emptyContainer}>
           <User size={48} color="rgba(255,255,255,0.05)" />
           <Text style={s.emptyTitle}>Nothing to see here</Text>
-          <Text style={s.emptySubtitle}>Follow your friends to see what they're watching!</Text>
+          <Text style={s.emptySubtitle}>Follow your friends to see what they&apos;re watching!</Text>
           <TouchableOpacity 
             style={s.exploreBtn}
             onPress={() => router.push('/search-users')}

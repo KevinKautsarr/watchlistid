@@ -260,4 +260,6 @@ const styles = StyleSheet.create({
   },
 });
 
+MovieListItem.displayName = 'MovieListItem';
+
 export default MovieListItem;

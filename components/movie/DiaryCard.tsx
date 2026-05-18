@@ -242,4 +242,6 @@ const styles = StyleSheet.create({
   }
 });
 
+DiaryCard.displayName = 'DiaryCard';
+
 export default DiaryCard;

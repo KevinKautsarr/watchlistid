@@ -131,4 +131,6 @@ const styles = StyleSheet.create({
   },
 });
 
+PosterCard.displayName = 'PosterCard';
+
 export default PosterCard;

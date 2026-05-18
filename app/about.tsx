@@ -65,7 +65,7 @@ export default function AboutScreen() {
           {/* Description Section */}
           <View style={s.section}>
             <Text style={s.description}>
-              WatchlistID is more than just a list. It's your personal cinematic memory. Track every movie and show you watch, rate your favorites, and discover your next obsession.
+              WatchlistID is more than just a list. It&apos;s your personal cinematic memory. Track every movie and show you watch, rate your favorites, and discover your next obsession.
             </Text>
           </View>
 
