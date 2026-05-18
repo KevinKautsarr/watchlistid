@@ -70,6 +70,9 @@ export default function ActivityFeed() {
           source={`https://image.tmdb.org/t/p/w200${item.poster_path}`} 
           style={s.poster}
           contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
+          priority="low"
         />
         <View style={s.movieInfo}>
           <Text style={s.watchedText}>

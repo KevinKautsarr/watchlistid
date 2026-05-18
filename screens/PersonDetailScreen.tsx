@@ -64,7 +64,14 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.heroWrap}>
           {backdropUri ? (
-            <Image source={{ uri: backdropUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <Image 
+              source={{ uri: backdropUri }} 
+              style={StyleSheet.absoluteFill} 
+              contentFit="cover" 
+              cachePolicy="memory-disk"
+              transition={200}
+              priority="low"
+            />
           ) : (
             <View style={styles.backdropPlaceholder} />
           )}
@@ -75,9 +82,12 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
           />
           <View style={styles.profileFloat}>
             <Image 
-              source={{ uri: `${TMDB_IMAGE_SIZES.medium}${person.profile_path}` }} 
+              source={{ uri: `${TMDB_IMAGE_SIZES.small}${person.profile_path}` }} 
               style={styles.profileImg} 
               contentFit="cover" 
+              cachePolicy="memory-disk"
+              transition={200}
+              priority="low"
             />
           </View>
         </View>

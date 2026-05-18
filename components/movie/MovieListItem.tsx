@@ -60,6 +60,9 @@ const MovieListItem: React.FC<MovieListItemProps> = ({
           source={{ uri: `https://image.tmdb.org/t/p/w154${movie.poster_path}` }} 
           style={StyleSheet.absoluteFill} 
           contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
+          priority="low"
           accessibilityLabel={`${title} poster`}
           alt={`${title} poster`}
         />

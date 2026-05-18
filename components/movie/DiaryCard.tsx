@@ -15,7 +15,7 @@ interface DiaryCardProps {
   priority?: 'low' | 'normal' | 'high';
 }
 
-const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPressPoster, rank, priority = 'normal' }) => {
+const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPressPoster, rank, priority = 'low' }) => {
   const { t } = useLanguage();
   const [isRevealed, setIsRevealed] = useState(!log.is_spoiler);
 
@@ -64,6 +64,8 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
               source={{ uri: `https://image.tmdb.org/t/p/w92${log.poster_path}` }} 
               style={styles.poster} 
               contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={200}
               accessibilityLabel={`${log.movie_title} poster`}
               priority={priority}
             />

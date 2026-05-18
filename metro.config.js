@@ -6,11 +6,11 @@ config.resolver.sourceExts.push('cjs');
 
 // Minifier optimization
 config.transformer.minifierConfig = {
-  keep_classnames: true,
-  keep_fnames: true,
+  keep_classnames: false,
+  keep_fnames: false,
   mangle: {
-    keep_classnames: true,
-    keep_fnames: true
+    keep_classnames: false,
+    keep_fnames: false
   }
 };
 

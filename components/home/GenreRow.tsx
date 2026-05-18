@@ -39,6 +39,9 @@ export const GenreRow: React.FC<GenreRowProps> = ({ genres, onPress, pad, t, isD
               source={{ uri: `${TMDB_IMAGE_SIZES.thumb}${g.image}` }} 
               style={StyleSheet.absoluteFill} 
               contentFit="cover" 
+              cachePolicy="memory-disk"
+              transition={200}
+              priority="low"
             />
             <LinearGradient 
               colors={[Colors.overlay.light10, Colors.overlay.dark70]} 

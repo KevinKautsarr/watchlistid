@@ -25,9 +25,12 @@ const CastCard: React.FC<CastCardProps> = ({
       <View style={styles.avatarWrap}>
         {cast.profile_path ? (
           <Image
-            source={{ uri: `${TMDB_IMAGE_SIZES.medium}${cast.profile_path}` }}
+            source={{ uri: `${TMDB_IMAGE_SIZES.small}${cast.profile_path}` }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+            priority="low"
             accessibilityLabel={`${cast.name} profile photo`}
           />
         ) : (

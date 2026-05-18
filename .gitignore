@@ -65,3 +65,5 @@ supabase/.branches/
 # AI Agents
 .agents/
 skills-lock.json
+# Local Netlify folder
+.netlify
