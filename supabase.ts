@@ -31,8 +31,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     // On web, Supabase must read the #access_token from the URL hash after OAuth redirect.
+    // We enable this for ALL web environments — it safely no-ops when no hash token is present.
     // On native, URL detection is not needed (tokens are set manually via setSession).
-    detectSessionInUrl: typeof window !== 'undefined' && window.location?.hash?.includes('access_token'),
+    detectSessionInUrl: typeof window !== 'undefined',
   },
 });
 

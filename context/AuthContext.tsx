@@ -13,17 +13,24 @@ import { useWatchlist } from './WatchlistContext';
 WebBrowser.maybeCompleteAuthSession();
 
 // Platform-aware redirect URL:
-// - Web (dev):        http://localhost:8081/auth/callback  (via Linking.createURL)
 // - Web (production): https://watchlistid.vercel.app/auth/callback
+// - Web (local dev):  http://localhost:8081/auth/callback  (via Linking.createURL)
 // - Native:           moviewatchlist://auth/callback
+//
+// IMPORTANT: We do NOT use __DEV__ here because Expo sets __DEV__ = true even
+// in Vercel production builds (expo export), causing localhost redirects in prod.
+// Instead, we use runtime hostname detection which is always accurate.
 const PROD_WEB_URL = 'https://watchlistid.vercel.app';
+
+const isWebProduction = Platform.OS === 'web'
+  && typeof window !== 'undefined'
+  && window.location?.hostname === 'watchlistid.vercel.app';
+
 const REDIRECT_URL = Platform.OS === 'web'
-  ? (__DEV__
-      ? Linking.createURL('/auth/callback')
-      : `${PROD_WEB_URL}/auth/callback`)
-  : (__DEV__
-      ? Linking.createURL('/auth/callback')
-      : 'moviewatchlist://auth/callback');
+  ? (isWebProduction
+      ? `${PROD_WEB_URL}/auth/callback`
+      : Linking.createURL('/auth/callback'))
+  : 'moviewatchlist://auth/callback';
 
 /** Logged-in user's own profile — separate from the social UserProfile in types/index.ts
  *  which has stricter requirements (id required, username required) suited for
