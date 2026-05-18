@@ -63,11 +63,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.extrabold,
-    color: Colors.dark,
+    color: Colors.white,
   },
   subtitle: {
     fontSize: FontSize.md,
-    color: Colors.primary,
+    color: Colors.text.secondary,
     marginTop: 8,
     textAlign: 'center',
   },
@@ -79,19 +79,21 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   retry: {
-    color: Colors.background,
+    color: Colors.white,
     fontWeight: FontWeight.bold,
     fontSize: FontSize.lg,
   },
   debugBox: {
     marginTop: 20,
-    padding: 10,
-    backgroundColor: '#f8d7da',
-    borderRadius: 5,
+    padding: 12,
+    backgroundColor: 'rgba(229,9,20,0.1)',
+    borderRadius: Radius.md,
     width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(229,9,20,0.3)',
   },
   debugText: {
-    color: '#721c24',
+    color: '#FF8A8A',
     fontSize: 12,
     fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
   }
