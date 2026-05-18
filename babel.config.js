@@ -7,16 +7,17 @@ module.exports = function(api) {
         root: ['.'],
         alias: {
           '@': '.',
-          '@/components': './components',
-          '@/screens': './screens',
-          '@/context': './context',
-          '@/hooks': './hooks',
-          '@/services': './services',
-          '@/types': './types',
-          '@/constants': './constants',
-          '@/utils': './utils',
         }
-      }]
-    ]
+      }],
+      // Tree shake lodash jika dipakai
+      'lodash',
+      // Remove console.log di production
+      ['transform-remove-console', { exclude: ['error', 'warn'] }]
+    ],
+    env: {
+      production: {
+        plugins: ['transform-remove-console']
+      }
+    }
   };
 };

@@ -39,7 +39,9 @@ const PosterCard: React.FC<PosterCardProps> = ({
           source={{ uri: `${TMDB_IMAGE_SIZES.medium}${movie.poster_path}` }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          transition={300}
+          cachePolicy="memory-disk"
+          transition={200}
+          priority="low"
           accessibilityLabel={`${('title' in movie ? movie.title : (movie as any).name) || 'Media'} poster`}
         />
         {showRank && rank != null && (

@@ -32,6 +32,8 @@ export const DetailHero: React.FC<DetailHeroProps> = ({ movie, userRating, bp, a
           source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${movie.backdrop_path}` }} 
           style={styles.backdrop} 
           contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
           priority="high"
         />
         <LinearGradient
@@ -47,7 +49,7 @@ export const DetailHero: React.FC<DetailHeroProps> = ({ movie, userRating, bp, a
           </Animated.View>
         )}
       </View>
-
+ 
       <View style={[bp.isLarge && { flexDirection: 'row', width: '100%', maxWidth: bp.maxContentWidth, paddingHorizontal: 40 }]}>
         <View style={[bp.isLarge && { width: 300, marginRight: 40 }]}>
           {bp.isLarge && (
@@ -55,6 +57,9 @@ export const DetailHero: React.FC<DetailHeroProps> = ({ movie, userRating, bp, a
               source={{ uri: `${TMDB_IMAGE_SIZES.large}${movie.poster_path}` }} 
               style={{ width: 300, height: 450, borderRadius: Radius.lg, marginTop: -200, borderWidth: 1, borderColor: Colors.overlay.light10 } as any} 
               contentFit="cover" 
+              cachePolicy="memory-disk"
+              transition={200}
+              priority="high"
             />
           )}
           {!bp.isLarge && renderTitleBlock()}

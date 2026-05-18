@@ -33,6 +33,7 @@ const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 40, style, textStyle,
           source={{ uri }}
           style={styles.image}
           contentFit="cover"
+          cachePolicy="memory-disk"
           transition={200}
           priority={priority}
           accessibilityLabel={name ? `${name}'s avatar` : 'User avatar'}

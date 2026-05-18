@@ -66,6 +66,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${slides[0].backdrop_path}` }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
             priority="high"
             accessibilityLabel="Hero banner backdrop loading"
             alt="Hero banner backdrop loading"
@@ -84,6 +86,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${m.backdrop_path}` }}
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
                 priority={i === 0 ? 'high' : 'low'}
                 accessibilityLabel={`Hero banner backdrop ${m.media_type === 'movie' ? m.title : m.name}`}
                 alt={`Hero banner backdrop ${m.media_type === 'movie' ? m.title : m.name}`}
