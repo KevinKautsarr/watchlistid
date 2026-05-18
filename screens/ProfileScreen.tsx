@@ -68,12 +68,18 @@ export default function ProfileScreen() {
   const [showDeleteConfirm,   setShowDeleteConfirm]   = useState(false);
   const [showPasswordModal,   setShowPasswordModal]   = useState(false);
   const [showLangSheet,       setShowLangSheet]       = useState(false);
+  const [showExportConfirm,   setShowExportConfirm]   = useState(false);
   const [isDeleting,          setIsDeleting]          = useState(false);
 
   const profileData    = targetProfile.data;
   const userLogsList   = useMemo(() => userLogs.filter((l: any) => l.user_id === targetUserId), [userLogs, targetUserId]);
   const watchedMovies  = useMemo(() => watchlist.filter(m => m.status === 'completed'), [watchlist]);
   const watchlistMovies = useMemo(() => watchlist.filter(m => m.status === 'plan_to_watch'), [watchlist]);
+
+  // Perhitungan dinamis estimasi ukuran file CSV
+  const totalItems = watchlist.length + userLogsList.length;
+  const estimatedKb = Math.max(1, Math.round((totalItems * 150) / 1024));
+  const exportMessage = `Data watchlist (${watchlist.length} item) dan diary (${userLogsList.length} item) akan diekspor dalam format spreadsheet CSV (perkiraan ukuran ~${estimatedKb} KB). Kamu bisa membukanya di Microsoft Excel atau Google Sheets.`;
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleSignOut = async () => {
@@ -91,6 +97,7 @@ export default function ProfileScreen() {
   };
 
   const handleExport = () => {
+    setShowExportConfirm(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     exportWatchlistToCSV(
       watchlist,
@@ -238,7 +245,10 @@ export default function ProfileScreen() {
         }}
         onNotificationsPress={() => router.push('/notifications')}
         onAboutPress={() => router.push('/about')}
-        onExportPress={handleExport}
+        onExportPress={() => {
+          setShowSettingsSheet(false);
+          setShowExportConfirm(true);
+        }}
         onPasswordPress={() => setShowPasswordModal(true)}
         onDeletePress={() => setShowDeleteConfirm(true)}
         onLogoutPress={() => setShowSignOutConfirm(true)}
@@ -254,6 +264,18 @@ export default function ProfileScreen() {
       <ChangePasswordModal
         visible={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
+      />
+
+      {/* Export Watchlist Confirm Dialog */}
+      <ConfirmDialog
+        visible={showExportConfirm}
+        title="Export Watchlist"
+        message={exportMessage}
+        confirmLabel="Download CSV"
+        cancelLabel="Batal"
+        variant="download"
+        onConfirm={handleExport}
+        onCancel={() => setShowExportConfirm(false)}
       />
 
       {/* Sign Out Confirm Dialog */}

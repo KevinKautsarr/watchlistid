@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
-import { AlertTriangle, Info } from 'lucide-react-native';
+import { AlertTriangle, Info, Download } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 
 interface ConfirmDialogProps {
@@ -9,7 +9,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: 'danger' | 'warning' | 'info' | 'download';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -20,14 +20,15 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   variant = 'danger',
   onConfirm, onCancel,
 }) => {
-  const accentColor = variant === 'danger' ? '#DC3545' : variant === 'warning' ? '#FF9500' : Colors.primary;
+  const accentColor = variant === 'danger' ? '#DC3545' : variant === 'warning' ? '#FF9500' : variant === 'download' ? '#34A853' : Colors.primary;
+  const IconComponent = variant === 'download' ? Download : variant === 'info' ? Info : AlertTriangle;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={s.overlay} onPress={onCancel}>
         <Pressable style={s.dialog} onPress={(e) => e.stopPropagation()}>
           <View style={[s.iconWrap, { backgroundColor: accentColor + '18' }]}>
-            <AlertTriangle size={28} color={accentColor} strokeWidth={2} />
+            <IconComponent size={28} color={accentColor} strokeWidth={2} />
           </View>
 
           <Text style={s.title} allowFontScaling={false}>{title}</Text>
