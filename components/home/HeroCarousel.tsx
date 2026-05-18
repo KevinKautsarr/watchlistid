@@ -89,8 +89,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 cachePolicy="memory-disk"
                 transition={200}
                 priority={i === 0 ? 'high' : 'low'}
-                accessibilityLabel={`Hero banner backdrop ${m.media_type === 'movie' ? m.title : m.name}`}
-                alt={`Hero banner backdrop ${m.media_type === 'movie' ? m.title : m.name}`}
+                accessibilityLabel={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
+                alt={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
               />
               <LinearGradient
                 colors={['rgba(20,20,20,0.02)', 'rgba(20,20,20,0.45)', '#141414']}
@@ -105,7 +105,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       {/* Overlay content */}
       <View style={s.heroContent}>
         <Text style={s.heroTitle} numberOfLines={2} allowFontScaling={false}>
-          {cur ? (cur.media_type === 'movie' ? cur.title : cur.name) : ''}
+          {cur ? ('title' in cur ? cur.title : 'name' in cur ? cur.name : '') : ''}
         </Text>
         <View style={s.heroMeta}>
           <View style={s.ratingPill}>
@@ -113,7 +113,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             <Text style={s.ratingScore} allowFontScaling={false}>{cur?.vote_average?.toFixed(1)}</Text>
           </View>
           <Text style={s.heroYear} allowFontScaling={false}>
-            {cur ? (cur.media_type === 'movie' ? cur.release_date : cur.first_air_date)?.split('-')[0] : ''}
+            {cur ? ('release_date' in cur ? cur.release_date : 'first_air_date' in cur ? cur.first_air_date : '')?.split('-')[0] : ''}
           </Text>
         </View>
         <View style={s.heroButtons}>

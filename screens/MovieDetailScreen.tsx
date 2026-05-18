@@ -107,7 +107,7 @@ export default function MovieDetailScreen() {
       return;
     }
     if (inWatchlist) removeFromWatchlist(movie.id);
-    else addToWatchlist({ ...movie, media_type: type } as unknown as MediaItem);
+    else addToWatchlist({ ...movie, media_type: type } as any);
   };
 
   const handleRate = () => {

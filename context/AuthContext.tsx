@@ -75,6 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
+    }).catch(err => {
+      console.error('Failed to get session:', err);
+    }).finally(() => {
       setIsLoading(false);
     });
 

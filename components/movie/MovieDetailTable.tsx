@@ -38,8 +38,8 @@ const MovieDetailTable: React.FC<MovieDetailTableProps> = ({ movie }) => {
       <DetailCard 
         label={t('metaReleaseDate')} 
         value={
-          (movie.media_type === 'movie' ? movie.release_date : movie.first_air_date) 
-            ? new Date((movie.media_type === 'movie' ? movie.release_date : movie.first_air_date)!).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
+          ('release_date' in movie ? movie.release_date : 'first_air_date' in movie ? movie.first_air_date : undefined) 
+            ? new Date(('release_date' in movie ? movie.release_date : 'first_air_date' in movie ? movie.first_air_date : '')!).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
             : undefined
         } 
         Icon={Calendar}
