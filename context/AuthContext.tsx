@@ -7,6 +7,7 @@ import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '@/utils/authErrors';
 import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeClearCorruptStorage, clearStaleSupabaseSession } from '@/utils/storage';
 
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();
@@ -70,15 +71,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
   useEffect(() => {
-    // Restore existing session on mount
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-    }).catch(err => {
-      console.error('Failed to get session:', err);
-    }).finally(() => {
-      setIsLoading(false);
-    });
+    // ── Step 1: Clean up corrupt/stale localStorage data BEFORE session check ──
+    // This prevents the "works in incognito, not in normal browser" crash loop
+    // caused by expired or corrupt Supabase auth tokens in localStorage.
+    const init = async () => {
+      await safeClearCorruptStorage();
+      await clearStaleSupabaseSession();
+
+      // ── Step 2: Restore existing session ──
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+      } catch (err) {
+        console.error('Failed to get session:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    init();
 
     // Listen for auth state changes (login / logout / token refresh)
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -88,6 +100,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // ── Safety net: force-resolve loading after 5 seconds ─────────────────────
+  // Prevents permanent loading spinner if getSession() never resolves
+  // (e.g. network timeout, corrupt storage, Supabase SDK bug in normal browser).
+  useEffect(() => {
+    if (!isLoading) return;
+    const timeout = setTimeout(() => {
+      console.warn('[Auth] Session check timed out — forcing isLoading=false');
+      setIsLoading(false);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
 
   useEffect(() => {
     if (!user) {

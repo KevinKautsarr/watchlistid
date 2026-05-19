@@ -51,7 +51,7 @@ function WebHead() {
     // SEO basics
     setMeta('description', 'WatchlistID is your personal movie and TV show tracker. Discover trending films, build your watchlist, rate what you have watched, and follow friends.');
     setMeta('robots', 'index, follow');
-    setMeta('theme-color', '#141414');
+    setMeta('theme-color', '#641220');
     setMeta('color-scheme', 'dark');
 
     // Open Graph
@@ -92,6 +92,27 @@ function WebHead() {
 
     // lang attribute on <html>
     document.documentElement.lang = 'en';
+
+    // Unregister any stale Service Workers that may cause cache loops
+    // in normal browsers. Incognito always starts fresh, which is why
+    // the app worked there but not in normal mode.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(reg => {
+          reg.unregister();
+          console.log('[SW] Unregistered stale service worker:', reg.scope);
+        });
+      }).catch(() => {});
+    }
+
+    // Clear Cache Storage to remove any stale cached responses
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        cacheNames.forEach(name => {
+          caches.delete(name);
+        });
+      }).catch(() => {});
+    }
   }, []);
 
   return null;
