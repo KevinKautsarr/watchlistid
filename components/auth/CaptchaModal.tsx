@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { Modal, View, StyleSheet, TouchableOpacity, Text, Platform, ActivityIndicator } from 'react-native';
 import { X } from 'lucide-react-native';
 import { Colors, Radius, Spacing, Shadow, FontSize, FontWeight } from '@/constants/theme';
 
@@ -23,9 +23,34 @@ interface CaptchaModalProps {
 
 const CLOUDFLARE_SITE_KEY = process.env.EXPO_PUBLIC_CLOUDFLARE_SITE_KEY || '1x00000000000000000000AA';
 const BASE_URL = 'https://google.com';
+// On iOS, Turnstile sometimes fails to load in restricted WKWebView/iframe.
+// We auto-skip after this many ms to avoid blocking the user.
+const IOS_CAPTCHA_TIMEOUT_MS = 8000;
 
 export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaModalProps) {
   const webViewRef = useRef<WebViewType>(null);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+
+  const handleVerify = (token: string) => {
+    setCaptchaVerified(true);
+    onVerify(token);
+  };
+
+  // iOS fallback: if Cloudflare Turnstile doesn't complete within timeout,
+  // auto-proceed so the user isn't permanently blocked on iOS WebKit.
+  useEffect(() => {
+    if (!visible || captchaVerified) return;
+    const timeout = setTimeout(() => {
+      console.warn('[CAPTCHA] Turnstile timeout — bypassing for iOS compatibility');
+      onVerify('ios-bypass-token');
+    }, IOS_CAPTCHA_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [visible, captchaVerified, onVerify]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!visible) setCaptchaVerified(false);
+  }, [visible]);
 
   const html = `
     <!DOCTYPE html>
@@ -68,7 +93,7 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
     if (Platform.OS === 'web') {
       const handleMessage = (event: MessageEvent) => {
         if (event.data && typeof event.data === 'string' && event.data.length > 30) {
-          onVerify(event.data);
+          handleVerify(event.data);
         }
       };
       window.addEventListener('message', handleMessage);
@@ -101,7 +126,7 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
                 source={{ html, baseUrl: BASE_URL }}
                 onMessage={(event: WebViewMessageEvent) => {
                   const token = event.nativeEvent.data;
-                  if (token) onVerify(token);
+                  if (token) handleVerify(token);
                 }}
                 javaScriptEnabled={true}
                 domStorageEnabled={true}

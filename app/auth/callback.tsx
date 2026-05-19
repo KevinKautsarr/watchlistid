@@ -5,46 +5,75 @@ import { supabase } from '../../supabase';
 import { Colors } from '@/constants/theme';
 
 /**
- * Web-only OAuth callback handler.
- * Supabase redirects here after Google Sign-In on web.
- * The URL contains #access_token=...&refresh_token=... in the fragment.
- * We extract those tokens, set the session, then navigate to the app.
+ * OAuth callback handler — supports both PKCE and Implicit flows.
+ *
+ * PKCE flow (used by iOS web & modern browsers):
+ *   URL: /auth/callback?code=<auth_code>
+ *   Supabase SDK automatically exchanges the code for a session.
+ *
+ * Implicit flow (legacy, some desktop browsers):
+ *   URL: /auth/callback#access_token=<token>&refresh_token=<token>
+ *   We manually parse the hash and call setSession.
  */
 export default function AuthCallbackScreen() {
   const router = useRouter();
 
   const handleCallback = useCallback(async () => {
     try {
-      // Supabase appends tokens in the URL hash fragment on web
-      // e.g. /auth/callback#access_token=xxx&refresh_token=yyy&type=recovery
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.replace('#', '?'));
-      
-      const accessToken  = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const type         = params.get('type'); // 'recovery' for password reset
+      // ── PKCE flow: URL contains ?code=... ──────────────────────────────────
+      // Supabase's detectSessionInUrl=true automatically handles this.
+      // We just need to wait a tick for it to exchange the code, then check.
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
 
-      if (accessToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token:  accessToken,
-          refresh_token: refreshToken ?? '',
-        });
-
-        if (error) {
-          console.error('Auth callback session error:', error.message);
-          router.replace('/auth/login');
-          return;
-        }
-
-        // Password reset flow — redirect to update password page
-        if (type === 'recovery') {
-          router.replace('/auth/reset-password' as any);
+      if (code) {
+        // Give Supabase SDK time to exchange the code for a session
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          router.replace('/(tabs)');
           return;
         }
       }
 
-      // Normal sign-in — go to home
-      router.replace('/');
+      // ── Implicit flow: URL contains #access_token=... ─────────────────────
+      const hash = window.location.hash;
+      if (hash) {
+        const params = new URLSearchParams(hash.replace('#', '?'));
+        const accessToken  = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const type         = params.get('type');
+
+        if (accessToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token:  accessToken,
+            refresh_token: refreshToken ?? '',
+          });
+
+          if (error) {
+            console.error('Auth callback session error:', error.message);
+            router.replace('/auth/login');
+            return;
+          }
+
+          // Password reset flow
+          if (type === 'recovery') {
+            router.replace('/auth/reset-password' as any);
+            return;
+          }
+
+          router.replace('/(tabs)');
+          return;
+        }
+      }
+
+      // ── Fallback: check existing session ──────────────────────────────────
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/auth/login');
+      }
     } catch (err) {
       console.error('Auth callback error:', err);
       router.replace('/auth/login');
@@ -70,3 +99,5 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+

@@ -196,12 +196,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /** Handles Google Sign-In via Supabase OAuth */
   const signInWithGoogle = async (): Promise<string | null> => {
     try {
-      const redirectUrl = REDIRECT_URL;
-      
+      // On web (desktop & iOS browser): use direct redirect flow — no popup.
+      // WebBrowser.openAuthSessionAsync is for native apps only.
+      // iOS Safari blocks popups from TouchableOpacity events, so we must
+      // redirect the current window instead.
+      if (Platform.OS === 'web') {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: REDIRECT_URL,
+            skipBrowserRedirect: false, // Let Supabase redirect the window directly
+          },
+        });
+        if (error) return mapAuthError(error);
+        return null; // Page will redirect
+      }
+
+      // Native (iOS/Android app): use in-app browser session
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: REDIRECT_URL,
           skipBrowserRedirect: true,
         },
       });
@@ -209,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        const result = await WebBrowser.openAuthSessionAsync(data.url, REDIRECT_URL);
         
         if (result.type === 'success' && result.url) {
           // Robust token extraction (handles both ?query and #fragment)
