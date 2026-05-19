@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 
 import { Colors } from '@/constants/theme';
+import { nativeDriver } from '@/utils/animation';
 
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
@@ -35,7 +36,7 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
   useEffect(() => {
     Animated.spring(animatedValue, {
       toValue: activeIndex,
-      useNativeDriver: true,
+      ...nativeDriver,
       tension: 60,
       friction: 8,
     }).start();

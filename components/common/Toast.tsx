@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Text, StyleSheet, View, Platform } from 'react-native';
 import { CheckCircle2, Info, AlertTriangle } from 'lucide-react-native';
 import { Colors, Radius, Spacing, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { nativeDriver } from '@/utils/animation';
 
 interface ToastProps {
   visible: boolean;
@@ -21,12 +22,12 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
         Animated.timing(opacity, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
         Animated.timing(translateY, {
           toValue: 0,
           duration: 300,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
       ]).start();
 
@@ -44,12 +45,12 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
       Animated.timing(opacity, {
         toValue: 0,
         duration: 250,
-        useNativeDriver: true,
+        ...nativeDriver,
       }),
       Animated.timing(translateY, {
         toValue: 10,
         duration: 250,
-        useNativeDriver: true,
+        ...nativeDriver,
       }),
     ]).start(() => onHide());
   };

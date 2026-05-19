@@ -21,6 +21,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useSocial } from '@/context/SocialContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useSearchQuery } from '@/hooks/useSearchQuery';
+import { nativeDriver } from '@/utils/animation';
+
 import { 
   getTrendingMovies, getTrendingTV, getPopularMovies, 
   getTopRatedMovies, getTopRatedTV 
@@ -142,8 +144,9 @@ export default function SearchScreen() {
     router.push({ pathname: '/person/[id]', params: { id: id.toString() } });
   };
 
-  const onFocus = () => Animated.spring(inputScale, { toValue: 1.015, useNativeDriver: true, speed: 20 }).start();
-  const onBlur  = () => Animated.spring(inputScale, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
+  const onFocus = () => Animated.spring(inputScale, { toValue: 1.015, ...nativeDriver, speed: 20 }).start();
+  const onBlur  = () => Animated.spring(inputScale, { toValue: 1, ...nativeDriver, speed: 20 }).start();
+
 
   const isPeople = activeFilter === "people";
   const showDefault = !activeCat && searchText.length === 0;

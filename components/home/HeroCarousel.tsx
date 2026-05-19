@@ -5,7 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Bookmark, Plus, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES, IconSize } from '@/constants/theme';
 import { MediaItem } from '@/types';
-import { cursorPointer } from '@/utils/webStyles';
+import { textShadow, cursorPointer } from '@/utils/webStyles';
+
 
 interface HeroCarouselProps {
   data: MediaItem[];
@@ -165,7 +166,7 @@ const s = StyleSheet.create({
   heroTitle: {
     fontSize: FontSize.h1 * 1.1, fontWeight: FontWeight.black, color: Colors.white,
     letterSpacing: -0.5, lineHeight: 42, marginBottom: 8, textAlign: 'center',
-    textShadowColor: Colors.overlay.dark, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 12,
+    ...textShadow(Colors.overlay.dark, 0, 2, 12),
   },
   heroMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(245,197,24,0.18)', borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 3 },

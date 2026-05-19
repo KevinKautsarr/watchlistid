@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { nativeDriver } from '@/utils/animation';
 
 interface ToastProps {
   message: string;
@@ -18,12 +19,12 @@ const Toast: React.FC<ToastProps> = ({ message, onHide }) => {
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 400,
-        useNativeDriver: true,
+        ...nativeDriver,
       }),
       Animated.timing(opacityAnim, {
         toValue: 1,
         duration: 400,
-        useNativeDriver: true,
+        ...nativeDriver,
       }),
     ]).start();
 
@@ -33,12 +34,12 @@ const Toast: React.FC<ToastProps> = ({ message, onHide }) => {
         Animated.timing(slideAnim, {
           toValue: 20,
           duration: 400,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
         Animated.timing(opacityAnim, {
           toValue: 0,
           duration: 400,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
       ]).start(() => {
         if (onHide) onHide();

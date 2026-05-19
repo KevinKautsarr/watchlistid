@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Animated } from 'react-native';
 import { Colors, Radius } from '@/constants/theme';
+import { nativeDriver } from '@/utils/animation';
 
 interface SkeletonProps {
   width?:        number | string;
@@ -21,12 +22,12 @@ const SkeletonCard: React.FC<SkeletonProps> = ({
         Animated.timing(shimmerAnim, {
           toValue: 0.8,
           duration: 1200,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
         Animated.timing(shimmerAnim, {
           toValue: 0.4,
           duration: 1200,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
       ])
     ).start();
@@ -54,12 +55,12 @@ export const SkeletonListItem: React.FC<SkeletonProps> = ({
         Animated.timing(shimmerAnim, {
           toValue: 0.8,
           duration: 1200,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
         Animated.timing(shimmerAnim, {
           toValue: 0.4,
           duration: 1200,
-          useNativeDriver: true,
+          ...nativeDriver,
         }),
       ])
     ).start();

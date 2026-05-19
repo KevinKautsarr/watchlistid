@@ -9,6 +9,8 @@ import {
 import { Film } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
+import { nativeDriver } from '@/utils/animation';
+import { boxShadow } from '@/utils/webStyles';
 
 const SplashScreen: React.FC = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -19,13 +21,13 @@ const SplashScreen: React.FC = () => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        ...nativeDriver,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 8,
         tension: 20,
-        useNativeDriver: true,
+        ...nativeDriver,
       }),
     ]).start();
   }, []);
@@ -66,11 +68,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginBottom: Spacing.lg,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    ...boxShadow(Colors.primary, 0, 4, 12, 0.4, 8),
   },
   appName: {
     fontSize: 42,
@@ -101,3 +99,4 @@ const styles = StyleSheet.create({
 });
 
 export default SplashScreen;
+

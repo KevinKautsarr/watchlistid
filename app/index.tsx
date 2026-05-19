@@ -4,6 +4,7 @@ import SplashScreen from '@/screens/SplashScreen';
 import { Stack, Redirect } from 'expo-router';
 import Head from 'expo-router/head';
 import { useAuth } from '@/context/AuthContext';
+import { nativeDriver } from '@/utils/animation';
 
 export default function AppEntry() {
   const { isLoading } = useAuth();
@@ -15,7 +16,7 @@ export default function AppEntry() {
       Animated.timing(fadeAnim, {
         toValue:         0,
         duration:        800,
-        useNativeDriver: true,
+        ...nativeDriver,
       }).start(() => {
         setShowSplash(false);
       });

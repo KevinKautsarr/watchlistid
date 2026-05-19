@@ -89,6 +89,21 @@ export default function Root({ children }: PropsWithChildren) {
             }
           `
         }} />
+
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Suppress known React Native Web warnings dari library internal
+            const originalWarn = console.error;
+            console.error = (...args) => {
+              if (
+                typeof args[0] === 'string' &&
+                (args[0].includes('collapsable') ||
+                 args[0].includes('non-boolean attribute'))
+              ) return;
+              originalWarn(...args);
+            };
+          `
+        }} />
       </head>
       <body>{children}</body>
     </html>

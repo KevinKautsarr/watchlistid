@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Star } from 'lucide-react-native';
 import { TMDB_IMAGE_SIZES, Radius, Colors, IconSize, FontSize, FontWeight } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
+import { nativeDriver } from '@/utils/animation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface BaseCardProps {
@@ -44,7 +45,7 @@ export const MediaCard = React.memo(function MediaCard({
   const handlePressIn = useCallback(() => {
     Animated.spring(scale, {
       toValue: 0.96,
-      useNativeDriver: true,
+      ...nativeDriver,
       speed: 30,
       bounciness: 4,
     }).start();
@@ -53,7 +54,7 @@ export const MediaCard = React.memo(function MediaCard({
   const handlePressOut = useCallback(() => {
     Animated.spring(scale, {
       toValue: 1,
-      useNativeDriver: true,
+      ...nativeDriver,
       speed: 20,
       bounciness: 6,
     }).start();

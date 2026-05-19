@@ -84,8 +84,6 @@ function WebHead() {
       'http-equiv'
     );
 
-    // X-Frame-Options (clickjacking protection)
-    setMeta('X-Frame-Options', 'SAMEORIGIN', 'http-equiv');
 
     // Cross-Origin-Opener-Policy
     setMeta('Cross-Origin-Opener-Policy', 'same-origin-allow-popups', 'http-equiv');
