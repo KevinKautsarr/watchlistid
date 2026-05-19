@@ -16,7 +16,7 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Primary SEO */}
         <title>WatchlistID — Track, Rate, and Discover Movies & TV Shows</title>
         <meta name="description" content="WatchlistID is your ultimate movie and TV show watchlist tracker. Rate what you've watched, discover trending media, and share logs with your friends." />
-        <meta name="theme-color" content="#141414" />
+        <meta name="theme-color" content="#641220" />
         <link rel="canonical" href="https://watchlistid.vercel.app" />
 
         {/* Open Graph / Facebook */}
@@ -52,7 +52,41 @@ export default function Root({ children }: PropsWithChildren) {
           __html: `
             /* Prevent layout shift on initial load */
             #root, body, html { height: 100%; }
-            body { background-color: #141414; overflow: hidden; }
+            body { background-color: #0A0A0B; color: #F5F0F1; overflow: hidden; }
+
+            /* Premium Red Gradient scrollbar */
+            ::-webkit-scrollbar { width: 6px; height: 6px; }
+            ::-webkit-scrollbar-track { background: #0A0A0B; }
+            ::-webkit-scrollbar-thumb {
+              background: linear-gradient(180deg, #E01E37, #641220);
+              border-radius: 3px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+              background: linear-gradient(180deg, #C71F37, #4A0D18);
+            }
+
+            /* Selection color */
+            ::selection {
+              background: rgba(199, 31, 55, 0.3);
+              color: #F5F0F1;
+            }
+
+            /* Focus ring for accessibility */
+            *:focus-visible {
+              outline: 2px solid #C71F37;
+              outline-offset: 2px;
+            }
+
+            /* Link hover */
+            a:hover { color: #E01E37; }
+
+            /* Glassmorphism card utility */
+            .glass-card {
+              background: rgba(20, 16, 20, 0.8);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border: 1px solid rgba(42, 21, 32, 0.6);
+            }
           `
         }} />
       </head>

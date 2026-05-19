@@ -144,19 +144,19 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, flexDirection: 'row', backgroundColor: '#141414' },
+  root: { flex: 1, flexDirection: 'row', backgroundColor: '#0A0A0B' },
   content: { flex: 1, overflow: 'hidden' },
 
   // Sidebar
   sidebar: {
     width: 240,
     backgroundColor: Colors.tabBarBackground,
-    borderTopWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderRightWidth: 1,
+    borderColor: Colors.surfaceBorder,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 4, height: 0 }, shadowOpacity: 0.4, shadowRadius: 16 },
+      ios:     { shadowColor: '#C71F37', shadowOffset: { width: 4, height: 0 }, shadowOpacity: 0.15, shadowRadius: 16 },
       android: { elevation: 12 },
-      web:     { boxShadow: '4px 0 24px rgba(0,0,0,0.4)' } as unknown as ViewStyle,
+      web:     { boxShadow: '4px 0 32px rgba(100,18,32,0.3)' } as unknown as ViewStyle,
     }),
     zIndex: 20,
   },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   brandTitle: { fontSize: 18, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.3 },
   brandSub:   { fontSize: 11, fontWeight: '700', color: PRIMARY, letterSpacing: 1.5, marginTop: -1 },
 
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 16, marginVertical: 4 },
+  divider: { height: 1, backgroundColor: Colors.surfaceBorder, marginHorizontal: 16, marginVertical: 4 },
 
   // Nav
   nav: { flex: 1, paddingHorizontal: 12, paddingTop: 8 },
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   navItemActive: {
-    backgroundColor: 'rgba(229,9,20,0.15)',
+    backgroundColor: 'rgba(199,31,55,0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(229,9,20,0.25)',
+    borderColor: 'rgba(199,31,55,0.3)',
   },
   navLabel: { fontSize: 15, fontWeight: '600', color: INACTIVE, flex: 1 },
   navLabelActive: { color: '#FFFFFF', fontWeight: '700' },
