@@ -165,15 +165,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     fetchProfileWithRetry();
 
-    // Subscribe to realtime changes on this user's profile
-    const channel = supabase.channel(`public:profiles:${user.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
-        setProfile(prev => ({ ...prev, data: payload.new as AuthUserProfile, status: 'success' }));
-      })
-      .subscribe();
+    // Realtime subscription: only on native (iOS/Android app).
+    // On web (including iOS Safari), WebKit blocks WebSocket with
+    // "The operation is insecure" — we skip Realtime and rely on
+    // one-time fetches + manual refreshProfile() calls instead.
+    if (Platform.OS === 'web') return;
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase.channel(`public:profiles:${user.id}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+          setProfile(prev => ({ ...prev, data: payload.new as AuthUserProfile, status: 'success' }));
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('[Auth] Realtime subscription failed (expected on web):', err);
+    }
 
     return () => {
-      channel.unsubscribe();
+      channel?.unsubscribe();
     };
   }, [user]);
 

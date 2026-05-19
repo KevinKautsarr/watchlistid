@@ -55,24 +55,33 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (user) {
       fetchNotifications();
 
-      // Realtime subscription
-      const channel = supabase
-        .channel(`user-notifications-${user.id}`)
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        }, (payload) => {
-          const newNotif = payload.new as Notification;
-          setNotifications(prev => [newNotif, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          sendLocalNotification(newNotif.title, newNotif.message);
-        })
-        .subscribe();
+      // Realtime subscription: only on native (iOS/Android app).
+      // iOS WebKit blocks WebSocket with "The operation is insecure" —
+      // skip Realtime on web and rely on fetchNotifications() on mount.
+      if (Platform.OS === 'web') return;
+
+      let channel: ReturnType<typeof supabase.channel> | null = null;
+      try {
+        channel = supabase
+          .channel(`user-notifications-${user.id}`)
+          .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          }, (payload) => {
+            const newNotif = payload.new as Notification;
+            setNotifications(prev => [newNotif, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            sendLocalNotification(newNotif.title, newNotif.message);
+          })
+          .subscribe();
+      } catch (err) {
+        console.warn('[Notifications] Realtime subscription failed (expected on web):', err);
+      }
 
       return () => {
-        supabase.removeChannel(channel);
+        if (channel) supabase.removeChannel(channel);
       };
     } else {
       setNotifications([]);
