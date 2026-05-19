@@ -108,6 +108,7 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'auth';
+    const isResetPassword = (segments[1] as string) === 'reset-password';
     
     // Check if ANY part of the current route is in the protected list
     const isProtectedRoute = segments.some(s => PROTECTED_ROUTES.includes(s));
@@ -115,7 +116,7 @@ function RootLayoutNav() {
     if (!session && isProtectedRoute) {
       // Redirect to login only if trying to access protected routes while not logged in
       router.replace('/auth/login');
-    } else if (session && inAuthGroup) {
+    } else if (session && inAuthGroup && !isResetPassword) {
       // Redirect to home if authenticated and trying to access auth screens
       router.replace('/(tabs)');
     }
@@ -153,6 +154,13 @@ function RootLayoutNav() {
         <Stack.Screen name="auth" />
         <Stack.Screen name="movie/[id]" />
         <Stack.Screen name="person/[id]" />
+        <Stack.Screen name="user/[userId]" options={{ 
+          headerShown: true,
+          headerTransparent: true,
+          title: 'Profile',
+          headerTintColor: '#F5F0F1',
+          headerStyle: { backgroundColor: '#0A0A0B' }
+        }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style="light" />

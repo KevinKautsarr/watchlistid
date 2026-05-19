@@ -31,6 +31,12 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
 }) => {
   const { t } = useLanguage();
 
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
+
   const menuItems = [
     { 
       id: 'lang', 

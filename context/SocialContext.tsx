@@ -1,7 +1,7 @@
 import React from 'react';
-import { LogProvider, useLogs } from './LogContext';
-import { ReviewProvider, useReviews } from './ReviewContext';
-import { FollowProvider, useFollow } from './FollowContext';
+import { LogProvider, useLogs } from '@/context/LogContext';
+import { ReviewProvider, useReviews } from '@/context/ReviewContext';
+import { FollowProvider, useFollow } from '@/context/FollowContext';
 
 // This is now a "Composite Context" that aggregates the modular contexts
 // to maintain backward compatibility during the migration phase.

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { supabase, typedFrom } from '../supabase';
-import { useAuth } from './AuthContext';
+import { supabase, typedFrom } from '@/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { ReviewItem } from '@/types/review';
 import Toast from '@/components/common/Toast';
 

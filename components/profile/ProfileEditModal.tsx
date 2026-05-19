@@ -30,8 +30,14 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   isSaving,
   t
 }) => {
-  const [username, setUsername] = useState(initialData.username);
-  const [bio, setBio] = useState(initialData.bio);
+  const [username, setUsername] = useState(initialData.username || '');
+  const [bio, setBio] = useState(initialData.bio || '');
+
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
 
   const handleSave = () => {
     onSave({ username, bio });

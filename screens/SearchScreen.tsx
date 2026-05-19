@@ -1,11 +1,12 @@
 import * as Haptics from "expo-haptics";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
-  ActivityIndicator, Animated, FlatList, 
+  ActivityIndicator, Animated, 
   ScrollView, StatusBar, StyleSheet, Text, TextInput,
-  TouchableOpacity, View,
+  TouchableOpacity, View, Pressable
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowLeft, Award, ChevronDown, Clock, Flame,
@@ -77,6 +78,13 @@ export default function SearchScreen() {
   } = useSearchQuery(params.category || null, params.genre || "all");
 
   const [searchMode, setSearchMode] = useState<'media' | 'users'>('media');
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: !activeCat
+    });
+  }, [navigation, activeCat]);
   const [userResults, setUserResults] = useState<FetchState<UserProfile[]>>({ status: 'idle', data: [], error: null });
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
@@ -187,10 +195,7 @@ export default function SearchScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.titleRow}>
-            <Text style={styles.pageTitle}>{t('discoverTitle')}</Text>
-            <Text style={styles.pageSub}>{t('discoverSub')}</Text>
-          </View>
+          <View style={{ height: 60 }} />
         )}
       </View>
 
@@ -214,8 +219,8 @@ export default function SearchScreen() {
       {/* Pill Tab Switcher */}
       {!activeCat && (
         <View style={[styles.tabSwitcher, { marginHorizontal: bp.contentPadding }]}>
-          <TouchableOpacity
-            style={[styles.pill, searchMode === 'media' && styles.pillActive, cursorPointer]}
+          <Pressable
+            style={({ pressed }) => [styles.pill, searchMode === 'media' && styles.pillActive, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setSearchMode('media');
@@ -224,9 +229,9 @@ export default function SearchScreen() {
             accessibilityLabel="Cari Film & TV"
           >
             <Text style={[styles.pillText, searchMode === 'media' && styles.pillTextActive]}>🎬 Film & TV</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.pill, searchMode === 'users' && styles.pillActive, cursorPointer]}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.pill, searchMode === 'users' && styles.pillActive, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setSearchMode('users');
@@ -235,12 +240,12 @@ export default function SearchScreen() {
             accessibilityLabel="Cari Pengguna"
           >
             <Text style={[styles.pillText, searchMode === 'users' && styles.pillTextActive]}>👥 Pengguna</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       )}
 
       {searchMode === 'media' ? (
-        <FlatList
+        <FlashList
           data={isPeople ? personItems : items}
           keyExtractor={i => String(i.id)}
           renderItem={({ item }) => isPeople ? (
@@ -269,10 +274,10 @@ export default function SearchScreen() {
                     <View style={styles.recentSection}>
                       <Text style={styles.sectionLbl}>{t('recent')}</Text>
                       {recentSearches.map(txt => (
-                        <TouchableOpacity key={txt} style={styles.recentRow} onPress={() => setSearchText(txt)}>
+                        <Pressable key={txt} style={({ pressed }) => [styles.recentRow, pressed && { opacity: 0.7 }]} onPress={() => setSearchText(txt)}>
                           <Clock size={IconSize.sm} color={Colors.primary} />
                           <Text style={styles.recentTxt}>{txt}</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       ))}
                     </View>
                   )}
@@ -281,10 +286,10 @@ export default function SearchScreen() {
                       <Text style={styles.sectionLbl}>{t('trendingSearches')}</Text>
                       <View style={styles.pills}>
                         {trendingKeywords.map(txt => (
-                          <TouchableOpacity key={txt} style={styles.pillChip} onPress={() => setSearchText(txt)}>
+                          <Pressable key={txt} style={({ pressed }) => [styles.pillChip, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]} onPress={() => setSearchText(txt)}>
                             <TrendingUp size={IconSize.xs} color={Colors.primary} />
                             <Text style={styles.pillTxt}>{txt}</Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         ))}
                       </View>
                     </View>
@@ -303,15 +308,15 @@ export default function SearchScreen() {
           contentContainerStyle={styles.listContent}
         />
       ) : (
-        <FlatList
+        <FlashList
           data={userResults.data || []}
           keyExtractor={i => i.id}
           renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={[styles.userCard, cursorPointer]} 
+            <Pressable 
+              style={({ pressed }) => [styles.userCard, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]} 
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push({ pathname: '/(tabs)/profile', params: { userId: item.id } } as any);
+                router.push({ pathname: '/user/[userId]', params: { userId: item.id } } as any);
               }}
             >
               <Image source={{ uri: item.avatar_url || 'https://via.placeholder.com/50' }} style={styles.userAvatar} contentFit="cover" />
@@ -320,7 +325,7 @@ export default function SearchScreen() {
                 <Text style={styles.userSubText}>View Profile</Text>
               </View>
               <ChevronRight size={20} color={Colors.text.secondary} />
-            </TouchableOpacity>
+            </Pressable>
           )}
           ListEmptyComponent={userResults.status === 'loading' ? (
             <ActivityIndicator size="large" color={Colors.accentBlue} style={styles.loadingIndicator} />

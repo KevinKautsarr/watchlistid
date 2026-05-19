@@ -61,7 +61,7 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
   const iconColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : Colors.primary;
 
   return (
-    <View style={styles.root} pointerEvents="none">
+    <View style={[styles.root, { pointerEvents: 'none' }]}>
       <Animated.View style={[
         styles.container,
         { opacity, transform: [{ translateY }] }

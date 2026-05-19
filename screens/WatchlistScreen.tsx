@@ -89,9 +89,8 @@ const WatchlistScreen: React.FC = () => {
       <StatusBar barStyle="light-content" />
 
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: 60 }]}>
         <View>
-          <Text style={styles.headerTitle} allowFontScaling={false}>{t('myWatchlist')}</Text>
           <Text style={styles.headerSub} allowFontScaling={false}>
             {activeTab === 'Watchlist' ? `${planToWatchList.length} ${t('moviesShowsToWatch')}` : activeTab === 'Watched' ? `${watchedList.length} Watched` : `${ratedList.length} ${t('ratedByYou')}`}
           </Text>

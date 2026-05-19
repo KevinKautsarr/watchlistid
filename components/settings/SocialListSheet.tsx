@@ -28,13 +28,26 @@ interface SocialListSheetProps {
   onUserPress: (userId: string) => void;
   onFollowToggle: (userId: string) => void;
   currentUserId: string;
+  onTabChange?: (tab: 'followers' | 'following') => void;
 }
 
 const SocialListSheet: React.FC<SocialListSheetProps> = ({
-  visible, onClose, initialTab, data, loading, onUserPress, onFollowToggle, currentUserId
+  visible, onClose, initialTab, data, loading, onUserPress, onFollowToggle, currentUserId, onTabChange
 }) => {
   const { t } = useLanguage();
+
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
+
   const [activeTab, setActiveTab] = useState<'followers' | 'following'>(initialTab);
+
+  React.useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredData = useMemo(() => {
@@ -100,6 +113,7 @@ const SocialListSheet: React.FC<SocialListSheetProps> = ({
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveTab('followers');
+                onTabChange?.('followers');
               }}
             >
               <Text style={[s.tabText, activeTab === 'followers' && s.activeTabText]}>
@@ -111,6 +125,7 @@ const SocialListSheet: React.FC<SocialListSheetProps> = ({
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveTab('following');
+                onTabChange?.('following');
               }}
             >
               <Text style={[s.tabText, activeTab === 'following' && s.activeTabText]}>

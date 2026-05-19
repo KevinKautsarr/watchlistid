@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
-import { typedFrom } from '../supabase';
-import { useAuth } from './AuthContext';
+import { typedFrom } from '@/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { UserProfile, MovieLog } from '@/types';
 
 interface FollowContextType {
@@ -37,7 +37,7 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const getFollowStatus = async (targetId: string) => {
     if (!user) return false;
-    const { data, error } = await typedFrom('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', targetId).single();
+    const { data, error } = await typedFrom('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', targetId).maybeSingle();
     return !!data && !error;
   };
 

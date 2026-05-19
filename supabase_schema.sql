@@ -47,8 +47,20 @@ create table public.watchlist (
 
 alter table public.watchlist enable row level security;
 
-create policy "Users can manage their own watchlist" 
-on watchlist for all 
+create policy "Watchlist is viewable by everyone" 
+on watchlist for select 
+using ( true );
+
+create policy "Users can insert own watchlist" 
+on watchlist for insert 
+with check ( auth.uid() = user_id );
+
+create policy "Users can update own watchlist" 
+on watchlist for update 
+using ( auth.uid() = user_id );
+
+create policy "Users can delete own watchlist" 
+on watchlist for delete 
 using ( auth.uid() = user_id );
 
 
@@ -137,8 +149,20 @@ create table public.movie_logs (
 
 alter table public.movie_logs enable row level security;
 
-create policy "Users can manage their own logs" 
-on movie_logs for all 
+create policy "Logs are viewable by everyone" 
+on movie_logs for select 
+using ( true );
+
+create policy "Users can insert own logs" 
+on movie_logs for insert 
+with check ( auth.uid() = user_id );
+
+create policy "Users can update own logs" 
+on movie_logs for update 
+using ( auth.uid() = user_id );
+
+create policy "Users can delete own logs" 
+on movie_logs for delete 
 using ( auth.uid() = user_id );
 
 -- ==========================================
@@ -148,8 +172,8 @@ using ( auth.uid() = user_id );
 -- Table to store user following relationships
 create table public.follows (
   id uuid default gen_random_uuid() primary key,
-  follower_id uuid references auth.users not null,
-  following_id uuid references auth.users not null,
+  follower_id uuid references public.profiles(id) on delete cascade not null,
+  following_id uuid references public.profiles(id) on delete cascade not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   
   -- Prevent duplicate follows
@@ -166,9 +190,9 @@ ALTER TABLE public.follows
 
 ALTER TABLE public.follows
   ADD CONSTRAINT follows_follower_id_fkey
-    FOREIGN KEY (follower_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+    FOREIGN KEY (follower_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
   ADD CONSTRAINT follows_following_id_fkey
-    FOREIGN KEY (following_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+    FOREIGN KEY (following_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 -- Enable RLS
@@ -277,6 +301,9 @@ create or replace trigger handle_updated_at_user_ratings
 
 -- ─── M7: Fix Reviews RLS — replace broad 'for all' with explicit policies ─
 drop policy if exists "Users can manage their own reviews" on public.reviews;
+drop policy if exists "Users can insert own reviews" on public.reviews;
+drop policy if exists "Users can update own reviews" on public.reviews;
+drop policy if exists "Users can delete own reviews" on public.reviews;
 
 create policy "Users can insert own reviews"
   on public.reviews for insert
@@ -292,7 +319,9 @@ create policy "Users can delete own reviews"
 
 
 -- ─── C2: notifications Table ──────────────────────────────────────────────
-create table if not exists public.notifications (
+drop table if exists public.notifications cascade;
+
+create table public.notifications (
   id           uuid default gen_random_uuid() primary key,
   user_id      uuid references public.profiles(id) on delete cascade not null,
   actor_id     uuid references public.profiles(id) on delete cascade,
@@ -315,6 +344,9 @@ create index if not exists idx_notifications_unread
   where is_read = false;
 
 -- RLS: users can only read and update their own notifications
+drop policy if exists "Users can view own notifications" on public.notifications;
+drop policy if exists "Users can update own notifications" on public.notifications;
+
 create policy "Users can view own notifications"
   on public.notifications for select
   using (auth.uid() = user_id);
@@ -386,7 +418,8 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_follower_name TEXT;
 BEGIN
-  SELECT username INTO v_follower_name FROM public.profiles WHERE id = NEW.follower_id;
+  SELECT coalesce(username, 'Seseorang') INTO v_follower_name FROM public.profiles WHERE id = NEW.follower_id;
+  v_follower_name := coalesce(v_follower_name, 'Seseorang');
   
   INSERT INTO public.notifications (user_id, type, actor_id, title, message)
   VALUES (
@@ -410,25 +443,53 @@ CREATE OR REPLACE FUNCTION public.notify_review_like()
 RETURNS TRIGGER AS $$
 DECLARE
   v_review_owner_id UUID;
-  v_liker_name TEXT;
+  v_movie_id INTEGER;
   v_movie_title TEXT;
+  v_liker_name TEXT;
 BEGIN
-  -- Get owner of the review
-  SELECT user_id, movie_id INTO v_review_owner_id, v_movie_title FROM public.reviews WHERE id = NEW.review_id;
+  -- 1. Dapatkan owner review dan movie_id
+  SELECT user_id, movie_id INTO v_review_owner_id, v_movie_id 
+  FROM public.reviews 
+  WHERE id = NEW.review_id;
   
-  -- Get liker name
-  SELECT username INTO v_liker_name FROM public.profiles WHERE id = NEW.user_id;
+  -- Jika review tidak ditemukan, abaikan
+  IF v_review_owner_id IS NULL THEN
+    RETURN NEW;
+  END IF;
 
-  -- Don't notify if liking own review
+  -- 2. Cari judul film dari logs atau watchlist (karena review tidak menyimpan judul film langsung)
+  SELECT movie_title INTO v_movie_title 
+  FROM public.movie_logs 
+  WHERE movie_id = v_movie_id 
+  LIMIT 1;
+
+  IF v_movie_title IS NULL THEN
+    SELECT title INTO v_movie_title 
+    FROM public.watchlist 
+    WHERE movie_id = v_movie_id 
+    LIMIT 1;
+  END IF;
+
+  v_movie_title := COALESCE(v_movie_title, 'Film');
+
+  -- 3. Dapatkan nama pemberi like
+  SELECT username INTO v_liker_name 
+  FROM public.profiles 
+  WHERE id = NEW.user_id;
+  
+  v_liker_name := COALESCE(v_liker_name, 'Seseorang');
+
+  -- 4. Kirim notifikasi jika bukan menyukai review sendiri
   IF v_review_owner_id != NEW.user_id THEN
-    INSERT INTO public.notifications (user_id, type, actor_id, reference_id, title, message)
+    INSERT INTO public.notifications (user_id, type, actor_id, reference_id, title, message, movie_id)
     VALUES (
       v_review_owner_id, 
       'review_like', 
       NEW.user_id, 
       NEW.review_id, 
       'Ulasan Disukai', 
-      v_liker_name || ' menyukai ulasan Anda'
+      v_liker_name || ' menyukai ulasan Anda untuk "' || v_movie_title || '"',
+      v_movie_id
     );
   END IF;
   RETURN NEW;
@@ -439,5 +500,27 @@ DROP TRIGGER IF EXISTS on_review_liked ON public.review_likes;
 CREATE TRIGGER on_review_liked
 AFTER INSERT ON public.review_likes
 FOR EACH ROW EXECUTE FUNCTION public.notify_review_like();
+
+
+-- ─── M9: delete_user_account — Safe Account Deletion RPC ─────────────────
+-- Deletes the authenticated user's account safely from auth.users.
+-- Since profiles/reviews/watchlist have "on delete cascade", all related
+-- records in the public schema will be automatically and safely purged.
+CREATE OR REPLACE FUNCTION public.delete_user_account()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  DELETE FROM auth.users WHERE id = v_user_id;
+END;
+$$;
 
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Share } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Share } from 'react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { UserPlus, UserMinus, Edit3, Share2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -37,28 +37,30 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
   if (isOwner) {
     return (
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={onEditPress}>
+        <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={onEditPress} accessibilityRole="button" accessibilityLabel="Edit profile">
           <View style={styles.btnContent}>
             <Edit3 size={16} color={Colors.white} />
             <Text style={styles.secondaryBtnText} allowFontScaling={false}>{t('editProfile')}</Text>
           </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
+        </Pressable>
+        <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
           <View style={styles.btnContent}>
             <Share2 size={16} color={Colors.accentBlue} />
             <Text style={styles.shareText} allowFontScaling={false}>Bagikan</Text>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
 
   return (
     <View style={styles.actionRow}>
-      <TouchableOpacity 
-        style={[styles.primaryBtn, isFollowing && styles.followingBtn]} 
+      <Pressable 
+        style={({ pressed }) => [styles.primaryBtn, isFollowing && styles.followingBtn, pressed && !isFollowLoading && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} 
         onPress={onFollowPress}
         disabled={isFollowLoading}
+        accessibilityRole="button"
+        accessibilityLabel={isFollowing ? t('unfollow') : t('follow')}
       >
         {isFollowLoading ? (
           <ActivityIndicator size="small" color={Colors.white} />
@@ -77,13 +79,13 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
             )}
           </View>
         )}
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.shareButton} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
+      </Pressable>
+      <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
         <View style={styles.btnContent}>
           <Share2 size={16} color={Colors.accentBlue} />
           <Text style={styles.shareText} allowFontScaling={false}>Bagikan</Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

@@ -34,7 +34,7 @@ const ActivityFeedItem = React.memo(({ item }: { item: MovieLog }) => {
           style={s.userRow}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push({ pathname: '/(tabs)/profile', params: { targetUserId: item.user_id } });
+            router.push({ pathname: '/user/[userId]', params: { userId: item.user_id } } as any);
           }}
         >
           <Avatar uri={item.user?.avatar_url} name={item.user?.username || 'User'} size={32} />

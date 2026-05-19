@@ -230,6 +230,9 @@ const translations = {
     noLogsYet: 'No movies in your Diary yet.',
     noWatchedYet: 'No watched movies yet.',
     noWatchlistYet: 'Your watchlist is empty.',
+    noLogsYetOthers: "No movies in this user's Diary yet.",
+    noWatchedYetOthers: 'No watched movies yet.',
+    noWatchlistYetOthers: "This user's watchlist is empty.",
   },
 
   id: {
@@ -457,6 +460,9 @@ const translations = {
     noLogsYet: 'Belum ada film di Diari kamu.',
     noWatchedYet: 'Belum ada film yang ditonton.',
     noWatchlistYet: 'Daftar tontonan kamu masih kosong.',
+    noLogsYetOthers: 'Belum ada film di Diari pengguna ini.',
+    noWatchedYetOthers: 'Belum ada film yang ditonton oleh pengguna ini.',
+    noWatchlistYetOthers: 'Daftar tontonan pengguna ini masih kosong.',
   }
 
 };

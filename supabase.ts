@@ -17,17 +17,19 @@ if (supabaseUrl && !supabaseUrl.startsWith('http')) {
 // The API key you provided
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+const isServer = Platform.OS === 'web' && typeof window === 'undefined';
+
 const ExpoProvider = {
   getItem: (key: string) => {
-    if (typeof window === 'undefined') return Promise.resolve(null);
+    if (isServer) return Promise.resolve(null);
     return AsyncStorage.getItem(key);
   },
   setItem: (key: string, value: string) => {
-    if (typeof window === 'undefined') return Promise.resolve();
+    if (isServer) return Promise.resolve();
     return AsyncStorage.setItem(key, value);
   },
   removeItem: (key: string) => {
-    if (typeof window === 'undefined') return Promise.resolve();
+    if (isServer) return Promise.resolve();
     return AsyncStorage.removeItem(key);
   },
 };
@@ -41,7 +43,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     // On web, Supabase must read the URL after OAuth redirect.
     // PKCE flow is used for better security and iOS WebKit compatibility.
     // The implicit flow (hash fragment) is blocked by some iOS browsers.
-    detectSessionInUrl: typeof window !== 'undefined',
+    detectSessionInUrl: Platform.OS === 'web' && typeof window !== 'undefined',
     flowType: 'pkce',
   },
 });

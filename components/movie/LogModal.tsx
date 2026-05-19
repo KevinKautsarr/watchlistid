@@ -25,6 +25,13 @@ interface LogModalProps {
 
 export default function LogModal({ visible, onClose, movie, existingLog }: LogModalProps) {
   const { t } = useLanguage();
+
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
+
   const { addLog, addReview } = useSocial();
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState('');

@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import LoginPromptModal from '@/components/auth/LoginPromptModal';
 import { Colors } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
 
 const PRIMARY  = Colors.primary;
 const INACTIVE = Colors.overlay.light50;
@@ -105,6 +106,38 @@ const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
   );
 };
 
+const GlassHeaderBackground = () => {
+  if (Platform.OS === 'web') {
+    return (
+      <View 
+        style={[
+          StyleSheet.absoluteFill, 
+          { 
+            backgroundColor: 'rgba(10, 10, 11, 0.75)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottomWidth: 1,
+            borderBottomColor: 'rgba(255, 255, 255, 0.05)'
+          } as any
+        ]} 
+      />
+    );
+  }
+  return (
+    <BlurView 
+      intensity={80} 
+      tint="dark" 
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          borderBottomWidth: 1,
+          borderBottomColor: 'rgba(255, 255, 255, 0.05)'
+        }
+      ]} 
+    />
+  );
+};
+
 // ─── Root layout ─────────────────────────────────────────────────────────────
 export default function TabLayout() {
   const { width } = useWindowDimensions();
@@ -130,9 +163,51 @@ export default function TabLayout() {
           screenOptions={{ headerShown: false }}
         >
           <Tabs.Screen name="index"     options={{ title: 'WatchlistID — Home' }} />
-          <Tabs.Screen name="search"    options={{ title: 'Discover Movies & TV — WatchlistID' }} />
-          <Tabs.Screen name="watchlist" options={{ title: 'My Watchlist — WatchlistID' }} />
-          <Tabs.Screen name="profile"   options={{ title: 'My Profile — WatchlistID' }} />
+          <Tabs.Screen name="search"    options={{ 
+            title: 'Search',
+            headerShown: true,
+            headerTransparent: true,
+            headerTintColor: '#F5F0F1',
+            headerTitleAlign: 'left',
+            headerTitleStyle: {
+              fontSize: 18,
+              fontWeight: '800',
+              color: '#F5F0F1',
+              letterSpacing: 0.5,
+            },
+            headerBackground: () => <GlassHeaderBackground />,
+            headerStyle: { backgroundColor: 'transparent' }
+          }} />
+          <Tabs.Screen name="watchlist" options={{ 
+            title: 'Watchlist',
+            headerShown: true,
+            headerTransparent: true,
+            headerTintColor: '#F5F0F1',
+            headerTitleAlign: 'left',
+            headerTitleStyle: {
+              fontSize: 18,
+              fontWeight: '800',
+              color: '#F5F0F1',
+              letterSpacing: 0.5,
+            },
+            headerBackground: () => <GlassHeaderBackground />,
+            headerStyle: { backgroundColor: 'transparent' }
+          }} />
+          <Tabs.Screen name="profile"   options={{ 
+            title: 'Profile',
+            headerShown: true,
+            headerTransparent: true,
+            headerTintColor: '#F5F0F1',
+            headerTitleAlign: 'left',
+            headerTitleStyle: {
+              fontSize: 18,
+              fontWeight: '800',
+              color: '#F5F0F1',
+              letterSpacing: 0.5,
+            },
+            headerBackground: () => <GlassHeaderBackground />,
+            headerStyle: { backgroundColor: 'transparent' }
+          }} />
         </Tabs>
       </View>
       <LoginPromptModal 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Modal, Pressable, TextInput, ActivityIndicator,
+  Modal, Pressable, TextInput, ActivityIndicator, Platform
 } from 'react-native';
 import { Key, Eye, EyeOff, X } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing, Shadow } from '@/constants/theme';
@@ -14,6 +14,12 @@ interface ChangePasswordModalProps {
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onClose }) => {
   const { updatePassword } = useAuth();
+
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
   const [newPassword, setNewPassword]     = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNew, setShowNew]             = useState(false);

@@ -133,7 +133,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ visible, imageUri, onCl
           </View>
 
           {/* Circle Mask Overlay */}
-          <View style={styles.maskContainer} pointerEvents="none">
+          <View style={[styles.maskContainer, { pointerEvents: 'none' }]}>
             <View style={styles.maskOutside} />
             <View style={styles.maskRow}>
               <View style={styles.maskOutside} />

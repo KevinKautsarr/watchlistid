@@ -76,7 +76,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             alt="Hero banner backdrop loading"
           />
           <LinearGradient
-            colors={['transparent', 'rgba(100,18,32,0.35)', 'rgba(100,18,32,0.80)', '#0A0A0B']}
+            colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
             locations={[0, 0.4, 0.7, 1]}
             style={StyleSheet.absoluteFill}
           />
@@ -96,7 +96,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 alt={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
               />
               <LinearGradient
-                colors={['transparent', 'rgba(100,18,32,0.35)', 'rgba(100,18,32,0.80)', '#0A0A0B']}
+                colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
                 locations={[0, 0.4, 0.7, 1]}
                 style={StyleSheet.absoluteFill}
               />

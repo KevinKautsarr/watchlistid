@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LayoutGrid, Play, Bookmark } from 'lucide-react-native';
 import { Colors, FontWeight } from '@/constants/theme';
 
@@ -31,10 +31,12 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       {tabs.map(({ key, Icon, count }) => {
         const isActive = activeTab === key;
         return (
-          <TouchableOpacity 
+          <Pressable 
             key={key}
-            style={[styles.tab, isActive && styles.tabActive]}
+            style={({ pressed }) => [styles.tab, isActive && styles.tabActive, pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] }]}
             onPress={() => onTabPress(key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
           >
             <View style={styles.tabIconWrapper}>
               <Icon size={20} color={isActive ? Colors.white : 'rgba(255,255,255,0.4)'} strokeWidth={isActive ? 2.5 : 2} />
@@ -44,7 +46,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                 </Text>
               </View>
             </View>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>

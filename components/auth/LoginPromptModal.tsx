@@ -19,6 +19,12 @@ export default function LoginPromptModal({
 }: LoginPromptModalProps) {
   const router = useRouter();
 
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
+
   const handleLogin = () => {
     onClose();
     router.push('/auth/login');

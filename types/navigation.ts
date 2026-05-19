@@ -12,7 +12,8 @@ export type AppRoutes = {
   '/(tabs)/index': undefined;
   '/(tabs)/search': undefined;
   '/(tabs)/watchlist': undefined;
-  '/(tabs)/profile': { userId?: string };
+  '/(tabs)/profile': undefined;
+  '/user/[userId]': { userId: string };
 
   // Dynamic Routes
   '/movie/[id]': { id: string; type?: 'movie' | 'tv' };

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { supabase, typedFrom } from '../supabase';
-import { useAuth } from './AuthContext';
+import { supabase, typedFrom } from '@/supabase';
+import { useAuth } from '@/context/AuthContext';
 
 export interface Notification {
   id: string;

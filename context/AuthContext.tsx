@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
-import { supabase, typedFrom } from '../supabase';
+import { supabase, typedFrom } from '@/supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '@/utils/authErrors';
 import { FetchState } from '@/types';
@@ -284,15 +284,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return error ? mapAuthError(error) : null;
   };
 
-  /** Fix 5: Account Deletion (Native Client side) */
+  /** Fix 5: Account Deletion (Native Client side via RPC) */
   const deleteAccount = async (): Promise<string | null> => {
     if (!user) return 'Not authenticated';
     try {
-      // 1. Delete profile (cascade will handle some things, but auth.users requires admin)
-      // Note: Full deletion of auth.users usually needs an Edge Function.
-      // Here we clear the profile and sign out as a minimum.
-      const { error: profErr } = await typedFrom('profiles').delete().eq('id', user.id);
-      if (profErr) throw profErr;
+      // Panggil fungsi RPC untuk menghapus akun secara permanen dari auth.users
+      const { error } = await supabase.rpc('delete_user_account');
+      if (error) throw error;
 
       await signOut();
       return null;
@@ -302,11 +300,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Fix 8: Comprehensive Cleanup
-    // Note: clearWatchlist() is handled by child providers (WatchlistProvider) 
-    // automatically by listening to the auth state / userId changes.
-    await AsyncStorage.clear(); 
-    await supabase.auth.signOut();
+    // Fix 8: Non-destructive Cleanup
+    // Note: clearData() di WatchlistProvider otomatis mendeteksi perubahan userId (menjadi null)
+    // dan menghapus cache lokal (@watchlist, @userRatings, dll) tanpa merusak preferensi sistem.
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('[Auth] SignOut error (expected if offline):', err);
+    }
   };
 
   return (

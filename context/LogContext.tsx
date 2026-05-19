@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { typedFrom } from '../supabase';
-import { useAuth } from './AuthContext';
+import { supabase, typedFrom } from '@/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { MovieLog } from '@/types';
 import Toast from '@/components/common/Toast';
 
@@ -117,10 +117,19 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const getAverageRating = async (movieId: number) => {
-    const { data, error } = await typedFrom('movie_logs').select('rating').eq('movie_id', movieId);
-    if (error || !data || data.length === 0) return { average: 0, count: 0 };
-    const sum = data.reduce((acc, curr) => acc + (curr.rating || 0), 0);
-    return { average: sum / data.length, count: data.length };
+    try {
+      const { data, error } = await supabase.rpc('get_avg_rating', { p_movie_id: movieId });
+      if (error || !data || data.length === 0) {
+        return { average: 0, count: 0 };
+      }
+      return { 
+        average: Number(data[0].average), 
+        count: Number(data[0].count) 
+      };
+    } catch (err) {
+      console.error('[Logs] Failed to fetch average rating:', err);
+      return { average: 0, count: 0 };
+    }
   };
 
   return (

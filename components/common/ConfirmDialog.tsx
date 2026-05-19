@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, Platform } from 'react-native';
 import { AlertTriangle, Info, Download, LogOut, Trash2 } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing, Shadow } from '@/constants/theme';
 
@@ -20,6 +20,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   variant = 'danger',
   onConfirm, onCancel,
 }) => {
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
+
   const accentColor = variant === 'danger' ? Colors.primary : variant === 'warning' ? Colors.ratingGold : variant === 'download' ? Colors.success : variant === 'logout' ? Colors.primary : Colors.accentBlue;
   const IconComponent = variant === 'logout' ? LogOut : variant === 'download' ? Download : variant === 'info' ? Info : variant === 'danger' ? Trash2 : AlertTriangle;
 

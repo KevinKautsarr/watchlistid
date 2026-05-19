@@ -18,6 +18,12 @@ interface LanguageSheetProps {
 const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
   const { language, setLanguage, t } = useLanguage();
 
+  React.useEffect(() => {
+    if (visible && Platform.OS === 'web') {
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  }, [visible]);
+
   const handleSelect = (id: 'en' | 'id') => {
     if (id === language) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

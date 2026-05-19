@@ -342,6 +342,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_user_account: { Args: Record<string, never>; Returns: void }
       get_avg_rating: {
         Args: { p_movie_id: number }
         Returns: {

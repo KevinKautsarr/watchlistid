@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform, Pressable } from 'react-native';
 import Avatar from '@/components/common/Avatar';
 import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
 import * as Clipboard from 'expo-clipboard';
@@ -28,26 +28,26 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       </View>
       
       <View style={styles.identityBox}>
-        <Text style={styles.displayName} allowFontScaling={false}>{displayName}</Text>
+        <Text style={[styles.displayName, Platform.select({ web: { textWrap: 'balance' } as any })]} allowFontScaling={false} selectable={true}>{displayName}</Text>
         
         {!!userId && (
-          <TouchableOpacity
+          <Pressable
             onPress={async () => {
               await Clipboard.setStringAsync(userId);
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               Alert.alert('Sukses', 'ID disalin ke papan klip');
             }}
-            style={[styles.idContainer, cursorPointer]}
+            style={({ pressed }) => [styles.idContainer, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]}
             accessibilityRole="button"
             accessibilityLabel="Salin ID pengguna"
           >
-            <Text style={styles.idText} allowFontScaling={false}>#{userId.slice(0, 8).toUpperCase()}</Text>
+            <Text style={styles.idText} allowFontScaling={false} selectable={true}>#{userId.slice(0, 8).toUpperCase()}</Text>
             <Copy size={12} color={Colors.text.secondary} />
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {!!bio && (
-          <Text style={styles.bioText} allowFontScaling={false}>{bio}</Text>
+          <Text style={styles.bioText} allowFontScaling={false} selectable={true}>{bio}</Text>
         )}
       </View>
     </View>

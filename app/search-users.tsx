@@ -68,7 +68,7 @@ export default function UserSearchScreen() {
       style={s.userCard}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push({ pathname: '/(tabs)/profile', params: { userId: item.id } } as any);
+        router.push({ pathname: '/user/[userId]', params: { userId: item.id } } as any);
       }}
     >
       <Image 

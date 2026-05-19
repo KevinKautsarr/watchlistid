@@ -23,12 +23,25 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
     setIsRevealed(!isRevealed);
   };
 
+  const formatDate = (dateStr: string) => {
+    try {
+      if (!dateStr) return '';
+      // Replace hyphens with slashes for universal JS engine parsing compatibility (safari/JSC/hermes)
+      const sanitized = dateStr.includes('-') ? dateStr.replace(/-/g, '/') : dateStr;
+      const d = new Date(sanitized);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.date} allowFontScaling={false}>
-            {new Date(log.watched_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {formatDate(log.watched_at)}
           </Text>
         </View>
         
@@ -39,15 +52,17 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
         </View>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity 
-            onPress={() => onDelete?.(log.id)} 
-            style={[styles.deleteBtn, cursorPointer]}
-            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-            accessibilityRole="button"
-            accessibilityLabel="Delete log"
-          >
-            <Trash2 size={IconSize.sm} color={Colors.overlay.light30} />
-          </TouchableOpacity>
+          {onDelete && (
+            <TouchableOpacity 
+              onPress={() => onDelete?.(log.id)} 
+              style={[styles.deleteBtn, cursorPointer]}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              accessibilityRole="button"
+              accessibilityLabel="Delete log"
+            >
+              <Trash2 size={IconSize.sm} color={Colors.overlay.light30} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

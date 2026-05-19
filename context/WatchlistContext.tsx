@@ -124,8 +124,21 @@ function useWatchlistProviderLogic() {
           }
         }
 
-        if (storedRatings) setUserRatings(JSON.parse(storedRatings));
-        if (storedHistory) setRecentlyViewed(JSON.parse(storedHistory));
+        if (storedRatings) {
+          const parsed = JSON.parse(storedRatings);
+          const sanitized: Record<number, number> = {};
+          Object.keys(parsed).forEach(k => {
+            sanitized[Number(k)] = parsed[k];
+          });
+          setUserRatings(sanitized);
+        }
+        
+        if (storedHistory) {
+          const parsed = JSON.parse(storedHistory);
+          if (Array.isArray(parsed)) {
+            setRecentlyViewed(parsed.map(Number).filter(n => !isNaN(n)));
+          }
+        }
       } catch (e) {
         console.error('Failed to load local data', e);
       } finally {
