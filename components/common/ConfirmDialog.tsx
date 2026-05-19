@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
-import { AlertTriangle, Info, Download } from 'lucide-react-native';
-import { Colors, Radius, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { AlertTriangle, Info, Download, LogOut, Trash2 } from 'lucide-react-native';
+import { Colors, Radius, FontSize, FontWeight, Spacing, Shadow } from '@/constants/theme';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -9,7 +9,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'danger' | 'warning' | 'info' | 'download';
+  variant?: 'danger' | 'warning' | 'info' | 'download' | 'logout';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -20,15 +20,15 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   variant = 'danger',
   onConfirm, onCancel,
 }) => {
-  const accentColor = variant === 'danger' ? '#DC3545' : variant === 'warning' ? '#FF9500' : variant === 'download' ? '#34A853' : Colors.primary;
-  const IconComponent = variant === 'download' ? Download : variant === 'info' ? Info : AlertTriangle;
+  const accentColor = variant === 'danger' ? Colors.primary : variant === 'warning' ? Colors.ratingGold : variant === 'download' ? Colors.success : variant === 'logout' ? Colors.primary : Colors.accentBlue;
+  const IconComponent = variant === 'logout' ? LogOut : variant === 'download' ? Download : variant === 'info' ? Info : variant === 'danger' ? Trash2 : AlertTriangle;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={s.overlay} onPress={onCancel}>
         <Pressable style={s.dialog} onPress={(e) => e.stopPropagation()}>
-          <View style={[s.iconWrap, { backgroundColor: accentColor + '18' }]}>
-            <IconComponent size={28} color={accentColor} strokeWidth={2} />
+          <View style={[s.iconWrap, { backgroundColor: accentColor + '18', borderColor: accentColor + '30' }]}>
+            <IconComponent size={30} color={accentColor} strokeWidth={2.2} />
           </View>
 
           <Text style={s.title} allowFontScaling={false}>{title}</Text>
@@ -39,7 +39,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <Text style={s.cancelText} allowFontScaling={false}>{cancelLabel}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[s.confirmBtn, { backgroundColor: accentColor }]}
+              style={[
+                s.confirmBtn, 
+                { backgroundColor: accentColor },
+                (variant === 'logout' || variant === 'danger') && Shadow.primary
+              ]}
               onPress={onConfirm}
               activeOpacity={0.85}
             >
@@ -55,28 +59,30 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 const s = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
   },
   dialog: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: Colors.surface,
     borderRadius: Radius.xxl,
     padding: Spacing.xxl,
     width: '100%',
     maxWidth: 360,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...Shadow.lg,
   },
   iconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.lg,
+    borderWidth: 1,
   },
   title: {
     fontSize: FontSize.xl,
@@ -84,12 +90,13 @@ const s = StyleSheet.create({
     color: Colors.white,
     textAlign: 'center',
     marginBottom: Spacing.sm,
+    letterSpacing: -0.3,
   },
   message: {
     fontSize: FontSize.sm,
     color: Colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: Spacing.xxl,
   },
   actions: {
@@ -100,12 +107,12 @@ const s = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     height: 48,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   cancelText: {
     color: Colors.text.secondary,

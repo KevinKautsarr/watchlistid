@@ -36,35 +36,35 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
       id: 'lang', 
       label: t('language'), 
       icon: Globe, 
-      color: '#4285F4',
+      color: Colors.accentBlue,
       onPress: () => { onClose(); onLanguagePress(); }
     },
     { 
       id: 'notif', 
       label: t('notifications'), 
       icon: Bell, 
-      color: '#FF9500',
+      color: Colors.warning,
       onPress: () => { onClose(); onNotificationsPress?.(); } 
     },
     { 
       id: 'export', 
       label: t('exportWatchlist'), 
       icon: Download, 
-      color: '#34A853',
+      color: Colors.success,
       onPress: () => { onClose(); onExportPress?.(); } 
     },
     { 
       id: 'about', 
       label: t('about'), 
       icon: Info, 
-      color: '#9061F9',
+      color: Colors.accentBlue,
       onPress: () => { onClose(); onAboutPress?.(); } 
     },
     { 
       id: 'password', 
       label: 'Ganti Password', 
       icon: Key, 
-      color: '#E50914',
+      color: Colors.primary,
       onPress: () => { onClose(); onPasswordPress?.(); } 
     },
   ];
@@ -95,8 +95,8 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
                     item.onPress();
                   }}
                 >
-                  <View style={[s.iconBox, { backgroundColor: item.color + '15' }]}>
-                    <item.icon size={20} color={item.color} strokeWidth={2} />
+                  <View style={[s.iconBox, { backgroundColor: item.color + '18' }]}>
+                    <item.icon size={20} color={item.color} strokeWidth={2.2} />
                   </View>
                   <Text style={s.menuLabel}>{item.label}</Text>
                   <ChevronRight size={16} color="rgba(255,255,255,0.2)" />
@@ -104,35 +104,35 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
               ))}
             </View>
 
-        <View style={[s.section, { marginTop: 12 }]}>
-          <TouchableOpacity 
-            style={s.menuItem}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onClose();
-              onDeletePress?.();
-            }}
-          >
-            <View style={[s.iconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-              <Trash2 size={20} color="rgba(255,255,255,0.4)" strokeWidth={2} />
-            </View>
-            <Text style={[s.menuLabel, { color: 'rgba(255,255,255,0.4)' }]}>Hapus Akun</Text>
-          </TouchableOpacity>
+            <View style={[s.section, { marginTop: 12 }]}>
+              <TouchableOpacity 
+                style={s.menuItem}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onClose();
+                  onDeletePress?.();
+                }}
+              >
+                <View style={[s.iconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                  <Trash2 size={20} color="rgba(255,255,255,0.4)" strokeWidth={2} />
+                </View>
+                <Text style={[s.menuLabel, { color: 'rgba(255,255,255,0.4)' }]}>Hapus Akun</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={s.menuItem}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onClose();
-              onLogoutPress();
-            }}
-          >
-            <View style={[s.iconBox, { backgroundColor: 'rgba(220,53,69,0.1)' }]}>
-              <LogOut size={20} color="#DC3545" strokeWidth={2} />
+              <TouchableOpacity 
+                style={s.menuItem}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onClose();
+                  onLogoutPress();
+                }}
+              >
+                <View style={[s.iconBox, { backgroundColor: Colors.primary + '18' }]}>
+                  <LogOut size={20} color={Colors.primary} strokeWidth={2.2} />
+                </View>
+                <Text style={[s.menuLabel, { color: Colors.primary, fontWeight: FontWeight.bold }]}>{t('signOut')}</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={[s.menuLabel, { color: '#DC3545' }]}>{t('signOut')}</Text>
-          </TouchableOpacity>
-        </View>
             
             <View style={s.footer}>
               <Text style={s.versionText}>WATCHLISTID v1.0.0</Text>
@@ -148,20 +148,21 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
 const s = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'flex-end',
   },
   dismissArea: {
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: Colors.surface,
     borderTopLeftRadius: Radius.xxl,
     borderTopRightRadius: Radius.xxl,
     paddingTop: 12,
     maxHeight: '80%',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...Shadow.lg,
   },
   handle: {
     width: 36,

@@ -143,20 +143,20 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
 const s = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
   },
   card: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: Colors.surface,
     borderRadius: Radius.xxl,
     padding: Spacing.xxl,
     width: '100%',
     maxWidth: 380,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    ...Shadow.md,
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...Shadow.lg,
   },
   header: {
     flexDirection: 'row',

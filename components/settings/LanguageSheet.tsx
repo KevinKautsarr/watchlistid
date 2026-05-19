@@ -44,7 +44,7 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
           style={s.sheet}
         >
           {/* Fallback background while expo-blur installs */}
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.surface }]} />
 
           <View style={s.handle} />
           
@@ -104,7 +104,7 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
 const s = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'flex-end',
   },
   sheet: {
@@ -116,7 +116,8 @@ const s = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...Shadow.lg,
   },
   handle: {
     width: 40,

@@ -285,7 +285,7 @@ export default function ProfileScreen() {
         message="Kamu akan keluar dari akunmu. Kamu bisa login kembali kapan saja."
         confirmLabel="Sign Out"
         cancelLabel="Batal"
-        variant="warning"
+        variant="logout"
         onConfirm={handleSignOut}
         onCancel={() => setShowSignOutConfirm(false)}
       />
