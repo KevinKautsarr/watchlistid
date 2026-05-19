@@ -1,10 +1,18 @@
-import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
+if (Platform.OS !== 'web') {
+  require('react-native-url-polyfill/auto');
+}
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './types/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your Supabase Project URL derived from the Project ID
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+let supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+if (supabaseUrl && !supabaseUrl.startsWith('http')) {
+  supabaseUrl = `https://${supabaseUrl}`;
+} else if (supabaseUrl && supabaseUrl.startsWith('http://') && supabaseUrl.includes('supabase.co')) {
+  supabaseUrl = supabaseUrl.replace('http://', 'https://');
+}
 
 // The API key you provided
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
