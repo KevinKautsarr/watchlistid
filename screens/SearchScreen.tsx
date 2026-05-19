@@ -9,21 +9,23 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowLeft, Award, ChevronDown, Clock, Flame,
-  Search, Star, TrendingUp, X,
+  Search, Star, TrendingUp, X, ChevronRight, User,
 } from "lucide-react-native";
+import { Image } from "expo-image";
 
 import MovieListItem from '@/components/movie/MovieListItem';
 import { Colors, FontSize, FontWeight, IconSize, Radius, Shadow, Spacing } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSocial } from '@/context/SocialContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useSearchQuery } from '@/hooks/useSearchQuery';
 import { 
   getTrendingMovies, getTrendingTV, getPopularMovies, 
   getTopRatedMovies, getTopRatedTV 
 } from '@/services/api';
-import { MediaItem } from '@/types';
+import { MediaItem, UserProfile, FetchState } from '@/types';
 
 // Components
 import { SearchFilterRow } from '@/components/search/SearchFilterRow';
@@ -60,6 +62,7 @@ export default function SearchScreen() {
   const bp     = useBreakpoint();
   const { t }  = useLanguage();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const { searchUsers } = useSocial();
   const params = useLocalSearchParams<{ genre?:string; category?:string }>();
 
   const {
@@ -71,6 +74,8 @@ export default function SearchScreen() {
     fetchPage, fetchCatPage
   } = useSearchQuery(params.category || null, params.genre || "all");
 
+  const [searchMode, setSearchMode] = useState<'media' | 'users'>('media');
+  const [userResults, setUserResults] = useState<FetchState<UserProfile[]>>({ status: 'idle', data: [], error: null });
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
   const inputRef = useRef<TextInput>(null);
@@ -96,6 +101,24 @@ export default function SearchScreen() {
     if (activeCat) fetchCatPage(activeCat, 1, false, CATS);
     else fetchPage(debouncedQ, activeFilter, 1, false);
   }, [debouncedQ, activeFilter, activeCat, fetchPage, fetchCatPage]);
+
+  // User search effect
+  useEffect(() => {
+    if (searchMode !== 'users' || !debouncedQ.trim()) {
+      if (searchMode === 'users' && !debouncedQ.trim()) {
+        setUserResults({ status: 'idle', data: [], error: null });
+      }
+      return;
+    }
+    let isMounted = true;
+    setUserResults(prev => ({ ...prev, status: 'loading' }));
+    searchUsers(debouncedQ).then(data => {
+      if (isMounted) setUserResults({ status: 'success', data, error: null });
+    }).catch(err => {
+      if (isMounted) setUserResults({ status: 'error', data: [], error: err.message });
+    });
+    return () => { isMounted = false; };
+  }, [debouncedQ, searchMode, searchUsers]);
 
   const loadMore = () => {
     if (loadingMore || page >= totalPages) return;
@@ -172,7 +195,7 @@ export default function SearchScreen() {
         <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
         <TextInput
           ref={inputRef} style={styles.searchInput}
-          placeholder={activeCat ? t('searchIn').replace('{category}', t(CATS[activeCat]?.label)) : t('searchMoviesTVPeople')}
+          placeholder={activeCat ? t('searchIn').replace('{category}', t(CATS[activeCat]?.label)) : searchMode === 'users' ? "Cari nama atau ID pengguna..." : t('searchMoviesTVPeople')}
           placeholderTextColor={Colors.text.secondary}
           value={searchText} onChangeText={setSearchText}
           onFocus={onFocus} onBlur={onBlur}
@@ -185,68 +208,135 @@ export default function SearchScreen() {
         )}
       </Animated.View>
 
-      <FlatList
-        data={isPeople ? personItems : items}
-        keyExtractor={i => String(i.id)}
-        renderItem={({ item }) => isPeople ? (
-          <PersonCard person={item} onPress={() => goToPerson(item.id)} t={t} />
-        ) : (
-          <MovieListItem 
-            movie={item} 
-            onPress={() => goToMovie(item.id, item.media_type)} 
-            onAdd={() => toggleWL(item)} 
-            inWatchlist={isInWatchlist(item.id)} 
-          />
-        )}
-        ListHeaderComponent={
-          <View style={styles.headerWrapper}>
-            {!activeCat && (
-              <SearchFilterRow 
-                filters={FILTER_CHIPS} 
-                activeFilter={activeFilter} 
-                onSelect={setActiveFilter} 
-                t={t} 
-              />
-            )}
-            {showDefault ? (
-              <View style={styles.defaultHeader}>
-                {recentSearches.length > 0 && (
-                  <View style={styles.recentSection}>
-                    <Text style={styles.sectionLbl}>{t('recent')}</Text>
-                    {recentSearches.map(txt => (
-                      <TouchableOpacity key={txt} style={styles.recentRow} onPress={() => setSearchText(txt)}>
-                        <Clock size={IconSize.sm} color={Colors.primary} />
-                        <Text style={styles.recentTxt}>{txt}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-                {trendingKeywords.length > 0 && (
-                  <View style={styles.trendingSection}>
-                    <Text style={styles.sectionLbl}>{t('trendingSearches')}</Text>
-                    <View style={styles.pills}>
-                      {trendingKeywords.map(txt => (
-                        <TouchableOpacity key={txt} style={styles.pill} onPress={() => setSearchText(txt)}>
-                          <TrendingUp size={IconSize.xs} color={Colors.primary} />
-                          <Text style={styles.pillTxt}>{txt}</Text>
+      {/* Pill Tab Switcher */}
+      {!activeCat && (
+        <View style={[styles.tabSwitcher, { marginHorizontal: bp.contentPadding }]}>
+          <TouchableOpacity
+            style={[styles.pill, searchMode === 'media' && styles.pillActive, cursorPointer]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setSearchMode('media');
+            }}
+            accessibilityRole="tab"
+            accessibilityLabel="Cari Film & TV"
+          >
+            <Text style={[styles.pillText, searchMode === 'media' && styles.pillTextActive]}>🎬 Film & TV</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.pill, searchMode === 'users' && styles.pillActive, cursorPointer]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setSearchMode('users');
+            }}
+            accessibilityRole="tab"
+            accessibilityLabel="Cari Pengguna"
+          >
+            <Text style={[styles.pillText, searchMode === 'users' && styles.pillTextActive]}>👥 Pengguna</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {searchMode === 'media' ? (
+        <FlatList
+          data={isPeople ? personItems : items}
+          keyExtractor={i => String(i.id)}
+          renderItem={({ item }) => isPeople ? (
+            <PersonCard person={item} onPress={() => goToPerson(item.id)} t={t} />
+          ) : (
+            <MovieListItem 
+              movie={item} 
+              onPress={() => goToMovie(item.id, item.media_type)} 
+              onAdd={() => toggleWL(item)} 
+              inWatchlist={isInWatchlist(item.id)} 
+            />
+          )}
+          ListHeaderComponent={
+            <View style={styles.headerWrapper}>
+              {!activeCat && (
+                <SearchFilterRow 
+                  filters={FILTER_CHIPS} 
+                  activeFilter={activeFilter} 
+                  onSelect={setActiveFilter} 
+                  t={t} 
+                />
+              )}
+              {showDefault ? (
+                <View style={styles.defaultHeader}>
+                  {recentSearches.length > 0 && (
+                    <View style={styles.recentSection}>
+                      <Text style={styles.sectionLbl}>{t('recent')}</Text>
+                      {recentSearches.map(txt => (
+                        <TouchableOpacity key={txt} style={styles.recentRow} onPress={() => setSearchText(txt)}>
+                          <Clock size={IconSize.sm} color={Colors.primary} />
+                          <Text style={styles.recentTxt}>{txt}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
-                  </View>
-                )}
-                <Text style={styles.sectionLbl}>
-                  {activeFilter === "all" ? t('trendingNow') : t('popular')}
-                </Text>
+                  )}
+                  {trendingKeywords.length > 0 && (
+                    <View style={styles.trendingSection}>
+                      <Text style={styles.sectionLbl}>{t('trendingSearches')}</Text>
+                      <View style={styles.pills}>
+                        {trendingKeywords.map(txt => (
+                          <TouchableOpacity key={txt} style={styles.pillChip} onPress={() => setSearchText(txt)}>
+                            <TrendingUp size={IconSize.xs} color={Colors.primary} />
+                            <Text style={styles.pillTxt}>{txt}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  <Text style={styles.sectionLbl}>
+                    {activeFilter === "all" ? t('trendingNow') : t('popular')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          }
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={!isLoading ? (
+            <SearchEmptyState title={showDefault ? t('searchPlaceholder') : t('noResults')} subtitle={!showDefault ? t('tryAnother') : undefined} />
+          ) : <ActivityIndicator size="large" color={Colors.primary} style={styles.loadingIndicator} />}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <FlatList
+          data={userResults.data || []}
+          keyExtractor={i => i.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={[styles.userCard, cursorPointer]} 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: '/(tabs)/profile', params: { userId: item.id } } as any);
+              }}
+            >
+              <Image source={{ uri: item.avatar_url || 'https://via.placeholder.com/50' }} style={styles.userAvatar} contentFit="cover" />
+              <View style={styles.userInfo}>
+                <Text style={styles.userUsername}>{item.username}</Text>
+                <Text style={styles.userSubText}>View Profile</Text>
               </View>
-            ) : null}
-          </View>
-        }
-        ListFooterComponent={renderFooter}
-        ListEmptyComponent={!isLoading ? (
-          <SearchEmptyState title={showDefault ? t('searchPlaceholder') : t('noResults')} subtitle={!showDefault ? t('tryAnother') : undefined} />
-        ) : <ActivityIndicator size="large" color={Colors.primary} style={styles.loadingIndicator} />}
-        contentContainerStyle={styles.listContent}
-      />
+              <ChevronRight size={20} color={Colors.text.secondary} />
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={userResults.status === 'loading' ? (
+            <ActivityIndicator size="large" color={Colors.accentBlue} style={styles.loadingIndicator} />
+          ) : debouncedQ.trim() ? (
+            <View style={styles.center}>
+              <User size={48} color="rgba(255,255,255,0.1)" />
+              <Text style={styles.emptyTitle}>No users found</Text>
+              <Text style={styles.emptySub}>Try searching for another username</Text>
+            </View>
+          ) : (
+            <View style={styles.center}>
+              <Search size={48} color="rgba(255,255,255,0.05)" />
+              <Text style={styles.emptyTitle}>Find your friends</Text>
+              <Text style={styles.emptySub}>Search for movie enthusiasts by their username</Text>
+            </View>
+          )}
+          contentContainerStyle={[styles.listContent, { paddingHorizontal: bp.contentPadding }]}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -279,7 +369,7 @@ const styles = StyleSheet.create({
   recentRow: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingHorizontal: Spacing.xl, paddingVertical: 12 },
   recentTxt: { fontSize: FontSize.base, color: Colors.text.primary },
   pills: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: Spacing.xl, gap: Spacing.sm },
-  pill: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: Colors.surface, borderRadius: Radius.full, paddingHorizontal: 14, paddingVertical: 8 },
+  pillChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: Colors.surface, borderRadius: Radius.full, paddingHorizontal: 14, paddingVertical: 8 },
   pillTxt: { fontSize: FontSize.md, color: Colors.text.primary },
   footerContainer: { alignItems: "center", paddingVertical: 16 },
   loadMoreContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -288,4 +378,85 @@ const styles = StyleSheet.create({
   trendingSection: { marginBottom: Spacing.xl },
   loadingIndicator: { marginTop: 50 },
   headerWrapper: { width: "100%" },
+
+  // Pill Tab Switcher styles
+  tabSwitcher: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 99,
+    padding: 4,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  pill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 99,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillActive: {
+    backgroundColor: Colors.accentBlue,
+  },
+  pillText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    color: Colors.text.secondary,
+  },
+  pillTextActive: {
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    marginBottom: Spacing.md,
+    ...Shadow.sm,
+  },
+  userAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.secondary,
+  },
+  userInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  userUsername: {
+    color: Colors.white,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  userSubText: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xxxl,
+    marginTop: Spacing.xl,
+  },
+  emptyTitle: {
+    color: Colors.white,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginTop: Spacing.xl,
+  },
+  emptySub: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+    marginTop: 4,
+  },
 });

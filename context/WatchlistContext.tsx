@@ -147,7 +147,7 @@ function useWatchlistProviderLogic() {
           .eq('user_id', userId)
           .order('added_at', { ascending: true });
 
-        if (cloudRows && cloudRows.length > 0) {
+        if (cloudRows) {
           const newMap: WatchlistMap = {};
           cloudRows.forEach(row => {
             const item = fromSupabaseRow(row);
@@ -158,7 +158,7 @@ function useWatchlistProviderLogic() {
         }
 
         const { data: ratingRows } = await typedFrom('user_ratings').select('movie_id, rating').eq('user_id', userId);
-        if (ratingRows && ratingRows.length > 0) {
+        if (ratingRows) {
           const ratings: Record<number, number> = {};
           ratingRows.forEach(r => { ratings[r.movie_id] = r.rating; });
           setUserRatings(ratings);

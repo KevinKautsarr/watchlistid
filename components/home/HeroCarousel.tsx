@@ -23,7 +23,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   const [isReady, setIsReady] = useState(false);
   const ref = useRef<ScrollView>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const slides = data.slice(0, 5);
+  const slides = data.slice(0, 10);
 
   useEffect(() => {
     const readyTimer = setTimeout(() => setIsReady(true), 1500);
@@ -31,7 +31,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   }, []);
 
   const scrollTo = useCallback((i: number) => {
-    const c = Math.max(0, Math.min(i, slides.length - 1));
+    let c = i;
+    if (c < 0) c = slides.length - 1;
+    else if (c >= slides.length) c = 0;
     setIdx(c);
     ref.current?.scrollTo({ x: c * width, animated: true });
   }, [slides.length, width]);

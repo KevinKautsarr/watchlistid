@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Animated
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { Flame, Star, Award, Clock } from 'lucide-react-native';
+import { Flame, Star, Award, Clock, UserPlus } from 'lucide-react-native';
 
 import Avatar from '@/components/common/Avatar';
 import ActivityFeed from '@/components/movie/ActivityFeed';
@@ -202,9 +202,19 @@ export default function HomeScreen() {
       {bp.isMobile && (
         <Animated.View style={[s.header, { backgroundColor: headerBg, paddingTop: Math.max(insets.top, 20) }]}>
           <Text style={s.logo} allowFontScaling={false}>WATCHLISTID</Text>
-          <TouchableOpacity style={[s.avatar, cursorPointer]} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
-            <Avatar uri={avatarUrl} name={username} size={36} />
-          </TouchableOpacity>
+          <View style={s.headerRight}>
+            <TouchableOpacity
+              onPress={() => router.push('/search-users')}
+              accessibilityRole="button"
+              accessibilityLabel="Cari teman"
+              style={[s.headerIcon, cursorPointer]}
+            >
+              <UserPlus size={20} color={Colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.avatar, cursorPointer]} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
+              <Avatar uri={avatarUrl} name={username} size={36} />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       )}
 
@@ -236,6 +246,8 @@ const s = StyleSheet.create({
       android: { elevation: 4 },
     }),
   },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  headerIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
   logo: { fontSize: FontSize.xl, fontWeight: '900', color: Colors.danger, letterSpacing: 2 },
   avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.dark, alignItems: 'center', justifyContent: 'center' },
   body: { paddingTop: Spacing.sm },

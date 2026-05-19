@@ -7,7 +7,6 @@ import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '@/utils/authErrors';
 import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useWatchlist } from './WatchlistContext';
 
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();

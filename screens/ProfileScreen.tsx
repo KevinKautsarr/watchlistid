@@ -160,6 +160,7 @@ export default function ProfileScreen() {
           avatarUrl={profileData?.avatar_url}
           bio={profileData?.bio}
           isOwner={isOwner}
+          userId={targetUserId}
         />
 
         <ProfileStats 
@@ -176,6 +177,8 @@ export default function ProfileScreen() {
           onFollowPress={handleFollow}
           onEditPress={() => setIsEditing(true)}
           t={t}
+          userId={targetUserId}
+          username={profileData?.username || 'User'}
         />
 
         <View style={styles.tabContainer}>

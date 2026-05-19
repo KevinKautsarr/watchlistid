@@ -44,18 +44,16 @@ const WatchlistScreen: React.FC = () => {
     removeFromWatchlist(id);
   }, [removeFromWatchlist]);
 
+  const planToWatchList = useMemo(() => watchlist.filter(m => m.status === WATCHLIST_STATUS.PLAN_TO_WATCH), [watchlist]);
+  const watchedList = useMemo(() => watchlist.filter(m => m.status === WATCHLIST_STATUS.COMPLETED), [watchlist]);
+  const ratedList = useMemo(() => watchlist.filter(m => userRatings[m.id] !== undefined), [watchlist, userRatings]);
+
   // Filter based on Tab
   const filteredList = useMemo(() => {
-    if (activeTab === 'Watchlist') {
-      return watchlist;
-    } else {
-      // Show movies that the user has rated, even if not in watchlist
-      // For simplicity in this app, we'll show movies from watchlist that have ratings
-      // OR we can map userRatings back to movie objects if we had a full database.
-      // For now, let's show items from watchlist that have a user rating.
-      return watchlist.filter(m => userRatings[m.id] !== undefined);
-    }
-  }, [watchlist, activeTab, userRatings]);
+    if (activeTab === 'Watchlist') return planToWatchList;
+    if (activeTab === 'Watched') return watchedList;
+    return ratedList;
+  }, [planToWatchList, watchedList, ratedList, activeTab]);
 
   const sortedList = useMemo(() => {
     const list = [...filteredList];
@@ -86,8 +84,6 @@ const WatchlistScreen: React.FC = () => {
     return list;
   }, [filteredList, activeSort, isAscending]);
 
-  const watched = watchlist.filter(m => m.status === WATCHLIST_STATUS.COMPLETED).length;
-
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -97,7 +93,7 @@ const WatchlistScreen: React.FC = () => {
         <View>
           <Text style={styles.headerTitle} allowFontScaling={false}>{t('myWatchlist')}</Text>
           <Text style={styles.headerSub} allowFontScaling={false}>
-            {activeTab === 'Watchlist' ? `${watchlist.length} ${t('moviesShowsToWatch')}` : `${filteredList.length} ${t('ratedByYou')}`}
+            {activeTab === 'Watchlist' ? `${planToWatchList.length} ${t('moviesShowsToWatch')}` : activeTab === 'Watched' ? `${watchedList.length} Watched` : `${ratedList.length} ${t('ratedByYou')}`}
           </Text>
         </View>
       </View>
@@ -115,7 +111,22 @@ const WatchlistScreen: React.FC = () => {
             {t('tabWatchlist')}
           </Text>
           <View style={[styles.tabBadge, activeTab === 'Watchlist' && styles.tabBadgeActive]}>
-            <Text style={styles.tabBadgeText}>{watchlist.length}</Text>
+            <Text style={styles.tabBadgeText}>{planToWatchList.length}</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'Watched' && styles.tabActive, cursorPointer]} 
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watched'); }}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'Watched' }}
+          accessibilityLabel="Watched"
+        >
+          <Text style={[styles.tabText, activeTab === 'Watched' && styles.tabTextActive]}>
+            Watched
+          </Text>
+          <View style={[styles.tabBadge, activeTab === 'Watched' && styles.tabBadgeActive]}>
+            <Text style={styles.tabBadgeText}>{watchedList.length}</Text>
           </View>
         </TouchableOpacity>
         
