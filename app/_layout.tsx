@@ -65,28 +65,7 @@ function WebHead() {
     setMeta('twitter:title', 'WatchlistID — Track Movies & TV Shows');
     setMeta('twitter:description', 'Your personal movie and TV show tracker.');
 
-    // Security headers via meta (best-effort; full protection requires server headers)
-    // Content-Security-Policy
-    setMeta(
-      'Content-Security-Policy',
-      [
-        "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // RN web requires inline scripts
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "font-src 'self' https://fonts.gstatic.com",
-        "img-src 'self' data: blob: https://image.tmdb.org https://*.supabase.co https://*.ytimg.com https://*.googleusercontent.com",
-        "connect-src 'self' https://api.themoviedb.org https://*.supabase.co wss://*.supabase.co",
-        "media-src 'self' https://www.youtube.com",
-        "frame-src https://www.youtube.com",
-        "object-src 'none'",
-        "base-uri 'self'",
-      ].join('; '),
-      'http-equiv'
-    );
 
-
-    // Cross-Origin-Opener-Policy
-    setMeta('Cross-Origin-Opener-Policy', 'same-origin-allow-popups', 'http-equiv');
 
     // lang attribute on <html>
     document.documentElement.lang = 'en';
