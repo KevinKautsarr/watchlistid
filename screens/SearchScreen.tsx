@@ -185,15 +185,6 @@ export default function SearchScreen() {
         )}
       </Animated.View>
 
-      {!activeCat && (
-        <SearchFilterRow 
-          filters={FILTER_CHIPS} 
-          activeFilter={activeFilter} 
-          onSelect={setActiveFilter} 
-          t={t} 
-        />
-      )}
-
       <FlatList
         data={isPeople ? personItems : items}
         keyExtractor={i => String(i.id)}
@@ -207,37 +198,49 @@ export default function SearchScreen() {
             inWatchlist={isInWatchlist(item.id)} 
           />
         )}
-        ListHeaderComponent={showDefault ? (
-          <View style={styles.defaultHeader}>
-            {recentSearches.length > 0 && (
-              <View style={styles.recentSection}>
-                <Text style={styles.sectionLbl}>{t('recent')}</Text>
-                {recentSearches.map(txt => (
-                  <TouchableOpacity key={txt} style={styles.recentRow} onPress={() => setSearchText(txt)}>
-                    <Clock size={IconSize.sm} color={Colors.primary} />
-                    <Text style={styles.recentTxt}>{txt}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+        ListHeaderComponent={
+          <View style={styles.headerWrapper}>
+            {!activeCat && (
+              <SearchFilterRow 
+                filters={FILTER_CHIPS} 
+                activeFilter={activeFilter} 
+                onSelect={setActiveFilter} 
+                t={t} 
+              />
             )}
-            {trendingKeywords.length > 0 && (
-              <View style={styles.trendingSection}>
-                <Text style={styles.sectionLbl}>{t('trendingSearches')}</Text>
-                <View style={styles.pills}>
-                  {trendingKeywords.map(txt => (
-                    <TouchableOpacity key={txt} style={styles.pill} onPress={() => setSearchText(txt)}>
-                      <TrendingUp size={IconSize.xs} color={Colors.primary} />
-                      <Text style={styles.pillTxt}>{txt}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+            {showDefault ? (
+              <View style={styles.defaultHeader}>
+                {recentSearches.length > 0 && (
+                  <View style={styles.recentSection}>
+                    <Text style={styles.sectionLbl}>{t('recent')}</Text>
+                    {recentSearches.map(txt => (
+                      <TouchableOpacity key={txt} style={styles.recentRow} onPress={() => setSearchText(txt)}>
+                        <Clock size={IconSize.sm} color={Colors.primary} />
+                        <Text style={styles.recentTxt}>{txt}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                {trendingKeywords.length > 0 && (
+                  <View style={styles.trendingSection}>
+                    <Text style={styles.sectionLbl}>{t('trendingSearches')}</Text>
+                    <View style={styles.pills}>
+                      {trendingKeywords.map(txt => (
+                        <TouchableOpacity key={txt} style={styles.pill} onPress={() => setSearchText(txt)}>
+                          <TrendingUp size={IconSize.xs} color={Colors.primary} />
+                          <Text style={styles.pillTxt}>{txt}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+                <Text style={styles.sectionLbl}>
+                  {activeFilter === "all" ? t('trendingNow') : t('popular')}
+                </Text>
               </View>
-            )}
-            <Text style={styles.sectionLbl}>
-              {activeFilter === "all" ? t('trendingNow') : t('popular')}
-            </Text>
+            ) : null}
           </View>
-        ) : null}
+        }
         ListFooterComponent={renderFooter}
         ListEmptyComponent={!isLoading ? (
           <SearchEmptyState title={showDefault ? t('searchPlaceholder') : t('noResults')} subtitle={!showDefault ? t('tryAnother') : undefined} />
@@ -284,4 +287,5 @@ const styles = StyleSheet.create({
   recentSection: { marginBottom: Spacing.xl },
   trendingSection: { marginBottom: Spacing.xl },
   loadingIndicator: { marginTop: 50 },
+  headerWrapper: { width: "100%" },
 });
