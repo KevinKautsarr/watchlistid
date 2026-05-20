@@ -11,13 +11,13 @@ import * as Haptics from 'expo-haptics';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react-native';
 
 import { useAuth } from '@/context/AuthContext';
-import { Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
 import { useLanguage } from '@/context/LanguageContext';
 
-// Color definitions matching the user's requested palette
-const BRAND_PRIMARY = '#3F72AF'; // Medium Blue
-const BRAND_DARK = '#112D4E';    // Deep Navy
-const BG_DARK = '#0A0A0B';       // Background near black
+// Brand palette — Intense Cherry & Night Bordeaux (WatchlistID theme)
+const BRAND_PRIMARY = Colors.primary;        // Intense Cherry #C71F37
+const BRAND_DARK = Colors.surfaceElevated;   // Night Bordeaux #1E1218
+const BG_DARK = Colors.background;           // Near-black #0A0A0B
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -218,8 +218,8 @@ const s = StyleSheet.create({
     paddingVertical: Spacing.xxl,
   },
   logoWrap: { alignItems: 'center', marginBottom: Spacing.xxl },
-  logo: { fontSize: 32, fontWeight: FontWeight.black, color: BRAND_PRIMARY, letterSpacing: 0.5 },
-  logoAccent: { color: '#FFFFFF' },
+  logo: { fontSize: 32, fontWeight: FontWeight.black, color: Colors.white, letterSpacing: 0.5 },
+  logoAccent: { color: BRAND_PRIMARY },
   logoSub: { fontSize: FontSize.base, color: 'rgba(255,255,255,0.6)', marginTop: 6 },
 
   card: {

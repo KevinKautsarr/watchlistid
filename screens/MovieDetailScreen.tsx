@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   StatusBar, Animated, Share, ActivityIndicator
@@ -23,12 +23,14 @@ import MovieDetailTable from '@/components/movie/MovieDetailTable';
 import PosterCard from '@/components/common/PosterCard';
 import LogModal from '@/components/movie/LogModal';
 import ReviewFeed from '@/components/movie/ReviewFeed';
+import { MovieDetailSkeleton } from '@/components/common/DetailSkeleton';
 
 import { DetailHero } from '@/components/movie/detail/DetailHero';
 import { DetailRatings } from '@/components/movie/detail/DetailRatings';
 import { DetailActions } from '@/components/movie/detail/DetailActions';
 import { DetailStory } from '@/components/movie/detail/DetailStory';
 import { DetailTrailers } from '@/components/movie/detail/DetailTrailers';
+import { getTVSeasonDetails } from '@/services/api';
 
 export default function MovieDetailScreen() {
   const params = useLocalSearchParams();
@@ -48,19 +50,42 @@ export default function MovieDetailScreen() {
   const [showLogModal, setShowLogModal] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // TV Show states — season & episode selector
+  const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [expandedEpisodeId, setExpandedEpisodeId] = useState<number | null>(null);
+
+  const loadEpisodes = useCallback(async (tvId: number, season: number) => {
+    setEpisodesLoading(true);
+    setExpandedEpisodeId(null);
+    try {
+      const res = await getTVSeasonDetails(tvId, season);
+      setEpisodes(res?.episodes || []);
+    } catch (err) {
+      console.error('[TV Episodes] Failed to load:', err);
+      setEpisodes([]);
+    } finally {
+      setEpisodesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (actualId && status === 'success') {
       addToRecentlyViewed(Number(actualId));
     }
   }, [actualId, status, addToRecentlyViewed]);
 
+  // Load first season episodes when TV show data is ready
+  useEffect(() => {
+    if (type === 'tv' && status === 'success' && actualId) {
+      loadEpisodes(Number(actualId), selectedSeason);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, status, actualId]);
+
   if (status === 'loading') {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText} allowFontScaling={false}>{t('preparingExperience')}</Text>
-      </View>
-    );
+    return <MovieDetailSkeleton />;
   }
 
   if (status === 'error' || !data?.movie) {
@@ -204,6 +229,117 @@ export default function MovieDetailScreen() {
               t={t} 
             />
 
+            {/* ── TV Show Season & Episode Selector ─────────────── */}
+            {type === 'tv' && (movie as any).seasons && (movie as any).seasons.length > 0 && (
+              <View style={styles.episodesSection}>
+                <Text style={styles.sectionTitle} allowFontScaling={false}>
+                  {t('seasons' as any) || 'Seasons'}
+                  {'  '}
+                  <Text style={styles.sectionSubcount}>
+                    ({(movie as any).number_of_seasons || (movie as any).seasons.length})
+                  </Text>
+                </Text>
+
+                {/* Season pill selector */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.seasonPills}
+                >
+                  {((movie as any).seasons as any[]).map((s: any) => {
+                    const isActive = selectedSeason === s.season_number;
+                    return (
+                      <TouchableOpacity
+                        key={s.id ?? s.season_number}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setSelectedSeason(s.season_number);
+                          loadEpisodes(Number(actualId), s.season_number);
+                        }}
+                        style={[
+                          styles.seasonPill,
+                          isActive && styles.seasonPillActive,
+                        ]}
+                        activeOpacity={0.75}
+                      >
+                        <Text
+                          style={[
+                            styles.seasonPillText,
+                            isActive && styles.seasonPillTextActive,
+                          ]}
+                          allowFontScaling={false}
+                        >
+                          {s.name || `Season ${s.season_number}`}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+
+                {/* Episode list */}
+                {episodesLoading ? (
+                  <ActivityIndicator
+                    color={Colors.primary}
+                    style={{ marginVertical: 20 }}
+                  />
+                ) : (
+                  <View style={styles.episodeList}>
+                    {episodes.map((ep: any) => {
+                      const isExpanded = expandedEpisodeId === ep.id;
+                      return (
+                        <TouchableOpacity
+                          key={ep.id}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setExpandedEpisodeId(isExpanded ? null : ep.id);
+                          }}
+                          activeOpacity={0.8}
+                          style={[
+                            styles.episodeCard,
+                            isExpanded && styles.episodeCardExpanded,
+                          ]}
+                        >
+                          <View style={styles.episodeHeader}>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={styles.episodeNum}
+                                allowFontScaling={false}
+                              >
+                                EP {ep.episode_number}
+                              </Text>
+                              <Text
+                                style={styles.episodeTitle}
+                                numberOfLines={isExpanded ? undefined : 1}
+                                allowFontScaling={false}
+                              >
+                                {ep.name}
+                              </Text>
+                            </View>
+                            <Text
+                              style={styles.episodeDate}
+                              allowFontScaling={false}
+                            >
+                              {ep.air_date
+                                ? ep.air_date.substring(0, 4)
+                                : '—'}
+                            </Text>
+                          </View>
+                          {isExpanded && ep.overview ? (
+                            <Text
+                              style={styles.episodeOverview}
+                              allowFontScaling={false}
+                            >
+                              {ep.overview}
+                            </Text>
+                          ) : null}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            )}
+
             {credits.length > 0 && (
               <View style={styles.castSection}>
                 <Text style={styles.sectionTitle} allowFontScaling={false}>{t('topCast')}</Text>
@@ -284,6 +420,90 @@ const styles = StyleSheet.create({
   similarSection: { paddingTop: 24, paddingBottom: 24 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
   loadingText: { color: Colors.overlay.light50, marginTop: 12 },
+
+  // TV Season/Episode styles
+  episodesSection: {
+    paddingTop: 24,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderColor: Colors.overlay.light10,
+  },
+  seasonPills: {
+    paddingHorizontal: 24,
+    gap: 8,
+    marginBottom: 16,
+  },
+  seasonPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  seasonPillActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  seasonPillText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  seasonPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: FontWeight.bold,
+  },
+  episodeList: {
+    paddingHorizontal: 24,
+    gap: 10,
+  },
+  episodeCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  episodeCardExpanded: {
+    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.surfaceElevated,
+  },
+  episodeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  episodeNum: {
+    color: Colors.primary,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  episodeTitle: {
+    color: '#FFFFFF',
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    paddingRight: 8,
+  },
+  episodeDate: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: FontSize.xs,
+    paddingTop: 2,
+  },
+  episodeOverview: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: FontSize.sm,
+    marginTop: 10,
+    lineHeight: 20,
+  },
+  sectionSubcount: {
+    color: Colors.primary,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+  },
+
   errorWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, backgroundColor: Colors.background },
   errorTitle: { color: Colors.white, fontSize: FontSize.xl, fontWeight: FontWeight.bold, marginTop: 20, textAlign: 'center' },
   errorSub: { color: Colors.overlay.light60, marginTop: 10, textAlign: 'center', lineHeight: 20 },

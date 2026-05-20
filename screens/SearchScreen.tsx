@@ -7,6 +7,7 @@ import {
   TouchableOpacity, View, Pressable
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
+const TypedFlashList = FlashList as any;
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowLeft, Award, ChevronDown, Clock, Flame,
@@ -245,10 +246,11 @@ export default function SearchScreen() {
       )}
 
       {searchMode === 'media' ? (
-        <FlashList
+        <TypedFlashList
+          estimatedItemSize={150}
           data={isPeople ? personItems : items}
-          keyExtractor={i => String(i.id)}
-          renderItem={({ item }) => isPeople ? (
+          keyExtractor={(i: any) => String(i.id)}
+          renderItem={({ item }: { item: any }) => isPeople ? (
             <PersonCard person={item} onPress={() => goToPerson(item.id)} t={t} />
           ) : (
             <MovieListItem 
@@ -308,10 +310,11 @@ export default function SearchScreen() {
           contentContainerStyle={styles.listContent}
         />
       ) : (
-        <FlashList
+        <TypedFlashList
+          estimatedItemSize={80}
           data={userResults.data || []}
-          keyExtractor={i => i.id}
-          renderItem={({ item }) => (
+          keyExtractor={(i: UserProfile) => i.id}
+          renderItem={({ item }: { item: UserProfile }) => (
             <Pressable 
               style={({ pressed }) => [styles.userCard, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]} 
               onPress={() => {

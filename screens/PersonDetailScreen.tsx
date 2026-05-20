@@ -14,6 +14,7 @@ import { usePersonDetails } from '@/hooks/useMovies';
 import PosterCard from '@/components/common/PosterCard';
 import { useLanguage } from '@/context/LanguageContext';
 import { MediaItem } from '@/types';
+import { PersonDetailSkeleton } from '@/components/common/DetailSkeleton';
 
 const PersonDetailScreen: React.FC = (): React.JSX.Element => {
   const params = useLocalSearchParams();
@@ -26,11 +27,7 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
   const [expandedBio, setExpandedBio] = useState(false);
 
   if (isLoading || !person) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.loadingText} allowFontScaling={false}>{t('loading')}</Text>
-      </View>
-    );
+    return <PersonDetailSkeleton />;
   }
 
   const knownFor = credits

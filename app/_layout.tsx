@@ -12,6 +12,7 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { SocialProvider } from '@/context/SocialContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import OfflineGuard from '@/components/common/OfflineGuard';
 
 // Global Polish: Enable font scaling but recommend max multipliers for layout-critical text
 // Note: individual components will be updated to use maxFontSizeMultiplier where necessary
@@ -163,6 +164,7 @@ function RootLayoutNav() {
         }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
+      <OfflineGuard />
       <StatusBar style="light" />
     </ThemeProvider>
   );

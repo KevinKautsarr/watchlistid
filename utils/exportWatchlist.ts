@@ -1,11 +1,13 @@
 import { Platform, Share, Alert } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { WatchlistItem } from '@/types/watchlist';
 import { MovieLog } from '@/types';
 
 /**
  * Exports the user's watchlist and diary logs as a CSV file.
  * On web: triggers a file download via an anchor element.
- * On native: uses the Share API.
+ * On native: saves to a temporary file and triggers the native sharing sheet.
  */
 export async function exportWatchlistToCSV(
   watchlist: WatchlistItem[],
@@ -20,7 +22,7 @@ export async function exportWatchlistToCSV(
       const type  = (item as any).mediaType ?? (item as any).media_type ?? 'movie';
       const status = item.status === 'completed' ? 'Watched' : 'Plan to Watch';
       const rating = (item as any).vote_average?.toFixed(1) ?? '';
-      const added  = item.addedAt ? new Date(item.addedAt).toLocaleDateString() : '';
+      const added  = formatSafeDate(item.addedAt);
       return [title, type, status, rating, added].map(csvEscape).join(',');
     });
 
@@ -30,7 +32,7 @@ export async function exportWatchlistToCSV(
       const title  = log.movie_title ?? '';
       const type   = log.media_type ?? 'movie';
       const rating = log.rating?.toString() ?? '';
-      const date   = log.watched_at ? new Date(log.watched_at).toLocaleDateString() : '';
+      const date   = formatSafeDate(log.watched_at);
       const review = log.review_text ?? '';
       return [title, type, rating, date, review].map(csvEscape).join(',');
     });
@@ -59,8 +61,28 @@ export async function exportWatchlistToCSV(
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } else {
-      // Native: use Share sheet
-      await Share.share({ message: csvContent, title: fileName });
+      // Native: Use expo-file-system and expo-sharing to share as a file attachment
+      try {
+        const fileUri = `${(FileSystem as any).cacheDirectory}${fileName}`;
+        await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+          encoding: (FileSystem as any).EncodingType.UTF8,
+        });
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'text/csv',
+            dialogTitle: 'Export WatchlistID Data',
+            UTI: 'public.comma-separated-values-text',
+          });
+        } else {
+          // Fallback to text sharing if Sharing is not available
+          await Share.share({ message: csvContent, title: fileName });
+        }
+      } catch (fileErr) {
+        console.warn('File share failed, falling back to text share:', fileErr);
+        // Fallback to text sharing
+        await Share.share({ message: csvContent, title: fileName });
+      }
     }
   } catch (err: any) {
     Alert.alert('Export Gagal', err?.message ?? 'Terjadi kesalahan saat mengekspor data.');
@@ -74,4 +96,13 @@ function csvEscape(value: string): string {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
+}
+
+function formatSafeDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    return '';
+  }
+  return date.toLocaleDateString();
 }

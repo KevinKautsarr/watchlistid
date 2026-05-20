@@ -47,21 +47,32 @@ create table public.watchlist (
 
 alter table public.watchlist enable row level security;
 
-create policy "Watchlist is viewable by everyone" 
-on watchlist for select 
-using ( true );
+drop policy if exists "Watchlist is viewable by everyone" on public.watchlist;
+drop policy if exists "Users can insert own watchlist" on public.watchlist;
+drop policy if exists "Users can update own watchlist" on public.watchlist;
+drop policy if exists "Users can delete own watchlist" on public.watchlist;
+drop policy if exists "watchlist: select own" on public.watchlist;
+drop policy if exists "watchlist: select public" on public.watchlist;
+drop policy if exists "watchlist: insert own" on public.watchlist;
+drop policy if exists "watchlist: update own" on public.watchlist;
+drop policy if exists "watchlist: delete own" on public.watchlist;
 
-create policy "Users can insert own watchlist" 
-on watchlist for insert 
-with check ( auth.uid() = user_id );
+create policy "watchlist: select public"
+  on public.watchlist for select
+  using ( true );
 
-create policy "Users can update own watchlist" 
-on watchlist for update 
-using ( auth.uid() = user_id );
+create policy "watchlist: insert own"
+  on public.watchlist for insert
+  with check ( auth.uid() = user_id );
 
-create policy "Users can delete own watchlist" 
-on watchlist for delete 
-using ( auth.uid() = user_id );
+create policy "watchlist: update own"
+  on public.watchlist for update
+  using ( auth.uid() = user_id )
+  with check ( auth.uid() = user_id );
+
+create policy "watchlist: delete own"
+  on public.watchlist for delete
+  using ( auth.uid() = user_id );
 
 
 -- 3. Create User Ratings Table
@@ -77,9 +88,28 @@ create table public.user_ratings (
 
 alter table public.user_ratings enable row level security;
 
-create policy "Users can manage their own ratings" 
-on user_ratings for all 
-using ( auth.uid() = user_id );
+drop policy if exists "Users can manage their own ratings" on public.user_ratings;
+drop policy if exists "user_ratings: select own" on public.user_ratings;
+drop policy if exists "user_ratings: insert own" on public.user_ratings;
+drop policy if exists "user_ratings: update own" on public.user_ratings;
+drop policy if exists "user_ratings: delete own" on public.user_ratings;
+
+create policy "user_ratings: select own"
+  on public.user_ratings for select
+  using ( auth.uid() = user_id );
+
+create policy "user_ratings: insert own"
+  on public.user_ratings for insert
+  with check ( auth.uid() = user_id );
+
+create policy "user_ratings: update own"
+  on public.user_ratings for update
+  using ( auth.uid() = user_id )
+  with check ( auth.uid() = user_id );
+
+create policy "user_ratings: delete own"
+  on public.user_ratings for delete
+  using ( auth.uid() = user_id );
 
 
 -- 4. Create Recently Viewed Table
@@ -94,27 +124,78 @@ create table public.recently_viewed (
 
 alter table public.recently_viewed enable row level security;
 
-create policy "Users can manage their own recently viewed" 
-on recently_viewed for all 
-using ( auth.uid() = user_id );
+drop policy if exists "Users can manage their own recently viewed" on public.recently_viewed;
+drop policy if exists "recently_viewed: select own" on public.recently_viewed;
+drop policy if exists "recently_viewed: insert own" on public.recently_viewed;
+drop policy if exists "recently_viewed: update own" on public.recently_viewed;
+drop policy if exists "recently_viewed: delete own" on public.recently_viewed;
+
+create policy "recently_viewed: select own"
+  on public.recently_viewed for select
+  using ( auth.uid() = user_id );
+
+create policy "recently_viewed: insert own"
+  on public.recently_viewed for insert
+  with check ( auth.uid() = user_id );
+
+create policy "recently_viewed: update own"
+  on public.recently_viewed for update
+  using ( auth.uid() = user_id )
+  with check ( auth.uid() = user_id );
+
+create policy "recently_viewed: delete own"
+  on public.recently_viewed for delete
+  using ( auth.uid() = user_id );
+
+-- Auto-cleanup recently_viewed (max 50 per user)
+create or replace function public.trim_recently_viewed()
+returns trigger as $$
+begin
+  delete from public.recently_viewed
+  where user_id = new.user_id
+    and id not in (
+      select id
+        from public.recently_viewed
+       where user_id = new.user_id
+       order by viewed_at desc
+       limit 50
+    );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists limit_recently_viewed on public.recently_viewed;
+create trigger limit_recently_viewed
+  after insert on public.recently_viewed
+  for each row execute function public.trim_recently_viewed();
 
 
 -- ========================================================
 -- AUTOMATIC PROFILE CREATION TRIGGER
 -- When a user signs up, automatically create a profile
 -- ========================================================
-create function public.handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger as $$
 begin
   insert into public.profiles (id, username, avatar_url)
-  values (new.id, new.raw_user_meta_data->>'username', new.raw_user_meta_data->>'avatar_url');
+  values (
+    new.id,
+    coalesce(
+      nullif(trim(new.raw_user_meta_data->>'username'), ''),
+      nullif(trim(new.raw_user_meta_data->>'full_name'), ''),
+      nullif(trim(new.raw_user_meta_data->>'name'), ''),
+      split_part(new.email, '@', 1)
+    ),
+    new.raw_user_meta_data->>'avatar_url'
+  );
   return new;
 end;
 $$ language plpgsql security definer;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+  for each row execute function public.handle_new_user();
 
 -- Fix 7: Forbidden Usernames Trigger
 CREATE OR REPLACE FUNCTION check_forbidden_username()
@@ -258,8 +339,12 @@ create index if not exists idx_follows_following_id  on public.follows(following
 create index if not exists idx_reviews_movie_id      on public.reviews(movie_id);
 create index if not exists idx_watchlist_user_id     on public.watchlist(user_id);
 create index if not exists idx_recently_viewed_user  on public.recently_viewed(user_id);
--- text_pattern_ops enables efficient ilike prefix searches on username
-create index if not exists idx_profiles_username     on public.profiles(username text_pattern_ops);
+-- pg_trgm extension for fast ilike '%keyword%' search
+create extension if not exists pg_trgm;
+
+drop index if exists idx_profiles_username;
+create index if not exists idx_profiles_username_trgm
+  on public.profiles using gin(username gin_trgm_ops);
 
 
 -- ─── M6a: Add bio column to profiles ──────────────────────────────────────
@@ -419,7 +504,6 @@ DECLARE
   v_follower_name TEXT;
 BEGIN
   SELECT coalesce(username, 'Seseorang') INTO v_follower_name FROM public.profiles WHERE id = NEW.follower_id;
-  v_follower_name := coalesce(v_follower_name, 'Seseorang');
   
   INSERT INTO public.notifications (user_id, type, actor_id, title, message)
   VALUES (
@@ -443,63 +527,42 @@ CREATE OR REPLACE FUNCTION public.notify_review_like()
 RETURNS TRIGGER AS $$
 DECLARE
   v_review_owner_id UUID;
-  v_movie_id INTEGER;
-  v_movie_title TEXT;
-  v_liker_name TEXT;
+  v_movie_id        INTEGER;  -- ← fix: was TEXT (type mismatch)
+  v_liker_name      TEXT;
 BEGIN
-  -- 1. Dapatkan owner review dan movie_id
-  SELECT user_id, movie_id INTO v_review_owner_id, v_movie_id 
-  FROM public.reviews 
-  WHERE id = NEW.review_id;
-  
-  -- Jika review tidak ditemukan, abaikan
-  IF v_review_owner_id IS NULL THEN
-    RETURN NEW;
-  END IF;
+  SELECT user_id, movie_id
+    INTO v_review_owner_id, v_movie_id
+    FROM public.reviews
+   WHERE id = NEW.review_id;
 
-  -- 2. Cari judul film dari logs atau watchlist (karena review tidak menyimpan judul film langsung)
-  SELECT movie_title INTO v_movie_title 
-  FROM public.movie_logs 
-  WHERE movie_id = v_movie_id 
-  LIMIT 1;
+  SELECT username
+    INTO v_liker_name
+    FROM public.profiles
+   WHERE id = NEW.user_id;
 
-  IF v_movie_title IS NULL THEN
-    SELECT title INTO v_movie_title 
-    FROM public.watchlist 
-    WHERE movie_id = v_movie_id 
-    LIMIT 1;
-  END IF;
-
-  v_movie_title := COALESCE(v_movie_title, 'Film');
-
-  -- 3. Dapatkan nama pemberi like
-  SELECT username INTO v_liker_name 
-  FROM public.profiles 
-  WHERE id = NEW.user_id;
-  
-  v_liker_name := COALESCE(v_liker_name, 'Seseorang');
-
-  -- 4. Kirim notifikasi jika bukan menyukai review sendiri
-  IF v_review_owner_id != NEW.user_id THEN
-    INSERT INTO public.notifications (user_id, type, actor_id, reference_id, title, message, movie_id)
+  IF v_review_owner_id IS DISTINCT FROM NEW.user_id THEN
+    INSERT INTO public.notifications
+      (user_id, type, actor_id, reference_id, title, message, movie_id)
     VALUES (
-      v_review_owner_id, 
-      'review_like', 
-      NEW.user_id, 
-      NEW.review_id, 
-      'Ulasan Disukai', 
-      v_liker_name || ' menyukai ulasan Anda untuk "' || v_movie_title || '"',
+      v_review_owner_id,
+      'review_like',
+      NEW.user_id,
+      NEW.review_id,
+      'Ulasan Disukai',
+      COALESCE(v_liker_name, 'Seseorang') || ' menyukai ulasan Anda',
       v_movie_id
     );
   END IF;
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS on_review_liked ON public.review_likes;
+
 CREATE TRIGGER on_review_liked
-AFTER INSERT ON public.review_likes
-FOR EACH ROW EXECUTE FUNCTION public.notify_review_like();
+  AFTER INSERT ON public.review_likes
+  FOR EACH ROW EXECUTE FUNCTION public.notify_review_like();
 
 
 -- ─── M9: delete_user_account — Safe Account Deletion RPC ─────────────────

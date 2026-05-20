@@ -126,6 +126,14 @@ export const getSimilarTV        = (id: number) => tmdbGet<{ results: any[] }>(`
 export const getTVKeywords       = (id: number) => tmdbGet<{ results: any[] }>(`/tv/${id}/keywords`);
 export const getTVContentRatings = (id: number) => tmdbGet<{ results: any[] }>(`/tv/${id}/content_ratings`);
 
+/**
+ * Fetch detailed data for a specific TV season, including episodes
+ * @param tvId The TMDB TV Show ID
+ * @param seasonNumber The season number to fetch
+ */
+export const getTVSeasonDetails = (tvId: number, seasonNumber: number) => 
+  tmdbGet<any>(`/tv/${tvId}/season/${seasonNumber}`);
+
 export const getCriticalMovieDetails = async (id: number) => {
   const results = await Promise.allSettled([
     getMovieDetails(id), getMovieCredits(id)
