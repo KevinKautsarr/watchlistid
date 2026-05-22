@@ -43,7 +43,27 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
   const today = new Date().toISOString().split('T')[0];
   const [watchedDate, setWatchedDate] = useState(today);
 
-  const { setRating: setLocalRating } = useWatchlist();
+  React.useEffect(() => {
+    if (visible) {
+      if (existingLog) {
+        setRating(existingLog.rating || 0);
+        setReviewText(existingLog.review_text || '');
+        setIsSpoiler(existingLog.is_spoiler || false);
+        if (existingLog.watched_at) {
+          setWatchedDate(existingLog.watched_at.split('T')[0]);
+        } else {
+          setWatchedDate(today);
+        }
+      } else {
+        setRating(0);
+        setReviewText('');
+        setIsSpoiler(false);
+        setWatchedDate(today);
+      }
+    }
+  }, [visible, existingLog, today]);
+
+  const { setRating: setLocalRating, registerMovieLog, registerMovieReview } = useWatchlist();
 
   if (!movie) return null;
 
@@ -66,11 +86,22 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
         rating: rating,
         review_text: reviewText.trim() || undefined,
         is_spoiler: isSpoiler,
+        genre_ids: (() => {
+          if ('genre_ids' in movie && Array.isArray(movie.genre_ids)) {
+            return movie.genre_ids;
+          }
+          if ('genres' in movie && Array.isArray(movie.genres)) {
+            return movie.genres.map((g: any) => g.id);
+          }
+          return undefined;
+        })(),
       });
 
       if (success) {
+        registerMovieLog(movie.id);
         // Save to professional reviews table if there is content
         if (reviewText.trim()) {
+          registerMovieReview(movie.id);
           await addReview({
             movie_id: movie.id,
             media_type: movie.media_type || 'movie',

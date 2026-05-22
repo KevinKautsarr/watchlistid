@@ -1,85 +1,156 @@
 # 🎬 WatchListID
 
-![WatchListID Hero](https://via.placeholder.com/1200x400/112D4E/FFFFFF?text=WatchListID)
+[![React Native](https://img.shields.io/badge/React_Native-v0.74.x-61dafb?style=flat-square&logo=react)](https://reactnative.dev/)
+[![Expo SDK 51](https://img.shields.io/badge/Expo_SDK-51-000000?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict_Mode-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-> Aplikasi basis data sinematik premium bergaya IMDb, dibangun dengan **React Native**, **Expo SDK 51**, dan **Supabase**.
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-
-**WatchListID** adalah aplikasi *mobile* profesional yang berfungsi sebagai pangkalan data film komprehensif dan jejaring sosial bagi pecinta film. Aplikasi ini menggunakan sistem navigasi modern **Expo Router** dan backend **Supabase** yang kuat untuk memberikan pengalaman pengguna yang responsif dan aman.
+> Pelacak Film & Seri TV Sosial Premium Lintas Platform (iOS, Android, Web) yang Dibangun dengan Expo, React Native, dan Supabase.
+> 
+> 🌐 **Akses Versi Web:** [watchlistid.vercel.app](https://watchlistid.vercel.app/)
 
 ---
 
-## ✨ Fitur Utama
+## 📖 Ringkasan (Overview)
 
-*   **Pangkalan Data Film (TMDB Integration)**: Menampilkan ribuan metadata film (Trailer, Cast, Kru, Skor Popularitas) secara *real-time*.
-*   **Movie Diary & Log**: Catat setiap film yang kamu tonton dengan tanggal, rating, dan ulasan pribadi.
-*   **Review System (Social)**: Berikan ulasan pada film dan sukai ulasan dari pengguna lain.
-*   **Social Engine**: Cari pengguna lain, ikuti teman, dan pantau aktivitas mereka di *Activity Feed*.
-*   **Smart Watchlist**: Manajemen daftar tontonan dengan filter sortir dan sinkronisasi cloud otomatis.
-*   **Robust Authentication**: Login aman dengan Email/Password atau Google OAuth, dilengkapi Cloudflare Turnstile CAPTCHA.
-*   **Security Hardening**: Proteksi data tingkat database dengan Supabase Row Level Security (RLS) dan validasi input yang ketat.
+**WatchListID** adalah platform sosial cinematic database modern yang dirancang untuk membantu pecinta film melacak, mengulas, dan mendiskusikan film serta acara televisi favorit mereka. Dibangun di atas **Expo SDK 51** dan **React Native**, aplikasi ini menghadirkan antarmuka pengguna hibrida yang sangat responsif, lancar, dan berestetika premium (*dark mode glassmorphism*) baik di perangkat seluler maupun web.
 
-## 🛠 Teknologi yang Digunakan
+Didukung oleh backend **Supabase** dengan keamanan tingkat tinggi (Row Level Security) dan integrasi **TMDB API**, WatchListID tidak hanya berfungsi sebagai perpustakaan pribadi untuk mengelola daftar tontonan (*Watchlist* dan *Diary*), tetapi juga sebagai jejaring sosial dinamis yang menghubungkan pengguna melalui aktivitas interaksi sosial, ulasan, pengikut (*followers*), dan umpan aktivitas komunitas (*Activity Feed*).
 
-*   **Framework**: React Native & Expo (SDK 51)
-*   **Bahasa**: TypeScript (Strict Mode)
-*   **Routing**: Expo Router (File-based routing)
-*   **State Management**: React Context API (Auth, Watchlist, Social, Notification)
-*   **Backend & Auth**: Supabase (PostgreSQL, Auth, Realtime)
-*   **Keamanan**: Cloudflare Turnstile, Supabase RLS Triggers
-*   **UI/UX**: Lucide React Native, Expo Image, Animated Svg Tab Bar
-*   **Markdown**: react-native-markdown-display (untuk konten legal/bio)
+---
 
-## 🚀 Cara Menjalankan Aplikasi
+## ✨ Fitur Unggulan
 
-### Prasyarat
-*   Node.js (LTS)
-*   Aplikasi **Expo Go** di HP
-*   Akun Supabase & TMDB API Key
+- 🎬 **Integrasi Database Sinematik Global (TMDB)** — Jelajahi ribuan film dan acara TV dengan informasi lengkap (detail pemeran, kru, trailer video YouTube, genre, dan skor rating popularitas).
+- 📅 **Log & Buku Diary Tontonan Pintar** — Catat film yang ditonton dengan tanggal tertentu, rating bintang personal (skala 5-bintang dengan micro-interaksi haptic), dan penanda spoiler.
+- 💬 **Mesin Ulasan Sosial & Likers** — Tulis ulasan lengkap dengan format Markdown, sembunyikan spoiler, dan sukai (*like*) ulasan dari sesama anggota komunitas.
+- 👥 **Jejaring Sosial (Follow/Unfollow)** — Cari profil pengguna lain secara aman, ikuti teman, dan pantau aktivitas terbaru mereka melalui tab *Activity Feed* yang diperbarui secara real-time.
+- 🔐 **Autentikasi Lapis Ganda & Captcha** — Login aman menggunakan Email/Password atau Google OAuth, diproteksi dengan verifikasi Cloudflare Turnstile CAPTCHA untuk mencegah bot spam.
+- 🌐 **Desain Lintas Platform Responsif** — Navigasi disesuaikan secara dinamis: menggunakan tab bar animasi modern untuk aplikasi seluler, dan bilah navigasi desktop yang elegan untuk browser web.
+- 📶 **Perlindungan Mode Offline (Offline Guard)** — Sistem pemantau jaringan terintegrasi yang menjaga keamanan data lokal dan memberikan peringatan visual yang anggun ketika perangkat kehilangan koneksi internet.
+- 🗺️ **Dukungan Multi-bahasa (Localization)** — Mendukung pengubahan bahasa secara dinamis (Bahasa Indonesia & Bahasa Inggris) di seluruh komponen aplikasi.
 
-### Instalasi & Setup
+---
 
-1. **Clone & Install**
+## 🛠 Tech Stack
+
+Aplikasi ini menggunakan teknologi modern terbaik untuk memastikan performa tinggi dan keamanan maksimal:
+
+- **Framework Utama**: [React Native](https://reactnative.dev/) & [Expo SDK 51](https://expo.dev/)
+- **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based navigation)
+- **Database & Backend**: [Supabase](https://supabase.com/) (PostgreSQL dengan RLS, Triggers, Realtime Channels, Storage Bucket untuk foto profil)
+- **Penyedia API**: [The Movie Database (TMDB)](https://www.themoviedb.org/)
+- **Penyimpanan Lokal**: [@react-native-async-storage/async-storage](https://react-native-async-storage.github.io/async-storage/) untuk cache watchlist dan rating offline
+- **Desain UI/UX**: [Lucide React Native](https://lucide.dev/), [Expo Linear Gradient](https://docs.expo.dev/versions/latest/sdk/linear-gradient/)
+- **Toleransi Masalah**: Custom `ErrorBoundary` untuk menangkap crash rendering di sisi runtime klien
+
+---
+
+## 🚀 Memulai (Getting Started)
+
+### Prasyarat (Prerequisites)
+
+Pastikan perangkat Anda sudah terinstal:
+- **Node.js** (versi `18.x` atau lebih tinggi)
+- **npm** atau **yarn**
+- Aplikasi **Expo Go** pada ponsel Anda (tersedia di Google Play Store & iOS App Store) untuk pratinjau native.
+
+### Langkah Instalasi
+
+1. **Kloning Repositori**:
    ```bash
-   git clone https://github.com/username/WatchListID.git
-   cd WatchListID
+   git clone https://github.com/KevinKautsarr/watchlistid.git
+   cd watchlistid
+   ```
+
+2. **Pasang Dependensi**:
+   ```bash
    npm install
    ```
 
-2. **Environment Variables**
-   Buat file `.env` di direktori utama dan isi kredensial berikut:
+3. **Konfigurasi Environment**:
+   Buat file bernama `.env` di root direktori proyek, lalu lengkapi variabel berikut:
    ```env
-   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   EXPO_PUBLIC_TMDB_API_KEY=your_tmdb_api_key
-   EXPO_PUBLIC_TURNSTILE_SITE_KEY=your_cloudflare_turnstile_key
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   EXPO_PUBLIC_TMDB_API_KEY=your-tmdb-api-key
+   EXPO_PUBLIC_TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
    ```
 
-3. **Jalankan**
+4. **Jalankan Server Pengembangan**:
    ```bash
+   npm run dev
+   # atau
    npx expo start
    ```
 
----
-
-## 📂 Struktur Proyek Utama
-
-```
-WatchListID/
-├── app/                  # Expo Router (tabs, layout, auth, movie detail)
-├── components/           # Komponen UI (auth, movie, navigation, common)
-├── context/              # Global Contexts (.tsx)
-├── screens/              # Core Screen Logic (.tsx)
-├── services/             # TMDB API & Cache Services
-├── types/                # TypeScript Definitions & Supabase Types
-├── utils/                # Helper functions (authErrors, export, dll)
-├── assets/               # Gambar, font, dan ikon
-└── supabase_schema.sql   # SQL Blueprint untuk Database
-```
+5. **Pindai Kode QR**:
+   - Untuk **iOS**: Pindai QR code menggunakan aplikasi Kamera bawaan.
+   - Untuk **Android**: Pindai QR code melalui aplikasi **Expo Go**.
+   - Tekan tombol `w` di terminal untuk membukanya langsung di browser web lokal.
 
 ---
-*Dibuat dengan ❤️ untuk kemajuan Ekosistem Digital Indonesia.*
+
+## ⚙️ Variabel Konfigurasi (Configuration)
+
+| Variabel Lingkungan | Deskripsi | Wajib |
+|---------------------|-----------|-------|
+| `EXPO_PUBLIC_SUPABASE_URL` | URL Endpoint dari proyek Supabase Anda. | Ya |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Kunci anonim Supabase untuk interaksi database sisi klien. | Ya |
+| `EXPO_PUBLIC_TMDB_API_KEY` | Kunci API The Movie Database untuk pencarian dan detail film. | Ya |
+| `EXPO_PUBLIC_TURNSTILE_SITE_KEY` | Kunci situs Cloudflare Turnstile untuk validasi Captcha. | Ya |
+
+---
+
+## 📂 Struktur Folder Proyek
+
+```text
+MovieWatchlist/
+├── app/                  # File-based routing untuk Expo Router (tabs, auth, modal detail)
+├── assets/               # Kumpulan ikon, font kustom, dan gambar statis
+├── components/           # Komponen UI modular
+│   ├── auth/             # Verifikasi Captcha dan formulir autentikasi
+│   ├── common/           # Komponen global reusable (Toast, Avatar, PosterCard, SafeImage)
+│   ├── movie/            # LogModal, DiaryCard, ulasan, cast, dan detail aksi film
+│   └── profile/          # Profil edit modal, statistik profil, tab view, dan header
+├── context/              # Penyedia State Global (Auth, Language, Social, Watchlist)
+├── hooks/                # React Hooks kustom (useMovieDetail, useProfileData, useSearchQuery)
+├── services/             # TMDB API client dan implementasi caching data
+├── types/                # Definisi tipe data TypeScript & pemetaan skema Supabase
+├── utils/                # Fungsi pembantu (pemformat tanggal, mapper error auth, ekspor CSV)
+├── supabase_schema.sql   # SQL blueprint untuk migrasi skema tabel Supabase
+├── package.json          # Manajemen dependensi dan naskah CLI
+└── README.md             # Dokumentasi utama proyek
+```
+
+---
+
+## 🔐 Keamanan Database (Security Blueprint)
+
+Proyek ini menerapkan keamanan ketat di level backend menggunakan PostgreSQL Row Level Security (RLS) di Supabase. Anda dapat merujuk ke file [supabase_schema.sql](file:///c:/Users/HP/Developer/MovieWatchlist/supabase_schema.sql) untuk blueprint lengkapnya:
+- Tabel `profiles`, `followers`, `movie_logs`, `reviews`, dan `watchlist` diproteksi secara individual.
+- Aksi `INSERT` / `UPDATE` / `DELETE` hanya diizinkan jika `auth.uid() = user_id`.
+- Kueri penambahan nama lengkap dan foto profil dikelola melalui Trigger Functions Supabase untuk menjamin konsistensi data.
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi selalu diterima dengan hangat! Jika Anda ingin meningkatkan fungsionalitas aplikasi ini:
+
+1. Lakukan **Fork** pada repositori ini.
+2. Buat cabang fitur baru Anda (`git checkout -b feature/FiturKeren`).
+3. Lakukan commit untuk perubahan Anda (`git commit -m 'Menambahkan fitur baru yang luar biasa'`).
+4. Lakukan Push ke cabang Anda (`git push origin feature/FiturKeren`).
+5. Buat **Pull Request** baru di repositori utama.
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dirilis di bawah lisensi **MIT License** - lihat file [LICENSE](LICENSE) untuk informasi lebih lanjut.
+
+---
+
+*Dibuat dengan dedikasi penuh dan ❤️ untuk kemajuan industri perangkat lunak Indonesia.*

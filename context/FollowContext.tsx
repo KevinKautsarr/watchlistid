@@ -17,10 +17,34 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user } = useAuth();
 
   const searchUsers = async (query: string): Promise<UserProfile[]> => {
-    if (!query.trim()) return [];
-    const { data, error } = await typedFrom('profiles').select('id, username, avatar_url').ilike('username', `%${query}%`).limit(20);
-    if (error) return [];
-    return data as UserProfile[];
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+
+    // Search by username handle and full display name simultaneously
+    const [byUsername, byFullName] = await Promise.all([
+      typedFrom('profiles')
+        .select('id, username, full_name, avatar_url')
+        .ilike('username', `%${trimmed}%`)
+        .limit(20),
+      typedFrom('profiles')
+        .select('id, username, full_name, avatar_url')
+        .ilike('full_name', `%${trimmed}%`)
+        .limit(20),
+    ]);
+
+    // Merge and deduplicate by id
+    const combined = [
+      ...(byUsername.data || []),
+      ...(byFullName.data || []),
+    ];
+    const seen = new Set<string>();
+    const unique = combined.filter(p => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+
+    return unique as UserProfile[];
   };
 
   const followUser = async (targetId: string) => {
@@ -47,14 +71,31 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const followingIds = following?.map(f => f.following_id) || [];
     if (followingIds.length === 0) return [];
 
-    const { data, error } = await typedFrom('movie_logs')
-      .select('*, user:profiles(username, avatar_url)')
+    const { data: logs, error: logsError } = await typedFrom('movie_logs')
+      .select('*')
       .in('user_id', followingIds)
       .order('watched_at', { ascending: false })
       .limit(30);
 
-    if (error) return [];
-    return data as unknown as MovieLog[];
+    if (logsError || !logs || logs.length === 0) return [];
+
+    const userIds = Array.from(new Set(logs.map(l => l.user_id).filter((id): id is string => !!id)));
+    const { data: profiles, error: profilesError } = await typedFrom('profiles')
+      .select('id, username, avatar_url')
+      .in('id', userIds);
+
+    if (profilesError || !profiles) {
+      return logs.map(l => ({ ...l, user: null })) as unknown as MovieLog[];
+    }
+
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+    return logs.map(l => {
+      const uId = l.user_id;
+      return {
+        ...l,
+        user: uId ? (profileMap.get(uId) || null) : null
+      };
+    }) as unknown as MovieLog[];
   };
 
   return (

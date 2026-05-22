@@ -12,22 +12,21 @@ export default function AppEntry() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    // Sedikit dipercepat agar aplikasi terasa lebih responsif (snappy)
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
-        toValue:         0,
-        duration:        800,
+        toValue: 0,
+        duration: 500, // Transisi fade-out dibuat lebih cepat (500ms dari sebelumnya 800ms)
         ...nativeDriver,
       }).start(() => {
         setShowSplash(false);
       });
-    }, 2500);
+    }, 2000); 
 
     return () => clearTimeout(timer);
-  // fadeAnim is a stable Animated.Value ref — intentionally excluded from deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Still loading auth state or showing splash — wait
   if (isLoading || showSplash) {
     return (
       <View style={styles.container}>
@@ -42,14 +41,12 @@ export default function AppEntry() {
     );
   }
 
-  // After splash: landing on tabs
-  // (RootLayout will handle protecting specific tabs)
   return <Redirect href="/(tabs)" />;
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex:            1,
-    backgroundColor: '#F9F7F7',
+    flex: 1,
+    backgroundColor: '#141414', // Samakan dengan warna background SplashScreen agar transisi seamless
   },
 });

@@ -1,48 +1,116 @@
-import * as Haptics from "expo-haptics";
-import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import {
-  ActivityIndicator, Animated, 
-  ScrollView, StatusBar, StyleSheet, Text, TextInput,
-  TouchableOpacity, View, Pressable
-} from "react-native";
 import { FlashList } from "@shopify/flash-list";
-const TypedFlashList = FlashList as any;
-import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
-  ArrowLeft, Award, ChevronDown, Clock, Flame,
-  Search, Star, TrendingUp, X, ChevronRight, User,
+  ArrowLeft,
+  Award,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  Flame,
+  Search,
+  Star,
+  TrendingUp,
+  User,
+  X,
 } from "lucide-react-native";
-import { Image } from "expo-image";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+const TypedFlashList = FlashList as any;
 
-import MovieListItem from '@/components/movie/MovieListItem';
-import { Colors, FontSize, FontWeight, IconSize, Radius, Shadow, Spacing } from '@/constants/theme';
-import { cursorPointer } from '@/utils/webStyles';
-import { useWatchlist } from '@/context/WatchlistContext';
-import { useLanguage } from '@/context/LanguageContext';
-import { useSocial } from '@/context/SocialContext';
-import { useBreakpoint } from '@/hooks/useBreakpoint';
-import { useSearchQuery } from '@/hooks/useSearchQuery';
-import { nativeDriver } from '@/utils/animation';
+import Avatar from "@/components/common/Avatar";
+import MovieListItem from "@/components/movie/MovieListItem";
+import {
+  Colors,
+  FontSize,
+  FontWeight,
+  IconSize,
+  Radius,
+  Shadow,
+  Spacing,
+} from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useSocial } from "@/context/SocialContext";
+import { useWatchlist } from "@/context/WatchlistContext";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useSearchQuery } from "@/hooks/useSearchQuery";
+import { nativeDriver } from "@/utils/animation";
+import { cursorPointer } from "@/utils/webStyles";
 
-import { 
-  getTrendingMovies, getTrendingTV, getPopularMovies, 
-  getTopRatedMovies, getTopRatedTV 
-} from '@/services/api';
-import { MediaItem, UserProfile, FetchState } from '@/types';
+import {
+  getPopularMovies,
+  getTopRatedMovies,
+  getTopRatedTV,
+  getTrendingMovies,
+  getTrendingTV,
+} from "@/services/api";
+import { FetchState, MediaItem, UserProfile } from "@/types";
 
 // Components
-import { SearchFilterRow } from '@/components/search/SearchFilterRow';
-import { PersonCard } from '@/components/search/PersonCard';
-import { SearchEmptyState } from '@/components/search/SearchEmptyState';
+import { PersonCard } from "@/components/search/PersonCard";
+import { SearchEmptyState } from "@/components/search/SearchEmptyState";
+import { SearchFilterRow } from "@/components/search/SearchFilterRow";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CATS: any = {
-  "trending-movies": { label: "trendingMovies",      subtitle: "catTrendingMoviesSub", Icon: Flame, iconColor: Colors.danger, fetchFn: getTrendingMovies },
-  "trending-tv":     { label: "trendingShows",       subtitle: "catTrendingTVSub",     Icon: Flame, iconColor: "#FF6B35", fetchFn: getTrendingTV, normalize: true },
-  "popular":         { label: "catPopularOn",        subtitle: "catPopularSub",        Icon: Star,  iconColor: Colors.ratingGold, fetchFn: getPopularMovies },
-  "top-rated-movies":{ label: "topRatedMovies",      subtitle: "catTopRatedMoviesSub", Icon: Award, iconColor: Colors.success, fetchFn: getTopRatedMovies },
-  "top-rated-tv":    { label: "topRatedShows",       subtitle: "catTopRatedTVSub",     Icon: Award, iconColor: "#2196F3", fetchFn: getTopRatedTV, normalize: true },
+  "trending-movies": {
+    label: "trendingMovies",
+    subtitle: "catTrendingMoviesSub",
+    Icon: Flame,
+    iconColor: Colors.danger,
+    fetchFn: getTrendingMovies,
+  },
+  "trending-tv": {
+    label: "trendingShows",
+    subtitle: "catTrendingTVSub",
+    Icon: Flame,
+    iconColor: "#FF6B35",
+    fetchFn: getTrendingTV,
+    normalize: true,
+  },
+  popular: {
+    label: "catPopularOn",
+    subtitle: "catPopularSub",
+    Icon: Star,
+    iconColor: Colors.ratingGold,
+    fetchFn: getPopularMovies,
+  },
+  "top-rated-movies": {
+    label: "topRatedMovies",
+    subtitle: "catTopRatedMoviesSub",
+    Icon: Award,
+    iconColor: Colors.success,
+    fetchFn: getTopRatedMovies,
+  },
+  "top-rated-tv": {
+    label: "topRatedShows",
+    subtitle: "catTopRatedTVSub",
+    Icon: Award,
+    iconColor: "#2196F3",
+    fetchFn: getTopRatedTV,
+    normalize: true,
+  },
 };
 
 const FILTER_CHIPS = [
@@ -63,72 +131,141 @@ const FILTER_CHIPS = [
 
 export default function SearchScreen() {
   const router = useRouter();
-  const bp     = useBreakpoint();
-  const { t }  = useLanguage();
-  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const bp = useBreakpoint();
+  const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist, isHydrated } =
+    useWatchlist();
   const { searchUsers } = useSocial();
-  const params = useLocalSearchParams<{ genre?:string; category?:string }>();
+  const params = useLocalSearchParams<{ genre?: string; category?: string }>();
 
   const {
-    activeCat, setActiveCat,
-    activeFilter, setActiveFilter,
-    searchText, setSearchText, debouncedQ,
-    itemsState, personState,
-    page, totalPages, totalResults, loadingMore,
-    fetchPage, fetchCatPage
+    activeCat,
+    setActiveCat,
+    activeFilter,
+    setActiveFilter,
+    searchText,
+    setSearchText,
+    debouncedQ,
+    itemsState,
+    personState,
+    page,
+    totalPages,
+    totalResults,
+    loadingMore,
+    fetchPage,
+    fetchCatPage,
   } = useSearchQuery(params.category || null, params.genre || "all");
 
-  const [searchMode, setSearchMode] = useState<'media' | 'users'>('media');
+  const [searchMode, setSearchMode] = useState<"media" | "users">("media");
   const navigation = useNavigation();
 
   useEffect(() => {
     navigation.setOptions({
-      headerShown: !activeCat
+      headerShown: !activeCat,
     });
   }, [navigation, activeCat]);
-  const [userResults, setUserResults] = useState<FetchState<UserProfile[]>>({ status: 'idle', data: [], error: null });
+
+  const [userResults, setUserResults] = useState<FetchState<UserProfile[]>>({
+    status: "idle",
+    data: [],
+    error: null,
+  });
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
   const inputRef = useRef<TextInput>(null);
   const inputScale = useRef(new Animated.Value(1)).current;
+  const mediaListRef = useRef<any>(null);
+  const userListRef = useRef<any>(null);
+  const fabAnim = useRef(new Animated.Value(0)).current;
+  const [showFab, setShowFab] = useState(false);
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      const shouldShow = y > 250;
+      if (shouldShow !== showFab) {
+        setShowFab(shouldShow);
+        Animated.spring(fabAnim, {
+          toValue: shouldShow ? 1 : 0,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 6,
+        }).start();
+      }
+    },
+    [showFab, fabAnim],
+  );
+
+  const scrollToTop = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (searchMode === "media") {
+      mediaListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    } else {
+      userListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
 
   const items = itemsState.data || [];
   const personItems = personState.data || [];
-  const isLoading = itemsState.status === 'loading' || personState.status === 'loading';
+  const isLoading =
+    itemsState.status === "loading" || personState.status === "loading";
 
   useEffect(() => {
     const fetchTrending = async () => {
       try {
         const data = await getTrendingMovies(1);
-        setTrendingKeywords((data.results ?? []).slice(0, 6).map((m: any) => m.title));
+        setTrendingKeywords(
+          (data.results ?? []).slice(0, 6).map((m: any) => m.title),
+        );
       } catch (e) {
-        setTrendingKeywords(["Dune", "Oppenheimer", "Spider-Man", "Batman", "Civil War"]);
+        setTrendingKeywords([
+          "Dune",
+          "Oppenheimer",
+          "Spider-Man",
+          "Batman",
+          "Civil War",
+        ]);
       }
     };
     fetchTrending();
   }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
     if (activeCat) fetchCatPage(activeCat, 1, false, CATS);
     else fetchPage(debouncedQ, activeFilter, 1, false);
-  }, [debouncedQ, activeFilter, activeCat, fetchPage, fetchCatPage]);
+  }, [
+    debouncedQ,
+    activeFilter,
+    activeCat,
+    fetchPage,
+    fetchCatPage,
+    isHydrated,
+  ]);
 
   // User search effect
   useEffect(() => {
-    if (searchMode !== 'users' || !debouncedQ.trim()) {
-      if (searchMode === 'users' && !debouncedQ.trim()) {
-        setUserResults({ status: 'idle', data: [], error: null });
+    if (searchMode !== "users" || !debouncedQ.trim()) {
+      if (searchMode === "users" && !debouncedQ.trim()) {
+        setUserResults({ status: "idle", data: [], error: null });
       }
       return;
     }
     let isMounted = true;
-    setUserResults(prev => ({ ...prev, status: 'loading' }));
-    searchUsers(debouncedQ).then(data => {
-      if (isMounted) setUserResults({ status: 'success', data, error: null });
-    }).catch(err => {
-      if (isMounted) setUserResults({ status: 'error', data: [], error: err.message });
-    });
-    return () => { isMounted = false; };
+    setUserResults((prev) => ({ ...prev, status: "loading" }));
+    searchUsers(debouncedQ)
+      .then((data) => {
+        if (isMounted) setUserResults({ status: "success", data, error: null });
+      })
+      .catch((err) => {
+        if (isMounted)
+          setUserResults({ status: "error", data: [], error: err.message });
+      });
+    return () => {
+      isMounted = false;
+    };
   }, [debouncedQ, searchMode, searchUsers]);
 
   const loadMore = () => {
@@ -138,24 +275,44 @@ export default function SearchScreen() {
   };
 
   const toggleWL = (m: MediaItem) => {
+    if (!user) {
+      (global as any).showLoginPrompt?.();
+      return;
+    }
     const has = isInWatchlist(m.id);
-    Haptics.notificationAsync(has ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(
+      has
+        ? Haptics.NotificationFeedbackType.Warning
+        : Haptics.NotificationFeedbackType.Success,
+    );
     has ? removeFromWatchlist(m.id) : addToWatchlist(m);
   };
 
-  const goToMovie = (id: number, type: 'movie' | 'tv' = 'movie') => {
+  const goToMovie = (id: number, type: "movie" | "tv" = "movie") => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({ pathname: '/movie/[id]', params: { id: id.toString(), type } });
+    router.push({
+      pathname: "/movie/[id]",
+      params: { id: id.toString(), type },
+    });
   };
 
   const goToPerson = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({ pathname: '/person/[id]', params: { id: id.toString() } });
+    router.push({ pathname: "/person/[id]", params: { id: id.toString() } });
   };
 
-  const onFocus = () => Animated.spring(inputScale, { toValue: 1.015, ...nativeDriver, speed: 20 }).start();
-  const onBlur  = () => Animated.spring(inputScale, { toValue: 1, ...nativeDriver, speed: 20 }).start();
-
+  const onFocus = () =>
+    Animated.spring(inputScale, {
+      toValue: 1.015,
+      ...nativeDriver,
+      speed: 20,
+    }).start();
+  const onBlur = () =>
+    Animated.spring(inputScale, {
+      toValue: 1,
+      ...nativeDriver,
+      speed: 20,
+    }).start();
 
   const isPeople = activeFilter === "people";
   const showDefault = !activeCat && searchText.length === 0;
@@ -164,15 +321,30 @@ export default function SearchScreen() {
     <View style={styles.footerContainer}>
       {!isLoading && totalResults > 0 && (
         <Text style={styles.resultCount} allowFontScaling={false}>
-          {t('showingResults').replace('{count}', (isPeople ? personItems.length : items.length).toString()).replace('{total}', totalResults.toLocaleString())}
+          {t("showingResults")
+            .replace(
+              "{count}",
+              (isPeople ? personItems.length : items.length).toString(),
+            )
+            .replace("{total}", totalResults.toLocaleString())}
         </Text>
       )}
       {page < totalPages && (
-        <TouchableOpacity style={[styles.loadMore, cursorPointer]} onPress={loadMore} disabled={loadingMore}>
-          {loadingMore ? <ActivityIndicator size="small" color={Colors.danger} /> : (
+        <TouchableOpacity
+          style={[styles.loadMore, cursorPointer]}
+          onPress={loadMore}
+          disabled={loadingMore}
+        >
+          {loadingMore ? (
+            <ActivityIndicator size="small" color={Colors.danger} />
+          ) : (
             <View style={styles.loadMoreContent}>
-              <ChevronDown size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
-              <Text style={styles.loadMoreTxt}>{t('loadMore')}</Text>
+              <ChevronDown
+                size={IconSize.md}
+                color={Colors.white}
+                strokeWidth={2.5}
+              />
+              <Text style={styles.loadMoreTxt}>{t("loadMore")}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -180,210 +352,529 @@ export default function SearchScreen() {
     </View>
   );
 
-  return (
-    <SafeAreaView style={styles.root} edges={["top"]}>
-      <StatusBar barStyle="light-content" />
-      
-      <View style={[styles.headerContainer, { paddingHorizontal: bp.contentPadding }]}>
-        {activeCat ? (
-          <View style={styles.catHeader}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => setActiveCat(null)}>
-              <ArrowLeft size={IconSize.md} color={Colors.white} />
+  if (!isHydrated) return null;
+
+  const renderSearchHeader = (withMargin: boolean) => {
+    if (activeCat) return null;
+    return (
+      <View style={{ width: "100%", paddingTop: 12 }}>
+        {/* Search Wrap */}
+        <Animated.View
+          style={[
+            styles.searchWrap,
+            {
+              marginHorizontal: withMargin ? bp.contentPadding : 0,
+              transform: [{ scale: inputScale }],
+            },
+          ]}
+        >
+          <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
+          <TextInput
+            ref={inputRef}
+            style={styles.searchInput}
+            placeholder={
+              searchMode === "users"
+                ? t("searchUserPlaceholder")
+                : t("searchMoviesTVPeople")
+            }
+            placeholderTextColor={Colors.text.secondary}
+            value={searchText}
+            onChangeText={setSearchText}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            returnKeyType="search"
+            allowFontScaling={false}
+            autoCorrect={false}
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearBtn}
+              onPress={() => setSearchText("")}
+            >
+              <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
             </TouchableOpacity>
-            <View>
-              <Text style={styles.catTitle}>{t(CATS[activeCat]?.label)}</Text>
-              <Text style={styles.catSub}>{t(CATS[activeCat]?.subtitle)}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={{ height: 60 }} />
-        )}
-      </View>
+          )}
+        </Animated.View>
 
-      <Animated.View style={[styles.searchWrap, { marginHorizontal: bp.contentPadding, transform: [{ scale: inputScale }] }]}>
-        <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
-        <TextInput
-          ref={inputRef} style={styles.searchInput}
-          placeholder={activeCat ? t('searchIn').replace('{category}', t(CATS[activeCat]?.label)) : searchMode === 'users' ? "Cari nama atau ID pengguna..." : t('searchMoviesTVPeople')}
-          placeholderTextColor={Colors.text.secondary}
-          value={searchText} onChangeText={setSearchText}
-          onFocus={onFocus} onBlur={onBlur}
-          returnKeyType="search" allowFontScaling={false} autoCorrect={false}
-        />
-        {searchText.length > 0 && (
-          <TouchableOpacity style={styles.clearBtn} onPress={() => setSearchText("")}>
-            <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
-          </TouchableOpacity>
-        )}
-      </Animated.View>
-
-      {/* Pill Tab Switcher */}
-      {!activeCat && (
-        <View style={[styles.tabSwitcher, { marginHorizontal: bp.contentPadding }]}>
+        {/* Pill Tab Switcher */}
+        <View
+          style={[
+            styles.tabSwitcher,
+            { marginHorizontal: withMargin ? bp.contentPadding : 0 },
+          ]}
+        >
           <Pressable
-            style={({ pressed }) => [styles.pill, searchMode === 'media' && styles.pillActive, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]}
+            style={({ pressed }) => [
+              styles.pill,
+              searchMode === "media" && styles.pillActive,
+              cursorPointer,
+              pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+            ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSearchMode('media');
+              setSearchMode("media");
             }}
             accessibilityRole="tab"
             accessibilityLabel="Cari Film & TV"
           >
-            <Text style={[styles.pillText, searchMode === 'media' && styles.pillTextActive]}>🎬 Film & TV</Text>
+            <Text
+              style={[
+                styles.pillText,
+                searchMode === "media" && styles.pillTextActive,
+              ]}
+            >
+              🎬 Film & TV
+            </Text>
           </Pressable>
           <Pressable
-            style={({ pressed }) => [styles.pill, searchMode === 'users' && styles.pillActive, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]}
+            style={({ pressed }) => [
+              styles.pill,
+              searchMode === "users" && styles.pillActive,
+              cursorPointer,
+              pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+            ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSearchMode('users');
+              if (!user) {
+                (global as any).showLoginPrompt?.();
+              } else {
+                setSearchMode("users");
+              }
             }}
             accessibilityRole="tab"
             accessibilityLabel="Cari Pengguna"
           >
-            <Text style={[styles.pillText, searchMode === 'users' && styles.pillTextActive]}>👥 Pengguna</Text>
+            <Text
+              style={[
+                styles.pillText,
+                searchMode === "users" && styles.pillTextActive,
+              ]}
+            >
+              👥 Pengguna
+            </Text>
           </Pressable>
+        </View>
+
+        {/* Filter Chips */}
+        {searchMode === "media" && (
+          <SearchFilterRow
+            filters={FILTER_CHIPS}
+            activeFilter={activeFilter}
+            onSelect={setActiveFilter}
+            t={t}
+          />
+        )}
+      </View>
+    );
+  };
+
+  const headerHeight = useMemo(() => {
+    if (activeCat) {
+      return insets.top + 60 + 52 + 16;
+    }
+    return insets.top + 60;
+  }, [insets.top, activeCat]);
+
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" />
+
+      {/* ── Absolute Header Container ── */}
+      {activeCat && (
+        <View style={[styles.fixedHeader, { paddingTop: insets.top }]}>
+          <View
+            style={[
+              styles.headerContainer,
+              { paddingHorizontal: bp.contentPadding },
+            ]}
+          >
+            <View style={styles.catHeader}>
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => setActiveCat(null)}
+              >
+                <ArrowLeft size={IconSize.md} color={Colors.white} />
+              </TouchableOpacity>
+              <View>
+                <Text style={styles.catTitle}>{t(CATS[activeCat]?.label)}</Text>
+                <Text style={styles.catSub}>
+                  {t(CATS[activeCat]?.subtitle)}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <Animated.View
+            style={[
+              styles.searchWrap,
+              {
+                marginHorizontal: bp.contentPadding,
+                transform: [{ scale: inputScale }],
+              },
+            ]}
+          >
+            <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
+            <TextInput
+              ref={inputRef}
+              style={styles.searchInput}
+              placeholder={t("searchIn").replace(
+                "{category}",
+                t(CATS[activeCat]?.label),
+              )}
+              placeholderTextColor={Colors.text.secondary}
+              value={searchText}
+              onChangeText={setSearchText}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              returnKeyType="search"
+              allowFontScaling={false}
+              autoCorrect={false}
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearBtn}
+                onPress={() => setSearchText("")}
+              >
+                <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
+              </TouchableOpacity>
+            )}
+          </Animated.View>
         </View>
       )}
 
-      {searchMode === 'media' ? (
-        <TypedFlashList
-          estimatedItemSize={150}
-          data={isPeople ? personItems : items}
-          keyExtractor={(i: any) => String(i.id)}
-          renderItem={({ item }: { item: any }) => isPeople ? (
-            <PersonCard person={item} onPress={() => goToPerson(item.id)} t={t} />
-          ) : (
-            <MovieListItem 
-              movie={item} 
-              onPress={() => goToMovie(item.id, item.media_type)} 
-              onAdd={() => toggleWL(item)} 
-              inWatchlist={isInWatchlist(item.id)} 
-            />
-          )}
-          ListHeaderComponent={
-            <View style={styles.headerWrapper}>
-              {!activeCat && (
-                <SearchFilterRow 
-                  filters={FILTER_CHIPS} 
-                  activeFilter={activeFilter} 
-                  onSelect={setActiveFilter} 
-                  t={t} 
+      {/* ── Scrollable list area ── */}
+      <View style={{ flex: 1 }}>
+        {searchMode === "media" ? (
+          <TypedFlashList
+            style={{ flex: 1 }}
+            ref={mediaListRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            estimatedItemSize={150}
+            data={isPeople ? personItems : items}
+            keyExtractor={(i: any) => String(i.id)}
+            renderItem={({ item }: { item: any }) =>
+              isPeople ? (
+                <PersonCard
+                  person={item}
+                  onPress={() => goToPerson(item.id)}
+                  t={t}
                 />
-              )}
-              {showDefault ? (
-                <View style={styles.defaultHeader}>
-                  {recentSearches.length > 0 && (
-                    <View style={styles.recentSection}>
-                      <Text style={styles.sectionLbl}>{t('recent')}</Text>
-                      {recentSearches.map(txt => (
-                        <Pressable key={txt} style={({ pressed }) => [styles.recentRow, pressed && { opacity: 0.7 }]} onPress={() => setSearchText(txt)}>
-                          <Clock size={IconSize.sm} color={Colors.primary} />
-                          <Text style={styles.recentTxt}>{txt}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                  {trendingKeywords.length > 0 && (
-                    <View style={styles.trendingSection}>
-                      <Text style={styles.sectionLbl}>{t('trendingSearches')}</Text>
-                      <View style={styles.pills}>
-                        {trendingKeywords.map(txt => (
-                          <Pressable key={txt} style={({ pressed }) => [styles.pillChip, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]} onPress={() => setSearchText(txt)}>
-                            <TrendingUp size={IconSize.xs} color={Colors.primary} />
-                            <Text style={styles.pillTxt}>{txt}</Text>
+              ) : (
+                <MovieListItem
+                  movie={item}
+                  onPress={() => goToMovie(item.id, item.media_type)}
+                  onAdd={() => toggleWL(item)}
+                  inWatchlist={isInWatchlist(item.id)}
+                />
+              )
+            }
+            ListHeaderComponent={
+              <View style={styles.headerWrapper}>
+                {renderSearchHeader(true)}
+                {showDefault ? (
+                  <View style={styles.defaultHeader}>
+                    {recentSearches.length > 0 && (
+                      <View style={styles.recentSection}>
+                        <Text style={styles.sectionLbl}>{t("recent")}</Text>
+                        {recentSearches.map((txt) => (
+                          <Pressable
+                            key={txt}
+                            style={({ pressed }) => [
+                              styles.recentRow,
+                              pressed && { opacity: 0.7 },
+                            ]}
+                            onPress={() => setSearchText(txt)}
+                          >
+                            <Clock size={IconSize.sm} color={Colors.primary} />
+                            <Text style={styles.recentTxt}>{txt}</Text>
                           </Pressable>
                         ))}
                       </View>
-                    </View>
-                  )}
-                  <Text style={styles.sectionLbl}>
-                    {activeFilter === "all" ? t('trendingNow') : t('popular')}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          }
-          ListFooterComponent={renderFooter}
-          ListEmptyComponent={!isLoading ? (
-            <SearchEmptyState title={showDefault ? t('searchPlaceholder') : t('noResults')} subtitle={!showDefault ? t('tryAnother') : undefined} />
-          ) : <ActivityIndicator size="large" color={Colors.primary} style={styles.loadingIndicator} />}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <TypedFlashList
-          estimatedItemSize={80}
-          data={userResults.data || []}
-          keyExtractor={(i: UserProfile) => i.id}
-          renderItem={({ item }: { item: UserProfile }) => (
-            <Pressable 
-              style={({ pressed }) => [styles.userCard, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]} 
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push({ pathname: '/user/[userId]', params: { userId: item.id } } as any);
-              }}
-            >
-              <Image source={{ uri: item.avatar_url || 'https://via.placeholder.com/50' }} style={styles.userAvatar} contentFit="cover" />
-              <View style={styles.userInfo}>
-                <Text style={styles.userUsername}>{item.username}</Text>
-                <Text style={styles.userSubText}>View Profile</Text>
+                    )}
+                    {trendingKeywords.length > 0 && (
+                      <View style={styles.trendingSection}>
+                        <Text style={styles.sectionLbl}>
+                          {t("trendingSearches")}
+                        </Text>
+                        <View style={styles.pills}>
+                          {trendingKeywords.map((txt) => (
+                            <Pressable
+                              key={txt}
+                              style={({ pressed }) => [
+                                styles.pillChip,
+                                pressed && {
+                                  opacity: 0.7,
+                                  transform: [{ scale: 0.98 }],
+                                },
+                              ]}
+                              onPress={() => setSearchText(txt)}
+                            >
+                              <TrendingUp
+                                size={IconSize.xs}
+                                color={Colors.primary}
+                              />
+                              <Text style={styles.pillTxt}>{txt}</Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+                    <Text style={styles.sectionLbl}>
+                      {activeFilter === "all" ? t("trendingNow") : t("popular")}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
-              <ChevronRight size={20} color={Colors.text.secondary} />
-            </Pressable>
-          )}
-          ListEmptyComponent={userResults.status === 'loading' ? (
-            <ActivityIndicator size="large" color={Colors.accentBlue} style={styles.loadingIndicator} />
-          ) : debouncedQ.trim() ? (
-            <View style={styles.center}>
-              <User size={48} color="rgba(255,255,255,0.1)" />
-              <Text style={styles.emptyTitle}>No users found</Text>
-              <Text style={styles.emptySub}>Try searching for another username</Text>
-            </View>
-          ) : (
-            <View style={styles.center}>
-              <Search size={48} color="rgba(255,255,255,0.05)" />
-              <Text style={styles.emptyTitle}>Find your friends</Text>
-              <Text style={styles.emptySub}>Search for movie enthusiasts by their username</Text>
-            </View>
-          )}
-          contentContainerStyle={[styles.listContent, { paddingHorizontal: bp.contentPadding }]}
-        />
-      )}
-    </SafeAreaView>
+            }
+            ListFooterComponent={renderFooter}
+            ListEmptyComponent={
+              !isLoading ? (
+                <SearchEmptyState
+                  title={showDefault ? t("searchPlaceholder") : t("noResults")}
+                  subtitle={!showDefault ? t("tryAnother") : undefined}
+                />
+              ) : (
+                <ActivityIndicator
+                  size="large"
+                  color={Colors.primary}
+                  style={styles.loadingIndicator}
+                />
+              )
+            }
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingTop: headerHeight },
+            ]}
+          />
+        ) : (
+          <TypedFlashList
+            style={{ flex: 1 }}
+            ref={userListRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            estimatedItemSize={80}
+            data={userResults.data || []}
+            keyExtractor={(i: UserProfile) => i.id}
+            renderItem={({ item }: { item: UserProfile }) => (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.userCard,
+                  cursorPointer,
+                  pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({
+                    pathname: "/user/[userId]",
+                    params: { userId: item.id },
+                  } as any);
+                }}
+              >
+                <Avatar
+                  uri={item.avatar_url}
+                  name={item.full_name || item.username}
+                  size={50}
+                  style={styles.userAvatar}
+                />
+                <View style={styles.userInfo}>
+                  <Text style={styles.userDisplayName}>
+                    {item.full_name || item.username}
+                  </Text>
+                  <Text style={styles.userHandle}>@{item.username}</Text>
+                </View>
+                <ChevronRight size={20} color={Colors.text.secondary} />
+              </Pressable>
+            )}
+            ListHeaderComponent={renderSearchHeader(false)}
+            ListEmptyComponent={
+              userResults.status === "loading" ? (
+                <ActivityIndicator
+                  size="large"
+                  color={Colors.accentBlue}
+                  style={styles.loadingIndicator}
+                />
+              ) : debouncedQ.trim() ? (
+                <View style={styles.center}>
+                  <User size={48} color="rgba(255,255,255,0.1)" />
+                  <Text style={styles.emptyTitle}>{t("noUsersFound")}</Text>
+                  <Text style={styles.emptySub}>{t("noUsersFoundSub")}</Text>
+                </View>
+              ) : (
+                <View style={styles.center}>
+                  <Search size={48} color="rgba(255,255,255,0.05)" />
+                  <Text style={styles.emptyTitle}>{t("findYourFriends")}</Text>
+                  <Text style={styles.emptySub}>{t("findYourFriendsSub")}</Text>
+                </View>
+              )
+            }
+            contentContainerStyle={[
+              styles.listContent,
+              {
+                paddingTop: headerHeight,
+                paddingHorizontal: bp.contentPadding,
+              },
+            ]}
+          />
+        )}
+      </View>
+
+      {/* ── Scroll-to-top FAB ── */}
+      <Animated.View
+        style={[
+          styles.fab,
+          {
+            opacity: fabAnim,
+            transform: [
+              {
+                scale: fabAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.6, 1],
+                }),
+              },
+              {
+                translateY: fabAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                }),
+              },
+            ],
+            pointerEvents: showFab ? "auto" : "none",
+          } as any,
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.fabBtn}
+          onPress={scrollToTop}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to top"
+        >
+          <ChevronUp size={22} color="#FFFFFF" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
+  fixedHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    backgroundColor: Colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.05)",
+  },
   headerContainer: { paddingTop: Spacing.sm, paddingBottom: 4 },
   titleRow: { marginBottom: Spacing.md },
-  pageTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.black, color: Colors.text.primary, letterSpacing: -0.5 },
-  pageSub: { fontSize: FontSize.sm, color: Colors.text.secondary, marginTop: 3 },
-  catHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: Spacing.lg },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.overlay.light, alignItems: "center", justifyContent: "center" },
-  catTitle: { fontSize: FontSize.xxl, fontWeight: FontWeight.black, color: Colors.text.primary },
+  pageTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.black,
+    color: Colors.text.primary,
+    letterSpacing: -0.5,
+  },
+  pageSub: {
+    fontSize: FontSize.sm,
+    color: Colors.text.secondary,
+    marginTop: 3,
+  },
+  catHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: Spacing.lg,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.overlay.light,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  catTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.black,
+    color: Colors.text.primary,
+  },
   catSub: { fontSize: FontSize.sm, color: Colors.text.secondary },
-  searchWrap: { 
-    flexDirection: "row", alignItems: "center", gap: Spacing.md, marginBottom: Spacing.lg, 
-    height: 52, backgroundColor: Colors.surface, borderRadius: Radius.lg, 
-    paddingHorizontal: Spacing.lg, ...Shadow.md 
+  searchWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+    height: 52,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+    ...Shadow.md,
   },
   searchInput: { flex: 1, fontSize: FontSize.base, color: Colors.text.primary },
-  clearBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.primary, justifyContent: "center", alignItems: "center" },
-  listContent: { paddingBottom: 100 },
-  resultCount: { fontSize: FontSize.xs, color: Colors.text.secondary, textAlign: 'center', marginBottom: 8 },
-  loadMore: { 
-    height: 48, borderRadius: Radius.lg, backgroundColor: Colors.overlay.light, 
-    justifyContent: "center", alignItems: "center", marginHorizontal: Spacing.xl 
+  clearBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  loadMoreTxt: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.danger },
-  sectionLbl: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.text.primary, paddingHorizontal: Spacing.xl, marginBottom: Spacing.md },
-  recentRow: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingHorizontal: Spacing.xl, paddingVertical: 12 },
+  listContent: { paddingBottom: 100 },
+  resultCount: {
+    fontSize: FontSize.xs,
+    color: Colors.text.secondary,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  loadMore: {
+    height: 48,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.overlay.light,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: Spacing.xl,
+  },
+  loadMoreTxt: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: Colors.danger,
+  },
+  sectionLbl: {
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    color: Colors.text.primary,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
+  recentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 12,
+  },
   recentTxt: { fontSize: FontSize.base, color: Colors.text.primary },
-  pills: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: Spacing.xl, gap: Spacing.sm },
-  pillChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: Colors.surface, borderRadius: Radius.full, paddingHorizontal: 14, paddingVertical: 8 },
+  pills: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  pillChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
   pillTxt: { fontSize: FontSize.md, color: Colors.text.primary },
   footerContainer: { alignItems: "center", paddingVertical: 16 },
-  loadMoreContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  loadMoreContent: { flexDirection: "row", alignItems: "center", gap: 8 },
   defaultHeader: { paddingBottom: Spacing.md },
   recentSection: { marginBottom: Spacing.xl },
   trendingSection: { marginBottom: Spacing.xl },
@@ -392,22 +883,22 @@ const styles = StyleSheet.create({
 
   // Pill Tab Switcher styles
   tabSwitcher: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.surface,
     borderRadius: 99,
     padding: 4,
     marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: "rgba(255,255,255,0.05)",
   },
   pill: {
     flex: 1,
     paddingVertical: 10,
     borderRadius: 99,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
   },
   pillActive: {
     backgroundColor: Colors.accentBlue,
@@ -422,13 +913,13 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.surface,
     padding: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: "rgba(255,255,255,0.05)",
     marginBottom: Spacing.md,
     ...Shadow.sm,
   },
@@ -442,19 +933,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.md,
   },
-  userUsername: {
+  userDisplayName: {
     color: Colors.white,
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
-  userSubText: {
-    color: Colors.text.secondary,
+  userHandle: {
+    color: "rgba(255,255,255,0.5)",
     fontSize: FontSize.xs,
     marginTop: 2,
+    fontWeight: FontWeight.semibold,
   },
   center: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: Spacing.xxxl,
     marginTop: Spacing.xl,
   },
@@ -467,7 +959,28 @@ const styles = StyleSheet.create({
   emptySub: {
     color: Colors.text.secondary,
     fontSize: FontSize.sm,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 4,
+  },
+
+  // Scroll-to-top FAB
+  fab: {
+    position: "absolute",
+    bottom: 100,
+    right: 20,
+    zIndex: 99,
+  },
+  fabBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
   },
 });

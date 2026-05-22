@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
+import SafeImage from '@/components/common/SafeImage';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,6 +13,7 @@ import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES
 import { usePersonDetails } from '@/hooks/useMovies';
 import PosterCard from '@/components/common/PosterCard';
 import { useLanguage } from '@/context/LanguageContext';
+import { useWatchlist } from '@/context/WatchlistContext';
 import { MediaItem } from '@/types';
 import { PersonDetailSkeleton } from '@/components/common/DetailSkeleton';
 
@@ -20,13 +21,14 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
   const params = useLocalSearchParams();
   const id = params.id || params.personId;
   const { t } = useLanguage();
+  const { isHydrated } = useWatchlist();
   const { data, isLoading } = usePersonDetails(Number(id));
   const person = data?.person;
   const credits = data?.credits?.cast || [];
   
   const [expandedBio, setExpandedBio] = useState(false);
 
-  if (isLoading || !person) {
+  if (!isHydrated || isLoading || !person) {
     return <PersonDetailSkeleton />;
   }
 
@@ -60,26 +62,24 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.heroWrap}>
-          {backdropUri ? (
-            <Image 
-              source={{ uri: backdropUri }} 
-              style={StyleSheet.absoluteFill} 
-              contentFit="cover" 
-              cachePolicy="memory-disk"
-              transition={200}
-              priority="low"
-            />
-          ) : (
-            <View style={styles.backdropPlaceholder} />
-          )}
+          <SafeImage 
+            uri={backdropUri} 
+            fallbackType="generic"
+            style={StyleSheet.absoluteFill} 
+            contentFit="cover" 
+            cachePolicy="memory-disk"
+            transition={200}
+            priority="low"
+          />
           <LinearGradient
             colors={['transparent', 'transparent', Colors.background]}
             locations={[0, 0.4, 1]}
             style={styles.backdropOverlay}
           />
           <View style={styles.profileFloat}>
-            <Image 
-              source={{ uri: `${TMDB_IMAGE_SIZES.small}${person.profile_path}` }} 
+            <SafeImage 
+              uri={person.profile_path ? `${TMDB_IMAGE_SIZES.small}${person.profile_path}` : null} 
+              fallbackType="user"
               style={styles.profileImg} 
               contentFit="cover" 
               cachePolicy="memory-disk"

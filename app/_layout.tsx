@@ -2,8 +2,42 @@ import React, { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, View, ActivityIndicator } from 'react-native';
+import { Platform, View, ActivityIndicator, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+
+const GlassHeaderBackground = () => {
+  if (Platform.OS === 'web') {
+    return (
+      <View 
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(10, 10, 11, 0.8)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottomWidth: 1,
+            borderBottomColor: 'rgba(255, 255, 255, 0.05)'
+          } as any
+        ]} 
+      />
+    );
+  }
+  return (
+    <BlurView 
+      intensity={80} 
+      tint="dark" 
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          borderBottomWidth: 1,
+          borderBottomColor: 'rgba(255, 255, 255, 0.05)'
+        }
+      ]} 
+    />
+  );
+};
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -11,7 +45,7 @@ import { WatchlistProvider } from '@/context/WatchlistContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { SocialProvider } from '@/context/SocialContext';
 import { LanguageProvider } from '@/context/LanguageContext';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import OfflineGuard from '@/components/common/OfflineGuard';
 
 // Global Polish: Enable font scaling but recommend max multipliers for layout-critical text
@@ -78,9 +112,8 @@ function WebHead() {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         registrations.forEach(reg => {
           reg.unregister();
-          console.log('[SW] Unregistered stale service worker:', reg.scope);
         });
-      }).catch(() => {});
+      }).catch((_err) => { /* SW unregister failed — non-critical */ });
     }
 
     // Clear Cache Storage to remove any stale cached responses
@@ -89,7 +122,7 @@ function WebHead() {
         cacheNames.forEach(name => {
           caches.delete(name);
         });
-      }).catch(() => {});
+      }).catch((_err) => { /* Cache clear failed — non-critical */ });
     }
   }, []);
 
@@ -160,7 +193,14 @@ function RootLayoutNav() {
           headerTransparent: true,
           title: 'Profile',
           headerTintColor: '#F5F0F1',
-          headerStyle: { backgroundColor: '#0A0A0B' }
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: '800',
+            color: '#F5F0F1',
+          },
+          headerBackground: () => <GlassHeaderBackground />,
+          headerStyle: { backgroundColor: 'transparent' }
         }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
@@ -172,19 +212,21 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <ErrorBoundary>
-      <WebHead />
-      <AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <WebHead />
         <LanguageProvider>
-          <NotificationProvider>
-            <SocialProvider>
-              <WatchlistProvider>
-                <RootLayoutNav />
-              </WatchlistProvider>
-            </SocialProvider>
-          </NotificationProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <SocialProvider>
+                <WatchlistProvider>
+                  <RootLayoutNav />
+                </WatchlistProvider>
+              </SocialProvider>
+            </NotificationProvider>
+          </AuthProvider>
         </LanguageProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }

@@ -18,8 +18,10 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { X, Check, RotateCcw } from 'lucide-react-native';
 import { Colors, Radius, FontWeight } from '@/constants/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CROP_SIZE = SCREEN_WIDTH * 0.8;
+const IS_WEB = Platform.OS === 'web';
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const MAX_CROP_WIDTH = IS_WEB ? 400 : SCREEN_WIDTH;
+const CROP_SIZE = IS_WEB ? 280 : SCREEN_WIDTH * 0.8;
 
 interface ImageCropModalProps {
   visible: boolean;
@@ -86,10 +88,10 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ visible, imageUri, onCl
         [
           { resize: { width: 1000 } }, 
         ],
-        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      onSave(`data:image/jpeg;base64,${result.base64}`);
+      onSave(result.uri);
     } catch (error) {
       console.error('Crop error:', error);
     } finally {
@@ -108,65 +110,77 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ visible, imageUri, onCl
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <GestureHandlerRootView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
-            <X color="#fff" size={24} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Sesuaikan Foto</Text>
-          <TouchableOpacity onPress={handleCrop} style={styles.iconBtn} disabled={isProcessing}>
-            {isProcessing ? <ActivityIndicator color={Colors.primary} size="small" /> : <Check color={Colors.primary} size={24} />}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.cropperArea}>
-          <View style={styles.imageContainer}>
-            <GestureDetector gesture={composedGesture}>
-              <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-                <Image 
-                  source={{ uri: imageUri }} 
-                  style={styles.image} 
-                  contentFit="contain"
-                />
-              </Animated.View>
-            </GestureDetector>
+      <View style={styles.modalRoot}>
+        <GestureHandlerRootView style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
+              <X color="#fff" size={24} />
+            </TouchableOpacity>
+            <Text style={styles.title}>Sesuaikan Foto</Text>
+            <TouchableOpacity onPress={handleCrop} style={styles.iconBtn} disabled={isProcessing}>
+              {isProcessing ? <ActivityIndicator color={Colors.primary} size="small" /> : <Check color={Colors.primary} size={24} />}
+            </TouchableOpacity>
           </View>
 
-          {/* Circle Mask Overlay */}
-          <View style={[styles.maskContainer, { pointerEvents: 'none' }]}>
-            <View style={styles.maskOutside} />
-            <View style={styles.maskRow}>
+          <View style={styles.cropperArea}>
+            <View style={styles.imageContainer}>
+              <GestureDetector gesture={composedGesture}>
+                <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+                  <Image 
+                    source={{ uri: imageUri }} 
+                    style={styles.image} 
+                    contentFit="contain"
+                  />
+                </Animated.View>
+              </GestureDetector>
+            </View>
+
+            {/* Circle Mask Overlay */}
+            <View pointerEvents="none" style={styles.maskContainer}>
               <View style={styles.maskOutside} />
-              <View style={styles.maskCircle} />
+              <View style={styles.maskRow}>
+                <View style={styles.maskOutside} />
+                <View style={styles.maskCircle} />
+                <View style={styles.maskOutside} />
+              </View>
               <View style={styles.maskOutside} />
             </View>
-            <View style={styles.maskOutside} />
           </View>
-        </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.resetBtn} onPress={reset}>
-            <RotateCcw size={16} color="rgba(255,255,255,0.6)" />
-            <Text style={styles.resetText}>Reset Posisi</Text>
-          </TouchableOpacity>
-          <Text style={styles.hint}>Gunakan dua jari untuk zoom, geser untuk memindahkan</Text>
-        </View>
-      </GestureHandlerRootView>
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.resetBtn} onPress={reset}>
+              <RotateCcw size={16} color="rgba(255,255,255,0.6)" />
+              <Text style={styles.resetText}>Reset Posisi</Text>
+            </TouchableOpacity>
+            <Text style={styles.hint}>Gunakan dua jari untuk zoom, geser untuk memindahkan</Text>
+          </View>
+        </GestureHandlerRootView>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  modalRoot: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: IS_WEB ? 'center' : 'stretch',
+  },
+  container: {
+    flex: IS_WEB ? undefined : 1,
+    width: IS_WEB ? Math.min(SCREEN_WIDTH * 0.9, 500) : '100%',
+    height: IS_WEB ? 600 : '100%',
     backgroundColor: '#000',
+    borderRadius: IS_WEB ? Radius.xxl : 0,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: IS_WEB ? 20 : (Platform.OS === 'ios' ? 60 : 40),
     paddingBottom: 20,
   },
   title: {
@@ -176,16 +190,21 @@ const styles = StyleSheet.create({
   },
   iconBtn: {
     padding: 8,
+    ...Platform.select({
+      web: { cursor: 'pointer' }
+    })
   },
   cropperArea: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#111',
   },
   imageContainer: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH,
+    width: MAX_CROP_WIDTH,
+    height: MAX_CROP_WIDTH,
   },
   image: {
     width: '100%',
@@ -214,9 +233,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   footer: {
-    paddingBottom: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: IS_WEB ? 20 : (Platform.OS === 'ios' ? 60 : 40),
     alignItems: 'center',
     paddingHorizontal: 40,
+    paddingTop: 15,
   },
   resetBtn: {
     flexDirection: 'row',
@@ -226,7 +246,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: Radius.full,
-    marginBottom: 20,
+    marginBottom: 10,
+    ...Platform.select({
+      web: { cursor: 'pointer' }
+    })
   },
   resetText: {
     color: 'rgba(255,255,255,0.8)',

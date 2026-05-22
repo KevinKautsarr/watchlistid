@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
 import * as Haptics from 'expo-haptics';
 import { supabase, typedFrom } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useSocial } from '@/context/SocialContext';
 import { FetchState, UserProfile } from '@/types';
+import { decodeBase64ToArrayBuffer } from '@/utils/base64';
 
 export const useProfileData = (userId: string | undefined) => {
   const { user, profile, refreshProfile } = useAuth();
@@ -16,6 +19,7 @@ export const useProfileData = (userId: string | undefined) => {
 
   const [targetLogs, setTargetLogs] = useState<any[]>([]);
   const [targetWatchlist, setTargetWatchlist] = useState<any[]>([]);
+  const [targetReviews, setTargetReviews] = useState<any[]>([]);
 
   const [targetProfile, setTargetProfile] = useState<FetchState<UserProfile>>({
     status: 'idle',
@@ -48,12 +52,13 @@ export const useProfileData = (userId: string | undefined) => {
     // Clear old data when user changes to prevent displaying stale content
     setTargetLogs([]);
     setTargetWatchlist([]);
+    setTargetReviews([]);
     
     const fetchData = async () => {
       if (!isOwner) {
         setTargetProfile(prev => ({ ...prev, status: 'loading' }));
         try {
-          const { data, error } = await typedFrom('profiles').select('id, username, avatar_url, bio').eq('id', targetUserId).single();
+          const { data, error } = await typedFrom('profiles').select('id, username, full_name, avatar_url, bio').eq('id', targetUserId).single();
           if (data) {
             setTargetProfile({ 
               status: 'success', 
@@ -88,22 +93,26 @@ export const useProfileData = (userId: string | undefined) => {
 
 
 
-  const fetchUserContent = async () => {
-    if (!targetUserId) {
-      console.log('[DEBUG useProfileData] No targetUserId provided to fetchUserContent');
-      return;
-    }
+  const fetchUserContent = useCallback(async () => {
+    if (!targetUserId) return;
     try {
-      console.log('[DEBUG useProfileData] fetchUserContent called with targetUserId:', targetUserId);
       const { data: logsData, error: logsError } = await typedFrom('movie_logs').select('*').eq('user_id', targetUserId).order('watched_at', { ascending: false });
-      
+
       if (logsError) {
-        console.error('[DEBUG useProfileData] movie_logs fetch error:', logsError);
-      } else {
-        console.log('[DEBUG useProfileData] movie_logs fetched successfully. Row count:', logsData?.length);
+        console.error('movie_logs fetch error:', logsError);
       }
-      
-      if (logsData) setTargetLogs(logsData);
+
+      if (logsData) {
+        const uniqueLogs: any[] = [];
+        const seen = new Set<number>();
+        for (const item of logsData) {
+          if (!seen.has(item.movie_id)) {
+            seen.add(item.movie_id);
+            uniqueLogs.push(item);
+          }
+        }
+        setTargetLogs(uniqueLogs);
+      }
 
       const { data: wlData, error: wlError } = await typedFrom('watchlist').select('*').eq('user_id', targetUserId).order('added_at', { ascending: false });
       if (wlError) console.error('Watchlist fetch error:', wlError);
@@ -121,12 +130,36 @@ export const useProfileData = (userId: string | undefined) => {
         }));
         setTargetWatchlist(mappedWl);
       }
+
+      // Fetch target user's reviews
+      const { data: reviewsData, error: reviewsError } = await typedFrom('reviews')
+        .select('*, user:profiles(username, avatar_url)')
+        .eq('user_id', targetUserId)
+        .order('created_at', { ascending: false });
+
+      if (reviewsError) {
+        console.error('reviews fetch error:', reviewsError);
+      } else if (reviewsData) {
+        // Map each review to find its movie title and poster from logs
+        const mappedReviews = reviewsData.map((r: any) => {
+          const matchingLog = logsData?.find(l => l.movie_id === r.movie_id);
+          const matchingWl = wlData?.find(w => w.movie_id === r.movie_id);
+          return {
+            ...r,
+            movie_title: matchingLog?.movie_title || matchingWl?.title || `Movie #${r.movie_id}`,
+            poster_path: matchingLog?.poster_path || matchingWl?.poster_path || null,
+            review_text: r.content,
+            watched_at: matchingLog?.watched_at || r.created_at,
+          };
+        });
+        setTargetReviews(mappedReviews);
+      }
     } catch (e) {
       console.error('Error fetching user content:', e);
     }
-  };
+  }, [targetUserId]);
 
-  const fetchSocialStats = async () => {
+  const fetchSocialStats = useCallback(async () => {
     if (!targetUserId) return;
     try {
       const { count: fers } = await typedFrom('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
@@ -140,7 +173,7 @@ export const useProfileData = (userId: string | undefined) => {
     } catch (err) {
       console.error('Stats error:', err);
     }
-  };
+  }, [targetUserId, isOwner, user, getFollowStatus]);
 
   const fetchSocialList = async (tab: 'followers' | 'following') => {
     if (!targetUserId) return;
@@ -280,7 +313,7 @@ export const useProfileData = (userId: string | undefined) => {
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -291,12 +324,13 @@ export const useProfileData = (userId: string | undefined) => {
     }
   };
 
-  const handleSaveProfile = async (data: { username: string; bio: string }, t: any) => {
+  const handleSaveProfile = async (data: { username: string; full_name: string; bio: string }, t: any) => {
     if (!user) return;
     setIsSaving(true);
     try {
       const { error } = await typedFrom('profiles').update({
         username: data.username,
+        full_name: data.full_name || null,
         bio: data.bio,
       }).eq('id', user.id);
       
@@ -325,26 +359,48 @@ export const useProfileData = (userId: string | undefined) => {
         [{ resize: { width: 400, height: 400 } }],
         { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
-
-      // 2. Baca file secara universal menjadi Blob menggunakan Fetch API
-      const response = await fetch(manipResult.uri);
-      const fileBlob = await response.blob();
-
-      // 3. Validasi batas ukuran file (maksimal 5MB)
+      // 2. Baca data file secara universal sebagai Blob di Web dan ArrayBuffer di Native (menghindari bug Blob di React Native)
+      let fileData: Blob | ArrayBuffer;
+      let contentType = 'image/jpeg';
       const MAX_SIZE = 5 * 1024 * 1024; // 5 Megabytes
-      if (fileBlob.size > MAX_SIZE) {
+
+      if (Platform.OS === 'web') {
+        const response = await fetch(manipResult.uri);
+        fileData = await response.blob();
+        contentType = 'image/jpeg';
+      } else {
+        const base64 = await FileSystem.readAsStringAsync(manipResult.uri, {
+          encoding: 'base64',
+        });
+        fileData = decodeBase64ToArrayBuffer(base64);
+        
+        // Deteksi tipe konten dari uri manipulasi jika memungkinkan
+        if (manipResult.uri.toLowerCase().endsWith('.png')) {
+          contentType = 'image/png';
+        }
+      }
+
+      // 3. Validasi batas ukuran file
+      const fileSize = Platform.OS === 'web' ? (fileData as Blob).size : (fileData as ArrayBuffer).byteLength;
+      if (fileSize > MAX_SIZE) {
         throw new Error('Ukuran gambar terlalu besar (maksimal 5MB).');
       }
 
-      // 4. Deteksi Content-Type dan ekstensi file secara dinamis
-      const contentType = fileBlob.type || 'image/jpeg';
+      // 4. Deteksi ekstensi file secara dinamis
       const fileExt = contentType === 'image/png' ? 'png' : 'jpg';
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      console.log('--- Submitting Upload to Supabase Storage ---');
+      console.log('File Name:', fileName);
+      console.log('File Size (bytes):', fileSize);
+      console.log('Content Type:', contentType);
+      console.log('Platform:', Platform.OS);
+      console.log('File Data Instance:', fileData?.constructor?.name);
 
       // 5. Upload ke Supabase Storage dengan memantau progress
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, fileBlob, {
+        .upload(fileName, fileData, {
           contentType,
           upsert: true,
           onUploadProgress: (progress: any) => {
@@ -368,7 +424,8 @@ export const useProfileData = (userId: string | undefined) => {
       setShowCropModal(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
-      console.error('Avatar update error:', err);
+      console.error('Avatar update error detail:', JSON.stringify(err, null, 2));
+      console.error('Avatar update error object:', err);
       alert(err.message || t('avatarError'));
     } finally {
       setIsSaving(false);
@@ -396,6 +453,9 @@ export const useProfileData = (userId: string | undefined) => {
     handleUpdateAvatar,
     targetLogs,
     targetWatchlist,
+    targetReviews,
+    fetchUserContent,
+    fetchSocialStats,
     // Social Modal Exports
     socialModalVisible, setSocialModalVisible,
     socialModalTab, setSocialModalTab,

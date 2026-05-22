@@ -2,18 +2,21 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, Platform, ScrollView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 import { ArrowUpDown, Film, Check, Trash2, ArrowUp, ArrowDown } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
 import { useWatchlist } from '@/context/WatchlistContext';
-import { WATCHLIST_STATUS } from '@/types/watchlist';
+import { WATCHLIST_STATUS, WatchlistItem } from '@/types/watchlist';
 import MovieListItem from '@/components/movie/MovieListItem';
+import LogModal from '@/components/movie/LogModal';
+import { Movie } from '@/types';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { cursorPointer } from '@/utils/webStyles';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSocial } from '@/context/SocialContext';
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
 
@@ -22,12 +25,41 @@ const ITEM_HEIGHT = 100;
 
 const WatchlistScreen: React.FC = () => {
   const router = useRouter();
-  const { watchlist, toggleWatched, removeFromWatchlist, userRatings } = useWatchlist();
-  const [activeTab, setActiveTab] = useState('Watchlist'); // 'Watchlist' or 'Rated'
+  const insets = useSafeAreaInsets();
+  const { watchlist, toggleWatched, removeFromWatchlist, getMovieStatus, isHydrated, isInWatchlist } = useWatchlist();
+  const { userLogs, deleteLog } = useSocial();
+  const [activeTab, setActiveTab] = useState('Watchlist'); // 'Watchlist', 'Watched', or 'Reviewed'
+
   const [activeSort, setActiveSort] = useState('Added');
   const [isAscending, setIsAscending] = useState(false);
   const bp = useBreakpoint();
   const { t } = useLanguage();
+
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [existingLog, setExistingLog] = useState<any>(undefined);
+
+  const handleOpenLogModal = useCallback((item: WatchlistItem) => {
+    const movieObj: Movie = {
+      id: item.id,
+      media_type: item.mediaType || 'movie',
+      title: item.mediaType === 'movie' ? (item.title || '') : '',
+      name: item.mediaType === 'tv' ? (item.name || '') : '',
+      poster_path: item.poster_path,
+      overview: item.overview || '',
+      vote_average: item.vote_average || 0,
+      vote_count: item.vote_count || 0,
+      popularity: 0,
+      original_language: 'en',
+      genre_ids: [],
+      release_date: item.mediaType === 'movie' ? (item.release_date || '') : '',
+    } as any;
+    
+    const matchLog = userLogs.find(l => l.movie_id === item.id);
+    setExistingLog(matchLog);
+    setSelectedMovie(movieObj);
+    setLogModalVisible(true);
+  }, [userLogs]);
 
   // M5: Stable callbacks — prevent renderItem from re-creating fns on every render
   const handlePress = useCallback((id: number, mediaType: string) => {
@@ -39,21 +71,72 @@ const WatchlistScreen: React.FC = () => {
     toggleWatched(id);
   }, [toggleWatched]);
 
-  const handleRemove = useCallback((id: number) => {
+  const handleRemove = useCallback(async (id: number) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     removeFromWatchlist(id);
-  }, [removeFromWatchlist]);
+    
+    // If there's a log entry for this movie/show, delete it to align library tabs with profile stats
+    const log = userLogs.find(l => l.movie_id === id);
+    if (log) {
+      await deleteLog(log.id);
+    }
+  }, [removeFromWatchlist, userLogs, deleteLog]);
 
-  const planToWatchList = useMemo(() => watchlist.filter(m => m.status === WATCHLIST_STATUS.PLAN_TO_WATCH), [watchlist]);
-  const watchedList = useMemo(() => watchlist.filter(m => m.status === WATCHLIST_STATUS.COMPLETED), [watchlist]);
-  const ratedList = useMemo(() => watchlist.filter(m => userRatings[m.id] !== undefined), [watchlist, userRatings]);
+  // Combine explicit watchlist and logs to build a single comprehensive duplicate-free collection
+  const mergedList = useMemo(() => {
+    const map = new Map<number, WatchlistItem>();
+    
+    // 1. Add all items from the explicit watchlist
+    watchlist.forEach(item => {
+      map.set(item.id, item);
+    });
+    
+    // 2. Add all items from user logs (mapping them to WatchlistItem shape)
+    userLogs.forEach(log => {
+      if (!map.has(log.movie_id)) {
+        const isTV = log.media_type === 'tv';
+        const mappedItem: WatchlistItem = isTV ? {
+          id: log.movie_id,
+          mediaType: 'tv',
+          name: log.movie_title,
+          poster_path: log.poster_path || null,
+          backdrop_path: null,
+          addedAt: log.watched_at || log.created_at || new Date().toISOString(),
+          status: WATCHLIST_STATUS.COMPLETED,
+          vote_average: log.rating || 0,
+          vote_count: 0,
+          first_air_date: '',
+          overview: '',
+        } : {
+          id: log.movie_id,
+          mediaType: 'movie',
+          title: log.movie_title,
+          poster_path: log.poster_path || null,
+          backdrop_path: null,
+          addedAt: log.watched_at || log.created_at || new Date().toISOString(),
+          status: WATCHLIST_STATUS.COMPLETED,
+          vote_average: log.rating || 0,
+          vote_count: 0,
+          release_date: '',
+          overview: '',
+        };
+        map.set(log.movie_id, mappedItem);
+      }
+    });
+    
+    return Array.from(map.values());
+  }, [watchlist, userLogs]);
+
+  const planToWatchList = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'plan_to_watch'), [mergedList, getMovieStatus]);
+  const watchedList     = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'watched'), [mergedList, getMovieStatus]);
+  const reviewedList    = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'reviewed'), [mergedList, getMovieStatus]);
 
   // Filter based on Tab
   const filteredList = useMemo(() => {
     if (activeTab === 'Watchlist') return planToWatchList;
     if (activeTab === 'Watched') return watchedList;
-    return ratedList;
-  }, [planToWatchList, watchedList, ratedList, activeTab]);
+    return reviewedList;
+  }, [planToWatchList, watchedList, reviewedList, activeTab]);
 
   const sortedList = useMemo(() => {
     const list = [...filteredList];
@@ -84,19 +167,25 @@ const WatchlistScreen: React.FC = () => {
     return list;
   }, [filteredList, activeSort, isAscending]);
 
+  if (!isHydrated) return null;
+
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
 
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: 60 }]}>
+      <View style={styles.header}>
         <View>
           <Text style={styles.headerSub} allowFontScaling={false}>
-            {activeTab === 'Watchlist' ? `${planToWatchList.length} ${t('moviesShowsToWatch')}` : activeTab === 'Watched' ? `${watchedList.length} Watched` : `${ratedList.length} ${t('ratedByYou')}`}
+            {activeTab === 'Watchlist' 
+              ? `${planToWatchList.length} ${t('planToWatch')}` 
+              : activeTab === 'Watched' 
+                ? `${watchedList.length} ${t('diary')}` 
+                : `${reviewedList.length} ${t('reviewed')}`}
           </Text>
         </View>
       </View>
-
+ 
       {/* ── IMDb Style Tabs ── */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
@@ -104,43 +193,43 @@ const WatchlistScreen: React.FC = () => {
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watchlist'); }}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'Watchlist' }}
-          accessibilityLabel={t('tabWatchlist')}
+          accessibilityLabel="Ingin Ditonton"
         >
           <Text style={[styles.tabText, activeTab === 'Watchlist' && styles.tabTextActive]}>
-            {t('tabWatchlist')}
+            {t('planToWatch')}
           </Text>
           <View style={[styles.tabBadge, activeTab === 'Watchlist' && styles.tabBadgeActive]}>
             <Text style={styles.tabBadgeText}>{planToWatchList.length}</Text>
           </View>
         </TouchableOpacity>
-
+ 
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'Watched' && styles.tabActive, cursorPointer]} 
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watched'); }}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'Watched' }}
-          accessibilityLabel="Watched"
+          accessibilityLabel="Sudah Ditonton"
         >
           <Text style={[styles.tabText, activeTab === 'Watched' && styles.tabTextActive]}>
-            Watched
+            {t('diary')}
           </Text>
           <View style={[styles.tabBadge, activeTab === 'Watched' && styles.tabBadgeActive]}>
             <Text style={styles.tabBadgeText}>{watchedList.length}</Text>
           </View>
         </TouchableOpacity>
-        
+         
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Rated' && styles.tabActive, cursorPointer]} 
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Rated'); }}
+          style={[styles.tab, activeTab === 'Reviewed' && styles.tabActive, cursorPointer]} 
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Reviewed'); }}
           accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'Rated' }}
-          accessibilityLabel={t('rated')}
+          accessibilityState={{ selected: activeTab === 'Reviewed' }}
+          accessibilityLabel="Sudah Direview"
         >
-          <Text style={[styles.tabText, activeTab === 'Rated' && styles.tabTextActive]}>
-            {t('rated')}
+          <Text style={[styles.tabText, activeTab === 'Reviewed' && styles.tabTextActive]}>
+            {t('reviewed')}
           </Text>
-          <View style={[styles.tabBadge, activeTab === 'Rated' && styles.tabBadgeActive]}>
-            <Text style={styles.tabBadgeText}>{Object.keys(userRatings).length}</Text>
+          <View style={[styles.tabBadge, activeTab === 'Reviewed' && styles.tabBadgeActive]}>
+            <Text style={styles.tabBadgeText}>{reviewedList.length}</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -186,50 +275,71 @@ const WatchlistScreen: React.FC = () => {
       </View>
 
       {/* ── List ── */}
-      <FlatList
-        data={sortedList}
-        keyExtractor={item => item.id.toString()}
-        numColumns={1}
-        renderItem={({ item, index }) => (
-          <MovieListItem
-            movie={item}
-            onPress={() => handlePress(item.id, item.mediaType)}
-            showWatched={true}
-            watched={item.status === WATCHLIST_STATUS.COMPLETED}
-            inWatchlist={true}
-            onToggleWatched={() => handleToggleWatched(item.id)}
-            onRemove={() => handleRemove(item.id)}
-            rank={index + 1}
-          />
-        )}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        getItemLayout={(_, index) => ({
-          length: ITEM_HEIGHT,
-          offset: ITEM_HEIGHT * index,
-          index,
-        })}
-        windowSize={5}
-        maxToRenderPerBatch={10}
-        initialNumToRender={8}
-        removeClippedSubviews={true}
-        ListEmptyComponent={(
-          <View style={styles.empty}>
-            <View style={styles.emptyIconWrap}>
-              <Film size={IconSize.xl} color={Colors.primary} strokeWidth={1.5} />
+      <View style={{ flex: 1 }}>
+        <FlatList
+          style={{ flex: 1 }}
+          data={sortedList}
+          keyExtractor={item => item.id.toString()}
+          numColumns={1}
+          renderItem={({ item, index }) => (
+            <MovieListItem
+              movie={item}
+              onPress={() => handlePress(item.id, item.mediaType)}
+              showWatched={true}
+              watched={getMovieStatus(item.id) !== 'plan_to_watch'}
+              inWatchlist={isInWatchlist(item.id)}
+              onToggleWatched={() => handleToggleWatched(item.id)}
+              onRemove={() => handleRemove(item.id)}
+              onWriteReview={() => handleOpenLogModal(item)}
+              rank={index + 1}
+              status={getMovieStatus(item.id)}
+            />
+          )}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          getItemLayout={(_, index) => ({
+            length: ITEM_HEIGHT,
+            offset: ITEM_HEIGHT * index,
+            index,
+          })}
+          windowSize={5}
+          maxToRenderPerBatch={10}
+          initialNumToRender={8}
+          removeClippedSubviews={true}
+          ListEmptyComponent={(
+            <View style={styles.empty}>
+              <View style={styles.emptyIconWrap}>
+                <Film size={IconSize.xl} color={Colors.primary} strokeWidth={1.5} />
+              </View>
+              <Text style={styles.emptyTitle} allowFontScaling={false}>
+                {activeTab === 'Watchlist' 
+                  ? t('watchlistEmptyTitle') 
+                  : activeTab === 'Watched' 
+                    ? t('emptyWatchedTitle') 
+                    : t('emptyReviewsTitle')}
+              </Text>
+              <Text style={styles.emptySub} allowFontScaling={false}>
+                {activeTab === 'Watchlist' 
+                  ? t('watchlistEmptySub') 
+                  : activeTab === 'Watched' 
+                    ? t('emptyWatchedSub') 
+                    : t('emptyReviewsSub')}
+              </Text>
             </View>
-            <Text style={styles.emptyTitle} allowFontScaling={false}>
-              {activeTab === 'Watchlist' ? t('emptyWatchlistTitle') : 'No ratings yet'}
-            </Text>
-            <Text style={styles.emptySub} allowFontScaling={false}>
-              {activeTab === 'Watchlist' 
-                ? t('emptyWatchlistSub') 
-                : 'Rate movies to see them in this list.'}
-            </Text>
-          </View>
-        )}
+          )}
+        />
+      </View>
+      <LogModal
+        visible={logModalVisible}
+        movie={selectedMovie}
+        onClose={() => {
+          setLogModalVisible(false);
+          setSelectedMovie(null);
+          setExistingLog(undefined);
+        }}
+        existingLog={existingLog}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

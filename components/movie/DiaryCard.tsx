@@ -1,39 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { Star, Film, Trash2, Eye, EyeOff } from 'lucide-react-native';
+import { Star, Film, Trash2, Eye, EyeOff, MessageSquare } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
 import { MovieLog } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
+import { formatHumanDate } from '@/utils/dateFormatter';
 
 interface DiaryCardProps {
   log: MovieLog;
   onDelete?: (id: string) => void;
   onPressPoster?: (movieId: number, mediaType: 'movie' | 'tv') => void;
+  onWriteReview?: (log: MovieLog) => void;
   rank?: number;
   priority?: 'low' | 'normal' | 'high';
 }
 
-const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPressPoster, rank, priority = 'low' }) => {
-  const { t } = useLanguage();
+const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPressPoster, onWriteReview, rank, priority = 'low' }) => {
+  const { t, language } = useLanguage();
   const [isRevealed, setIsRevealed] = useState(!log.is_spoiler);
 
   const handleToggleSpoiler = () => {
     setIsRevealed(!isRevealed);
-  };
-
-  const formatDate = (dateStr: string) => {
-    try {
-      if (!dateStr) return '';
-      // Replace hyphens with slashes for universal JS engine parsing compatibility (safari/JSC/hermes)
-      const sanitized = dateStr.includes('-') ? dateStr.replace(/-/g, '/') : dateStr;
-      const d = new Date(sanitized);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-    } catch (e) {
-      return dateStr;
-    }
   };
 
   return (
@@ -41,7 +30,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.date} allowFontScaling={false}>
-            {formatDate(log.watched_at)}
+            {formatHumanDate(log.watched_at, language)}
           </Text>
         </View>
         
@@ -135,6 +124,20 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
               )}
             </View>
           )}
+          {!log.review_text && onWriteReview && (
+            <TouchableOpacity 
+              style={[styles.writeReviewBtn, cursorPointer]}
+              onPress={() => onWriteReview(log)}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Tulis ulasan"
+            >
+              <MessageSquare size={12} color={Colors.primary} strokeWidth={2.5} />
+              <Text style={styles.writeReviewBtnText} allowFontScaling={false}>
+                Tulis Ulasan
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -226,6 +229,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.overlay.light85,
     lineHeight: 20,
+    paddingVertical: 6,
   },
   spoilerOverlay: {
     backgroundColor: Colors.overlay.light3,
@@ -254,7 +258,25 @@ const styles = StyleSheet.create({
   },
   spoilerIcon: {
     marginBottom: 4,
-  }
+  },
+  writeReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(229, 9, 20, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.2)',
+    borderRadius: Radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+    marginTop: 8,
+  },
+  writeReviewBtnText: {
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    color: Colors.primary,
+  },
 });
 
 DiaryCard.displayName = 'DiaryCard';

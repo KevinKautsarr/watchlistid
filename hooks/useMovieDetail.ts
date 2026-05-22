@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useContentDetails } from '@/hooks/useMovies';
-import { getSupplementaryMovieDetails, getSupplementaryTVDetails } from '@/services/api';
+import { 
+  getCriticalMovieDetails, 
+  getCriticalTVDetails, 
+  getSupplementaryMovieDetails, 
+  getSupplementaryTVDetails 
+} from '@/services/api';
 import { useSocial } from '@/context/SocialContext';
 import { FetchState, Movie, CastMember, Video } from '@/types';
 
@@ -15,8 +19,11 @@ export interface MovieDetailData {
   communityRating: { average: number; count: number };
 }
 
+// In-Memory Cache for complete movie/TV details
+const detailCache: Record<string, { data: MovieDetailData; timestamp: number }> = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
-  const { data: baseData, isLoading: isBaseLoading, error: baseError } = useContentDetails(actualId, type);
   const { getAverageRating } = useSocial();
   
   const [state, setState] = useState<FetchState<MovieDetailData>>({
@@ -26,31 +33,101 @@ export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
   });
 
   useEffect(() => {
+    if (!actualId || isNaN(actualId)) {
+      setState({ status: 'loading', data: null, error: null });
+      return;
+    }
+
+    const cacheKey = `${type}-${actualId}`;
+    
+    // Check in-memory cache first for instant load
+    if (detailCache[cacheKey]) {
+      const cachedEntry = detailCache[cacheKey];
+      if (Date.now() - cachedEntry.timestamp < CACHE_TTL) {
+        setState({
+          status: 'success',
+          data: cachedEntry.data,
+          error: null
+        });
+        return;
+      }
+    }
+
+    // Reset state to loading when actualId changes and there is no cache
+    setState({ status: 'loading', data: null, error: null });
+
     let isMounted = true;
 
     const fetchAllData = async () => {
-      if (!actualId || !baseData?.details) return;
-
       try {
-        const supp = type === 'movie' 
-          ? await getSupplementaryMovieDetails(actualId)
-          : await getSupplementaryTVDetails(actualId);
+        // Run all network requests in parallel
+        const criticalPromise = type === 'movie' 
+          ? getCriticalMovieDetails(actualId)
+          : getCriticalTVDetails(actualId);
 
-        const communityScore = await getAverageRating(actualId);
+        const supplementaryPromise = type === 'movie'
+          ? getSupplementaryMovieDetails(actualId)
+          : getSupplementaryTVDetails(actualId);
+
+        const ratingPromise = getAverageRating(actualId);
+
+        const [critical, supplementary, communityRating] = await Promise.all([
+          criticalPromise,
+          supplementaryPromise,
+          ratingPromise
+        ]);
+
+        let finalCritical = critical;
+        let finalSupplementary = supplementary;
+        let finalType = type;
+
+        // Auto-detect media type mismatch fallback!
+        // If content details are not found with the requested type, try the other type.
+        if (!finalCritical.details) {
+          const fallbackType = type === 'movie' ? 'tv' : 'movie';
+          const fallbackCritical = fallbackType === 'movie' 
+            ? await getCriticalMovieDetails(actualId)
+            : await getCriticalTVDetails(actualId);
+
+          if (fallbackCritical.details) {
+            finalCritical = fallbackCritical;
+            finalType = fallbackType;
+            finalSupplementary = fallbackType === 'movie'
+              ? await getSupplementaryMovieDetails(actualId)
+              : await getSupplementaryTVDetails(actualId);
+          }
+        }
+
+        if (!finalCritical.details) {
+          throw new Error('Content details not found');
+        }
+
+        const mergedData: MovieDetailData = {
+          movie: {
+            ...finalCritical.details,
+            media_type: finalType // Force correct type mapping in UI
+          },
+          credits: finalCritical.credits?.cast?.slice(0, 15) || [],
+          videos: finalSupplementary.videos?.results?.filter((v: any) => v.site === 'YouTube') || [],
+          reviews: finalSupplementary.reviews?.results?.slice(0, 2) || [],
+          similar: finalSupplementary.similar?.results?.slice(0, 10) || [],
+          releaseDates: finalSupplementary.releaseDates?.results || [],
+          keywords: finalSupplementary.keywords?.keywords?.slice(0, 10) || [],
+          communityRating: communityRating
+        };
+
+        // Cache the fully merged details for both the requested key and the final detected key
+        const finalCacheKey = `${finalType}-${actualId}`;
+        const cacheEntry = { data: mergedData, timestamp: Date.now() };
+        detailCache[cacheKey] = cacheEntry;
+        if (finalCacheKey !== cacheKey) {
+          detailCache[finalCacheKey] = cacheEntry;
+        }
 
         if (isMounted) {
           setState({
             status: 'success',
-            data: {
-              movie: baseData.details,
-              credits: baseData.credits?.cast?.slice(0, 15) || [],
-              videos: supp?.videos?.results?.filter((v: any) => v.site === 'YouTube') || [],
-              reviews: supp?.reviews?.results?.slice(0, 2) || [],
-              similar: supp?.similar?.results?.slice(0, 10) || [],
-              releaseDates: supp?.releaseDates?.results || [],
-              keywords: supp?.keywords?.keywords?.slice(0, 10) || [],
-              communityRating: communityScore
-            },
+            data: mergedData,
             error: null
           });
         }
@@ -59,22 +136,18 @@ export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
           setState({
             status: 'error',
             data: null,
-            error: (err as Error).message
+            error: err instanceof Error ? err.message : String(err)
           });
         }
       }
     };
 
-    if (!isBaseLoading) {
-      if (baseError) {
-        setState({ status: 'error', data: null, error: typeof baseError === 'string' ? baseError : (baseError as Error).message || String(baseError) });
-      } else if (baseData?.details) {
-        fetchAllData();
-      }
-    }
+    fetchAllData();
 
-    return () => { isMounted = false; };
-  }, [actualId, type, baseData, isBaseLoading, baseError, getAverageRating]);
+    return () => {
+      isMounted = false;
+    };
+  }, [actualId, type, getAverageRating]);
 
   return state;
 };

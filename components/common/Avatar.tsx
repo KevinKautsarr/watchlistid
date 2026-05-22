@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
-import { Image } from 'expo-image';
+import SafeImage from '@/components/common/SafeImage';
 import { Colors, FontWeight } from '@/constants/theme';
 
 interface AvatarProps {
@@ -29,8 +29,9 @@ const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 40, style, textStyle,
   if (hasValidUri) {
     return (
       <View style={containerStyle}>
-        <Image
-          source={{ uri }}
+        <SafeImage
+          uri={uri}
+          fallbackType="user"
           style={styles.image}
           contentFit="cover"
           cachePolicy="memory-disk"

@@ -40,13 +40,21 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLoadingLogs(true);
     try {
       const { data, error } = await typedFrom('movie_logs')
-        .select('id,movie_id,movie_title,poster_path,watched_at,rating,review_text,is_spoiler,created_at')
+        .select('id,movie_id,movie_title,poster_path,watched_at,rating,review_text,is_spoiler,created_at,genre_ids')
         .eq('user_id', user.id)
         .order('watched_at', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        setUserLogs(data as MovieLog[]);
+        const uniqueLogs: MovieLog[] = [];
+        const seen = new Set<number>();
+        for (const item of data) {
+          if (!seen.has(item.movie_id)) {
+            seen.add(item.movie_id);
+            uniqueLogs.push(item as MovieLog);
+          }
+        }
+        setUserLogs(uniqueLogs);
       }
     } finally {
       setLoadingLogs(false);
@@ -76,6 +84,7 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           review_text: logData.review_text,
           is_spoiler: logData.is_spoiler,
           watched_at: formattedDate,
+          genre_ids: logData.genre_ids,
         });
 
       if (error) {
@@ -94,12 +103,21 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const getUserLogs = async (userId: string): Promise<MovieLog[]> => {
     const { data, error } = await typedFrom('movie_logs')
-      .select('id, movie_id, movie_title, poster_path, watched_at, rating, review_text, is_spoiler, created_at')
+      .select('id, movie_id, movie_title, poster_path, watched_at, rating, review_text, is_spoiler, created_at, genre_ids')
       .eq('user_id', userId)
       .order('watched_at', { ascending: false });
 
     if (error) return [];
-    return data as MovieLog[];
+
+    const uniqueLogs: MovieLog[] = [];
+    const seen = new Set<number>();
+    for (const item of data) {
+      if (!seen.has(item.movie_id)) {
+        seen.add(item.movie_id);
+        uniqueLogs.push(item as MovieLog);
+      }
+    }
+    return uniqueLogs;
   };
 
   const deleteLog = async (logId: string) => {

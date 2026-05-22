@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  StatusBar, ActivityIndicator, Pressable, FlatList, RefreshControl
+  StatusBar, ActivityIndicator, Pressable, RefreshControl,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, SearchX, Settings as SettingsIcon } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useSharedValue } from 'react-native-reanimated';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
@@ -31,6 +30,7 @@ import DiaryCard from '@/components/movie/DiaryCard';
 import MovieListItem from '@/components/movie/MovieListItem';
 import LogModal from '@/components/movie/LogModal';
 import { Movie } from '@/types';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import ImageCropModal from '@/components/common/ImageCropModal';
 import SettingsSheet from '@/components/settings/SettingsSheet';
 import LanguageSheet from '@/components/settings/LanguageSheet';
@@ -93,16 +93,6 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
   const [existingLog, setExistingLog] = useState<any>(undefined);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const activeIndexVal = useSharedValue(0);
-  const activeIndexDecimal = useSharedValue(0);
-
-  const handleTabPress = (name: string) => {
-    setActiveTab(name as ContentTab);
-    const tabIdx = name === 'Reviews' ? 0 : name === 'Diary' ? 1 : 2;
-    activeIndexVal.value = tabIdx;
-    activeIndexDecimal.value = tabIdx;
-  };
-
   const handleOpenLogModal = useCallback((logItem: any) => {
     const movieObj: Movie = {
       id: logItem.movie_id,
@@ -126,9 +116,10 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
   }, [userLogs]);
 
   const navigation = useNavigation();
+  // Declare profileData here so the useEffect below can reference it
+  const profileData = targetProfile.data;
 
   // Dynamic header title — show viewed user's username once loaded
-  const profileData = targetProfile.data;
   useEffect(() => {
     navigation.setOptions({
       title: profileData?.username || 'Profile',
@@ -161,7 +152,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
     });
   }, [navigation, isOwner, t, router, userId, profileData?.username]);
 
-  // Re-fetch data each time the screen receives focus (e.g. returning from movie detail)
+  // Re-fetch data each time the screen receives focus
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       fetchUserContent();
@@ -282,13 +273,6 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
     return targetWatchlist.filter(item => item.status === 'plan_to_watch');
   }, [isOwner, mergedList, targetWatchlist, getMovieStatus]);
 
-  const listData = useMemo(() => {
-    if (activeTab === 'Diary') return userLogsList;
-    if (activeTab === 'Reviews') return userReviewsList;
-    if (activeTab === 'Watchlist') return watchlistList;
-    return [];
-  }, [activeTab, userLogsList, userReviewsList, watchlistList]);
-
   const avgRating = useMemo(() => {
     const movieRatings = new Map<number, number>();
     
@@ -375,89 +359,144 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
-      
-      <FlatList
-        data={listData}
-        keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `item-${index}`}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+
+      {/* ── Static profile section — always stays at top ── */}
+      <View style={[styles.staticHeader, { paddingTop: insets.top + 60 }]}>
+        <ProfileHeader 
+          displayName={profileData?.full_name || profileData?.username || 'User'} 
+          username={profileData?.username || null}
+          avatarUrl={profileData?.avatar_url}
+          bio={profileData?.bio}
+          isOwner={isOwner}
+        />
+
+        <ProfileStats 
+          followers={followers} 
+          following={following} 
+          reviewsCount={userReviewsList.length}
+          avgRating={avgRating}
+          watchedCount={userLogsList.length}
+          watchlistCount={watchlistList.length}
+          onFollowersPress={() => {
+            setSocialModalTab('followers');
+            fetchSocialList('followers');
+            setSocialModalVisible(true);
+          }}
+          onFollowingPress={() => {
+            setSocialModalTab('following');
+            fetchSocialList('following');
+            setSocialModalVisible(true);
+          }}
+          t={t}
+        />
+
+        <ProfileActions 
+          isOwner={isOwner}
+          isFollowing={isFollowing}
+          isFollowLoading={isFollowLoading}
+          onFollowPress={handleFollow}
+          onEditPress={() => setIsEditing(true)}
+          t={t}
+          userId={targetUserId}
+          username={profileData?.username || 'User'}
+        />
+      </View>
+
+      {/* ── Swipeable tabs — only the content scrolls ── */}
+      <Tabs.Container
+        onTabChange={(tab) => setActiveTab(tab.tabName as ContentTab)}
+        renderHeader={() => null}
+        renderTabBar={(props) => (
+          <ProfileTabs 
+            {...props}
+            counts={{
+              diary: userLogsList.length,
+              reviews: userReviewsList.length,
+              watchlist: watchlistList.length
+            }}
           />
-        }
-        ListHeaderComponent={
-          <View style={{ paddingTop: insets.top + 60 }}>
-            <ProfileHeader 
-              displayName={profileData?.full_name || profileData?.username || 'User'} 
-              username={profileData?.username || null}
-              avatarUrl={profileData?.avatar_url}
-              bio={profileData?.bio}
-              isOwner={isOwner}
-            />
-
-            <ProfileStats 
-              followers={followers}
-              following={following}
-              reviewsCount={userReviewsList.length}
-              avgRating={avgRating}
-              watchedCount={userLogsList.length}
-              watchlistCount={watchlistList.length}
-              onFollowersPress={() => {
-                setSocialModalTab('followers');
-                setSocialModalVisible(true);
-                fetchSocialList('followers');
-              }}
-              onFollowingPress={() => {
-                setSocialModalTab('following');
-                setSocialModalVisible(true);
-                fetchSocialList('following');
-              }}
-              t={t}
-            />
-
-            <ProfileActions 
-              isOwner={isOwner}
-              isFollowing={isFollowing}
-              isFollowLoading={isFollowLoading}
-              onFollowPress={handleFollow}
-              onEditPress={() => setIsEditing(true)}
-              t={t}
-              userId={targetUserId}
-              username={profileData?.username || 'User'}
-            />
-
-            <View style={styles.tabContainer}>
-              <ProfileTabs 
-                index={activeIndexVal}
-                tabNames={['Reviews', 'Diary', 'Watchlist']}
-                onTabPress={handleTabPress}
-                indexDecimal={activeIndexDecimal}
-                counts={{
-                  diary: userLogsList.length,
-                  reviews: userReviewsList.length,
-                  watchlist: watchlistList.length
-                }}
+        )}
+        headerContainerStyle={{
+          backgroundColor: Colors.background,
+          shadowColor: 'transparent',
+          elevation: 0,
+        }}
+      >
+        <Tabs.Tab name="Reviews" label={t('reviews')}>
+          <Tabs.FlatList
+            data={userReviewsList}
+            keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `review-${index}`}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingHorizontal: 16, paddingTop: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                tintColor={Colors.primary}
+                colors={[Colors.primary]}
               />
-            </View>
-          </View>
-        }
-        renderItem={({ item }: { item: any }) => {
-          if (activeTab === 'Diary' || activeTab === 'Reviews') {
-            return (
-              <View style={{ paddingHorizontal: 16 }}>
-                <DiaryCard 
-                  log={item} 
-                  onPressPoster={(movieId, mediaType) => router.push({ pathname: '/movie/[id]', params: { id: movieId.toString(), type: mediaType } } as any)}
-                />
+            }
+            renderItem={({ item }: { item: any }) => (
+              <DiaryCard 
+                log={item} 
+                onPressPoster={(movieId, mediaType) => router.push({ pathname: '/movie/[id]', params: { id: movieId.toString(), type: mediaType } } as any)}
+              />
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyText} allowFontScaling={false}>
+                  {isOwner ? t('emptyReviewsTitle') : t('noReviewsYetOthers')}
+                </Text>
               </View>
-            );
-          }
-          if (activeTab === 'Watchlist') {
-            return (
+            }
+          />
+        </Tabs.Tab>
+
+        <Tabs.Tab name="Diary" label={t('diary')}>
+          <Tabs.FlatList
+            data={userLogsList}
+            keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `diary-${index}`}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingHorizontal: 16, paddingTop: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                tintColor={Colors.primary}
+                colors={[Colors.primary]}
+              />
+            }
+            renderItem={({ item }: { item: any }) => (
+              <DiaryCard 
+                log={item} 
+                onPressPoster={(movieId, mediaType) => router.push({ pathname: '/movie/[id]', params: { id: movieId.toString(), type: mediaType } } as any)}
+              />
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyText} allowFontScaling={false}>
+                  {isOwner ? t('emptyWatchedTitle') : t('noLogsYetOthers')}
+                </Text>
+              </View>
+            }
+          />
+        </Tabs.Tab>
+
+        <Tabs.Tab name="Watchlist" label={t('tabWatchlist')}>
+          <Tabs.FlatList
+            data={watchlistList}
+            keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `watchlist-${index}`}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingTop: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                tintColor={Colors.primary}
+                colors={[Colors.primary]}
+              />
+            }
+            renderItem={({ item }: { item: any }) => (
               <View style={{ paddingHorizontal: 16, marginVertical: 4 }}>
                 <MovieListItem
                   movie={item}
@@ -466,22 +505,17 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
                   hideActions={true}
                 />
               </View>
-            );
-          }
-          return null;
-        }}
-        ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText} allowFontScaling={false}>
-              {isOwner ? (
-                activeTab === 'Diary' ? t('emptyWatchedTitle') : activeTab === 'Reviews' ? t('emptyReviewsTitle') : t('noWatchlistYet')
-              ) : (
-                activeTab === 'Diary' ? t('noLogsYetOthers') : activeTab === 'Reviews' ? t('noReviewsYetOthers') : t('noWatchlistYetOthers')
-              )}
-            </Text>
-          </View>
-        }
-      />
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyText} allowFontScaling={false}>
+                  {isOwner ? t('noWatchlistYet') : t('noWatchlistYetOthers')}
+                </Text>
+              </View>
+            }
+          />
+        </Tabs.Tab>
+      </Tabs.Container>
 
       {isOwner && (
         <ProfileEditModal 
@@ -613,6 +647,12 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
+  staticHeader: {
+    backgroundColor: Colors.background,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   errorTitle: { color: Colors.white, fontSize: FontSize.xl, fontWeight: FontWeight.black, marginTop: 20 },

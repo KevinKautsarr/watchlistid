@@ -50,7 +50,7 @@ const ActivityFeedItem = React.memo(({ item }: { item: MovieLog }) => {
 
       <TouchableOpacity 
         style={s.movieRow}
-        onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.movie_id.toString() } })}
+        onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.movie_id.toString(), type: item.media_type || 'movie' } })}
       >
         <Image 
           source={`https://image.tmdb.org/t/p/w200${item.poster_path}`} 

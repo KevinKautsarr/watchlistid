@@ -56,7 +56,7 @@ export default function HomeScreen() {
 
   const toggleWL = (item: MediaItem) => {
     if (!user) {
-      showLoginPrompt?.();
+      (global as any).showLoginPrompt?.();
       return;
     }
     const has = isInWatchlist(item.id);

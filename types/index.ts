@@ -122,11 +122,14 @@ export interface MovieLog {
   };
   likes_count?: number;
   is_liked_by_me?: boolean;
+  genre_ids?: number[];
 }
 
 export interface UserProfile {
   id: string;
   username: string;
+  /** Human-readable display name (e.g. "Kevin Kautsar"). Falls back to username when absent. */
+  full_name?: string | null;
   avatar_url?: string;
   followers_count?: number;
   following_count?: number;

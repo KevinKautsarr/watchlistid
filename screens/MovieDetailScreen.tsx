@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Animated, Share, ActivityIndicator
+  StatusBar, Animated, Share, Alert
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -13,6 +13,7 @@ import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/const
 import { cursorPointer } from '@/utils/webStyles';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { useAuth } from '@/context/AuthContext';
+import { useSocial } from '@/context/SocialContext';
 import { useMovieDetail } from '@/hooks/useMovieDetail';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useLanguage } from '@/context/LanguageContext';
@@ -23,7 +24,7 @@ import MovieDetailTable from '@/components/movie/MovieDetailTable';
 import PosterCard from '@/components/common/PosterCard';
 import LogModal from '@/components/movie/LogModal';
 import ReviewFeed from '@/components/movie/ReviewFeed';
-import { MovieDetailSkeleton } from '@/components/common/DetailSkeleton';
+import { MovieDetailSkeleton, PulsingSkeleton } from '@/components/common/DetailSkeleton';
 
 import { DetailHero } from '@/components/movie/detail/DetailHero';
 import { DetailRatings } from '@/components/movie/detail/DetailRatings';
@@ -43,7 +44,8 @@ export default function MovieDetailScreen() {
   const bp = useBreakpoint();
   const { session } = useAuth();
   const { t } = useLanguage();
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, addToRecentlyViewed } = useWatchlist();
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, addToRecentlyViewed, getMovieStatus, registerMovieLog, toggleWatched, isHydrated } = useWatchlist();
+  const { userLogs, addLog } = useSocial();
   
   const { status, data, error } = useMovieDetail(Number(actualId), type);
   
@@ -61,10 +63,11 @@ export default function MovieDetailScreen() {
     setExpandedEpisodeId(null);
     try {
       const res = await getTVSeasonDetails(tvId, season);
-      setEpisodes(res?.episodes || []);
+      if (res && res.episodes) {
+        setEpisodes(res.episodes);
+      }
     } catch (err) {
-      console.error('[TV Episodes] Failed to load:', err);
-      setEpisodes([]);
+      console.error(err);
     } finally {
       setEpisodesLoading(false);
     }
@@ -84,7 +87,7 @@ export default function MovieDetailScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, status, actualId]);
 
-  if (status === 'loading') {
+  if (!isHydrated || status === 'loading') {
     return <MovieDetailSkeleton />;
   }
 
@@ -136,6 +139,60 @@ export default function MovieDetailScreen() {
   };
 
   const handleRate = () => {
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+    setShowLogModal(true);
+  };
+
+  const handleMarkWatched = async () => {
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const success = await addLog({
+        movie_id: movie.id,
+        media_type: type,
+        movie_title: 'title' in movie ? movie.title : movie.name,
+        poster_path: movie.poster_path || undefined,
+        watched_at: new Date().toISOString().split('T')[0],
+        rating: undefined as any,
+        is_spoiler: false,
+      });
+
+      if (success) {
+        registerMovieLog(movie.id);
+        
+        if (inWatchlist) {
+          const currentStatus = getMovieStatus(movie.id);
+          if (currentStatus === 'plan_to_watch') {
+            toggleWatched(movie.id);
+          }
+        } else {
+          await addToWatchlist({ ...movie, media_type: type, status: 'completed' } as any);
+        }
+      } else {
+        Alert.alert('Gagal', 'Gagal menandai film sebagai sudah ditonton.');
+      }
+    } catch (err: any) {
+      console.error('[DetailScreen] mark watched failed:', err);
+      Alert.alert('Error', err.message || 'Terjadi kesalahan saat menyimpan log.');
+    }
+  };
+
+  const handleWriteReview = () => {
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+    setShowLogModal(true);
+  };
+
+  const handleEditReview = () => {
     if (!session) {
       router.push('/auth/login');
       return;
@@ -208,11 +265,12 @@ export default function MovieDetailScreen() {
           <View style={[bp.isLarge && styles.flex1]}>
             <DetailActions 
               featuredTrailer={featuredTrailer} 
-              inWatchlist={inWatchlist} 
-              userRating={userRating} 
+              movieStatus={getMovieStatus(movie.id)}
               onPlay={() => featuredTrailer && openTrailer(featuredTrailer.key)} 
               onWatchlist={handleWatchlist} 
-              onRate={handleRate} 
+              onMarkWatched={handleMarkWatched}
+              onWriteReview={handleWriteReview}
+              onEditReview={handleEditReview}
               t={t} 
             />
 
@@ -278,10 +336,11 @@ export default function MovieDetailScreen() {
 
                 {/* Episode list */}
                 {episodesLoading ? (
-                  <ActivityIndicator
-                    color={Colors.primary}
-                    style={{ marginVertical: 20 }}
-                  />
+                  <View style={{ gap: Spacing.sm, marginVertical: 20 }}>
+                    <PulsingSkeleton height={60} borderRadius={Radius.md} />
+                    <PulsingSkeleton height={60} borderRadius={Radius.md} />
+                    <PulsingSkeleton height={60} borderRadius={Radius.md} />
+                  </View>
                 ) : (
                   <View style={styles.episodeList}>
                     {episodes.map((ep: any) => {
@@ -394,6 +453,7 @@ export default function MovieDetailScreen() {
         visible={showLogModal} 
         movie={movie} 
         onClose={() => setShowLogModal(false)} 
+        existingLog={userLogs.find(l => l.movie_id === movie.id)}
       />
     </SafeAreaView>
   );

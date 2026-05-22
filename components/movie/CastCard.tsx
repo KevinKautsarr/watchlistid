@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
-import { User } from 'lucide-react-native';
+import SafeImage from '@/components/common/SafeImage';
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
 import { CastMember } from '@/types';
@@ -23,19 +22,17 @@ const CastCard: React.FC<CastCardProps> = ({
       accessibilityLabel={`View profile of ${cast.name}`}
     >
       <View style={styles.avatarWrap}>
-        {cast.profile_path ? (
-          <Image
-            source={{ uri: `${TMDB_IMAGE_SIZES.small}${cast.profile_path}` }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={200}
-            priority="low"
-            accessibilityLabel={`${cast.name} profile photo`}
-          />
-        ) : (
-          <User size={IconSize.xl} color={Colors.text.secondary} strokeWidth={1.5} />
-        )}
+        <SafeImage
+          uri={cast.profile_path ? `${TMDB_IMAGE_SIZES.small}${cast.profile_path}` : null}
+          fallbackType="user"
+          fallbackIconSize={IconSize.xl}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
+          priority="low"
+          accessibilityLabel={`${cast.name} profile photo`}
+        />
       </View>
       <Text style={styles.name} numberOfLines={1} allowFontScaling={false}>
         {cast.name}

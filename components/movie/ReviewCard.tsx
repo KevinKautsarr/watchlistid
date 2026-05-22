@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
 import { ReviewItem } from '@/types/review';
 import { useSocial } from '@/context/SocialContext';
+import Avatar from '@/components/common/Avatar';
 
 interface ReviewCardProps {
   review: ReviewItem;
@@ -42,10 +43,11 @@ export default function ReviewCard({ review }: ReviewCardProps) {
     <View style={s.card}>
       {/* User Header */}
       <View style={s.header}>
-        <Image 
-          source={review.user?.avatar_url || 'https://via.placeholder.com/40'} 
+        <Avatar 
+          uri={review.user?.avatar_url} 
+          name={review.user?.username || 'Anonymous'}
+          size={36}
           style={s.avatar}
-          contentFit="cover"
         />
         <View style={s.headerText}>
           <Text style={s.username} allowFontScaling={false}>

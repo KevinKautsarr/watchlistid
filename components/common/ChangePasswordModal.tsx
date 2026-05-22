@@ -6,6 +6,7 @@ import {
 import { Key, Eye, EyeOff, X } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ChangePasswordModalProps {
   visible: boolean;
@@ -14,6 +15,7 @@ interface ChangePasswordModalProps {
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onClose }) => {
   const { updatePassword } = useAuth();
+  const { t } = useLanguage();
 
   React.useEffect(() => {
     if (visible && Platform.OS === 'web') {
@@ -40,11 +42,11 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
   const handleSubmit = async () => {
     setError(null);
     if (newPassword.length < 8) {
-      setError('Password harus minimal 8 karakter.');
+      setError(t('passwordMin8Err'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Password tidak cocok. Coba lagi.');
+      setError(t('passwordsMismatchErr'));
       return;
     }
     setLoading(true);
@@ -67,7 +69,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
             <View style={s.iconWrap}>
               <Key size={22} color={Colors.primary} strokeWidth={2} />
             </View>
-            <Text style={s.title} allowFontScaling={false}>Ganti Password</Text>
+            <Text style={s.title} allowFontScaling={false}>{t('changePassword')}</Text>
             <TouchableOpacity onPress={handleClose} style={s.closeBtn} activeOpacity={0.7}>
               <X size={20} color={Colors.text.secondary} />
             </TouchableOpacity>
@@ -76,18 +78,18 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
           {success ? (
             <View style={s.successWrap}>
               <Text style={s.successEmoji}>✅</Text>
-              <Text style={s.successText} allowFontScaling={false}>Password berhasil diubah!</Text>
+              <Text style={s.successText} allowFontScaling={false}>{t('passwordChangedSuccess')}</Text>
             </View>
           ) : (
             <>
               {/* New Password */}
-              <Text style={s.label} allowFontScaling={false}>Password Baru</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('newPassword')}</Text>
               <View style={s.inputWrap}>
                 <TextInput
                   style={s.input}
                   value={newPassword}
                   onChangeText={setNewPassword}
-                  placeholder="Minimal 8 karakter"
+                  placeholder={t('min8Chars')}
                   placeholderTextColor={Colors.text.secondary}
                   secureTextEntry={!showNew}
                   autoCapitalize="none"
@@ -99,13 +101,13 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
               </View>
 
               {/* Confirm Password */}
-              <Text style={s.label} allowFontScaling={false}>Konfirmasi Password</Text>
+              <Text style={s.label} allowFontScaling={false}>{t('confirmPassword')}</Text>
               <View style={s.inputWrap}>
                 <TextInput
                   style={s.input}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  placeholder="Ulangi password baru"
+                  placeholder={t('repeatNewPassword')}
                   placeholderTextColor={Colors.text.secondary}
                   secureTextEntry={!showConfirm}
                   autoCapitalize="none"
@@ -124,7 +126,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
 
               <View style={s.actions}>
                 <TouchableOpacity style={s.cancelBtn} onPress={handleClose} activeOpacity={0.75}>
-                  <Text style={s.cancelText} allowFontScaling={false}>Batal</Text>
+                  <Text style={s.cancelText} allowFontScaling={false}>{t('cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.submitBtn, loading && { opacity: 0.6 }]}
@@ -134,7 +136,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
                 >
                   {loading
                     ? <ActivityIndicator color={Colors.white} size="small" />
-                    : <Text style={s.submitText} allowFontScaling={false}>Simpan</Text>
+                    : <Text style={s.submitText} allowFontScaling={false}>{t('save')}</Text>
                   }
                 </TouchableOpacity>
               </View>

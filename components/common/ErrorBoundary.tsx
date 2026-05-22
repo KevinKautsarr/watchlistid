@@ -11,7 +11,7 @@ interface State {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -29,17 +29,21 @@ class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <Text style={styles.emoji}>😕</Text>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.subtitle}>Our cinematic experience hit a snag.</Text>
+          <Text style={styles.emoji} allowFontScaling={false}>🎬</Text>
+          <Text style={styles.title} allowFontScaling={false}>Ups, Ada Kesalahan</Text>
+          <Text style={styles.subtitle} allowFontScaling={false}>
+            Aplikasi mengalami kendala saat memuat halaman ini.
+          </Text>
           <View style={styles.debugBox}>
-            <Text style={styles.debugText}>{this.state.error?.toString()}</Text>
+            <Text style={styles.debugText} allowFontScaling={false}>
+              {this.state.error?.toString()}
+            </Text>
           </View>
           <TouchableOpacity 
             style={styles.retryBtn} 
             onPress={() => this.setState({ hasError: false, error: null })}
           >
-            <Text style={styles.retry}>Try Again</Text>
+            <Text style={styles.retry} allowFontScaling={false}>Coba Lagi</Text>
           </TouchableOpacity>
         </View>
       );
@@ -86,16 +90,17 @@ const styles = StyleSheet.create({
   debugBox: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: 'rgba(229,9,20,0.1)',
+    backgroundColor: Colors.overlay.red10,
     borderRadius: Radius.md,
     width: '100%',
     borderWidth: 1,
-    borderColor: 'rgba(229,9,20,0.3)',
+    borderColor: Colors.overlay.red20,
   },
   debugText: {
-    color: '#FF8A8A',
-    fontSize: 12,
+    color: Colors.text.accent,
+    fontSize: FontSize.xs,
     fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+    textAlign: 'center',
   }
 });
 

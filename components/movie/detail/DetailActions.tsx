@@ -1,21 +1,22 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Play, BookmarkPlus, BookmarkCheck, Star } from 'lucide-react-native';
+import { Play, Plus, BookmarkCheck, Check, Edit3, Star, MessageSquare } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
 
 interface DetailActionsProps {
   featuredTrailer: any;
-  inWatchlist: boolean;
-  userRating: number | null;
+  movieStatus: 'not_added' | 'plan_to_watch' | 'watched' | 'reviewed';
   onPlay: () => void;
   onWatchlist: () => void;
-  onRate: () => void;
+  onMarkWatched: () => void;
+  onWriteReview: () => void;
+  onEditReview: () => void;
   t: any;
 }
 
 export const DetailActions: React.FC<DetailActionsProps> = ({ 
-  featuredTrailer, inWatchlist, userRating, onPlay, onWatchlist, onRate, t 
+  featuredTrailer, movieStatus, onPlay, onWatchlist, onMarkWatched, onWriteReview, onEditReview, t 
 }) => {
   return (
     <View style={styles.actionRow}>
@@ -29,29 +30,93 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
           <Text style={styles.btnPlayText} allowFontScaling={false}>{t('playTrailer')}</Text>
         </TouchableOpacity>
       )}
+
       <View style={styles.actionSubRow}>
-        <TouchableOpacity 
-          style={[styles.btnWatchlist, !!inWatchlist && styles.btnWatchlistActive, cursorPointer]}
-          onPress={onWatchlist}
-        >
-          {inWatchlist ? (
-            <BookmarkCheck size={IconSize.md} color={Colors.white} fill={Colors.white} strokeWidth={0} />
-          ) : (
-            <BookmarkPlus size={IconSize.md} color={Colors.white} strokeWidth={2} />
-          )}
-          <Text style={[styles.btnWatchlistText, !!inWatchlist && styles.btnWatchlistTextActive]} allowFontScaling={false}>
-            {inWatchlist ? t('inWatchlist') : t('addToWatchlist')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.btnRate, !!userRating && styles.btnRateActive, cursorPointer]}
-          onPress={onRate}
-        >
-          <Star size={IconSize.xs} color={userRating ? Colors.ratingGold : Colors.primary} fill={userRating ? Colors.ratingGold : "transparent"} strokeWidth={2} />
-          <Text style={[styles.btnRateText, !!userRating && styles.btnRateTextActive]} allowFontScaling={false}>
-            {userRating ? `${t('log')}ed` : t('log')}
-          </Text>
-        </TouchableOpacity>
+        {movieStatus === 'not_added' && (
+          <TouchableOpacity 
+            style={[styles.btnProminent, { flex: 1 }, cursorPointer]}
+            onPress={onWatchlist}
+            activeOpacity={0.8}
+          >
+            <Plus size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
+            <Text style={styles.btnText} allowFontScaling={false}>
+              {t('addToWatchlist')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {movieStatus === 'plan_to_watch' && (
+          <>
+            <TouchableOpacity 
+              style={[styles.btnDisabled, cursorPointer]}
+              onPress={onWatchlist}
+              activeOpacity={0.8}
+            >
+              <BookmarkCheck size={IconSize.sm} color="rgba(255,255,255,0.4)" strokeWidth={2} />
+              <Text style={styles.btnDisabledText} allowFontScaling={false}>
+                Watchlist
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.btnProminent, cursorPointer]}
+              onPress={onMarkWatched}
+              activeOpacity={0.8}
+            >
+              <Check size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
+              <Text style={styles.btnText} allowFontScaling={false}>
+                {t('markWatched')}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {movieStatus === 'watched' && (
+          <>
+            <TouchableOpacity 
+              style={[styles.btnDisabled, { flex: 1 }]}
+              disabled={true}
+            >
+              <Check size={IconSize.sm} color="rgba(255,255,255,0.4)" strokeWidth={2.5} />
+              <Text style={styles.btnDisabledText} allowFontScaling={false}>
+                {t('diary')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.btnProminent, { flex: 1.5 }, cursorPointer]}
+              onPress={onWriteReview}
+              activeOpacity={0.8}
+            >
+              <MessageSquare size={IconSize.sm} color={Colors.white} strokeWidth={2.5} />
+              <Text style={styles.btnText} allowFontScaling={false}>
+                {t('writeReview')}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {movieStatus === 'reviewed' && (
+          <>
+            <View style={[styles.badgeGold, { flex: 1 }]}>
+              <Star size={14} color={Colors.ratingGold} fill={Colors.ratingGold} />
+              <Text style={styles.badgeGoldText} allowFontScaling={false}>
+                {t('reviewed')}
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.btnProminent, { flex: 1, backgroundColor: Colors.surface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }, cursorPointer]}
+              onPress={onEditReview}
+              activeOpacity={0.8}
+            >
+              <Edit3 size={IconSize.sm} color={Colors.white} strokeWidth={2} />
+              <Text style={styles.btnText} allowFontScaling={false}>
+                {t('editReview')}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -59,15 +124,20 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
 
 const styles = StyleSheet.create({
   actionRow: { paddingHorizontal: 24, paddingVertical: 24, borderBottomWidth: 1, borderColor: Colors.overlay.light10, gap: 16 },
-  actionSubRow: { flexDirection: 'row', gap: 12 },
+  actionSubRow: { flexDirection: 'row', gap: 12, width: '100%' },
   btnPlay: { height: 48, borderRadius: Radius.md, backgroundColor: Colors.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12 },
   btnPlayText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
-  btnWatchlist: { flex: 2, height: 44, borderRadius: Radius.md, backgroundColor: Colors.surface, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12 },
-  btnWatchlistActive: { backgroundColor: Colors.primary },
-  btnWatchlistText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
-  btnWatchlistTextActive: { color: Colors.white },
-  btnRate: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: Colors.overlay.light10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
-  btnRateActive: { backgroundColor: `${Colors.ratingGold}26`, borderWidth: 1, borderColor: `${Colors.ratingGold}4D` },
-  btnRateText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
-  btnRateTextActive: { color: Colors.ratingGold },
+  
+  btnProminent: { flex: 2, height: 44, borderRadius: Radius.md, backgroundColor: Colors.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
+  btnSecondary: { flex: 1.2, height: 44, borderRadius: Radius.md, backgroundColor: 'rgba(255,255,255,0.1)', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  btnDisabled: { flex: 1, height: 44, borderRadius: Radius.md, backgroundColor: 'rgba(255,255,255,0.05)', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  
+  btnText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
+  btnSecondaryText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.white },
+  btnDisabledText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.4)' },
+  
+  badgeGold: { height: 44, borderRadius: Radius.md, backgroundColor: `${Colors.ratingGold}1F`, borderWidth: 1, borderColor: `${Colors.ratingGold}4D`, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  badgeGoldText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.ratingGold },
 });
+
+export default DetailActions;

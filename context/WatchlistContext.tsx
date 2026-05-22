@@ -66,9 +66,13 @@ function useWatchlistProviderLogic() {
   const [watchlistMap,   setWatchlistMap]   = useState<WatchlistMap>({});
   const [userRatings,    setUserRatings]    = useState<Record<number, number>>({});
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
+  const [userLogsMap,    setUserLogsMap]    = useState<Record<number, boolean>>({});
+  const [userReviewsMap, setUserReviewsMap] = useState<Record<number, boolean>>({});
   const [isLoaded,       setIsLoaded]       = useState(false);
   const [isSyncing,      setIsSyncing]      = useState(false);
   const [userId,         setUserId]         = useState<string | null>(null);
+  const [isHydrated,     setIsHydrated]     = useState(false);
+  const [isAuthReady,    setIsAuthReady]    = useState(false);
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
     visible: false, message: '', type: 'success',
@@ -76,8 +80,14 @@ function useWatchlistProviderLogic() {
 
   // Track auth state
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user?.id ?? null));
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => setUserId(session?.user?.id ?? null));
+    supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user?.id ?? null);
+      setIsAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUserId(session?.user?.id ?? null);
+      setIsAuthReady(true);
+    });
     return () => listener.subscription.unsubscribe();
   }, []);
 
@@ -177,14 +187,38 @@ function useWatchlistProviderLogic() {
           setUserRatings(ratings);
           AsyncStorage.setItem('@userRatings', JSON.stringify(ratings)).catch(console.error);
         }
+
+        // Fetch user logs to populate status helper
+        const { data: logRows } = await typedFrom('movie_logs').select('movie_id').eq('user_id', userId);
+        if (logRows) {
+          const logs: Record<number, boolean> = {};
+          logRows.forEach(l => { logs[l.movie_id] = true; });
+          setUserLogsMap(logs);
+        }
+
+        // Fetch user reviews to populate status helper
+        const { data: reviewRows } = await typedFrom('reviews').select('movie_id').eq('user_id', userId);
+        if (reviewRows) {
+          const revs: Record<number, boolean> = {};
+          reviewRows.forEach(r => { revs[r.movie_id] = true; });
+          setUserReviewsMap(revs);
+        }
       } catch (e) {
         console.error('Cloud sync error:', e);
       } finally {
         setIsSyncing(false);
+        setIsHydrated(true);
       }
     };
     syncFromCloud();
   }, [userId, isLoaded]);
+
+  // Guest users hydration check
+  useEffect(() => {
+    if (isAuthReady && isLoaded && userId === null) {
+      setIsHydrated(true);
+    }
+  }, [isAuthReady, isLoaded, userId]);
 
   // Persist to AsyncStorage
   useEffect(() => { if (isLoaded) AsyncStorage.setItem('@watchlist', JSON.stringify(watchlistMap)).catch(console.error); }, [watchlistMap, isLoaded]);
@@ -196,6 +230,7 @@ function useWatchlistProviderLogic() {
   const hideToast = useCallback(() => setToast(prev => ({ ...prev, visible: false })), []);
 
   const addToWatchlist = useCallback((item: MediaItem) => {
+    if (!userId) return;
     setWatchlistMap(prev => {
       if (prev[item.id]) return prev;
 
@@ -205,24 +240,25 @@ function useWatchlistProviderLogic() {
           ...item,
           mediaType: 'movie',
           addedAt: new Date().toISOString(),
-          status: WATCHLIST_STATUS.PLAN_TO_WATCH,
+          status: item.status || WATCHLIST_STATUS.PLAN_TO_WATCH,
         } as WatchlistItem;
       } else {
         newItem = {
           ...item,
           mediaType: 'tv',
           addedAt: new Date().toISOString(),
-          status: WATCHLIST_STATUS.PLAN_TO_WATCH,
+          status: item.status || WATCHLIST_STATUS.PLAN_TO_WATCH,
         } as WatchlistItem;
       }
 
-      if (userId) typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => error && console.error(error));
+      typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => error && console.error(error));
       showToast('Added to Watchlist', 'success');
       return { ...prev, [item.id]: newItem };
     });
   }, [userId, showToast]);
 
   const removeFromWatchlist = useCallback((id: number) => {
+    if (!userId) return;
     setWatchlistMap(prev => {
       if (!prev[id]) return prev;
       const copy = { ...prev };
@@ -230,10 +266,11 @@ function useWatchlistProviderLogic() {
       return copy;
     });
     showToast('Removed from Watchlist', 'info');
-    if (userId) typedFrom('watchlist').delete().eq('user_id', userId).eq('movie_id', id).then(({ error }) => error && console.error(error));
+    typedFrom('watchlist').delete().eq('user_id', userId).eq('movie_id', id).then(({ error }) => error && console.error(error));
   }, [userId, showToast]);
 
   const toggleWatched = useCallback((id: number) => {
+    if (!userId) return;
     setWatchlistMap(prev => {
       const item = prev[id];
       if (!item) return prev;
@@ -241,13 +278,11 @@ function useWatchlistProviderLogic() {
       const newStatus = item.status === WATCHLIST_STATUS.COMPLETED ? WATCHLIST_STATUS.PLAN_TO_WATCH : WATCHLIST_STATUS.COMPLETED;
       const updated = { ...item, status: newStatus } as WatchlistItem;
       
-      if (userId) {
-        typedFrom('watchlist')
-          .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED })
-          .eq('user_id', userId)
-          .eq('movie_id', id)
-          .then(({ error }) => error && console.error(error));
-      }
+      typedFrom('watchlist')
+        .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED })
+        .eq('user_id', userId)
+        .eq('movie_id', id)
+        .then(({ error }) => error && console.error(error));
       return { ...prev, [id]: updated };
     });
   }, [userId]);
@@ -272,6 +307,8 @@ function useWatchlistProviderLogic() {
     setWatchlistMap({});
     setUserRatings({});
     setRecentlyViewed([]);
+    setUserLogsMap({});
+    setUserReviewsMap({});
     try { await Promise.all([AsyncStorage.removeItem('@watchlist'), AsyncStorage.removeItem('@userRatings'), AsyncStorage.removeItem('@recentlyViewed')]); } catch (e) { console.error(e); }
   };
 
@@ -281,6 +318,31 @@ function useWatchlistProviderLogic() {
     if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== null && !userId) clearData();
     prevUserIdRef.current = userId;
   }, [userId, isLoaded]);
+
+  const getMovieStatus = useCallback((movieId: number): 'not_added' | 'plan_to_watch' | 'watched' | 'reviewed' => {
+    if (userReviewsMap[movieId]) {
+      return 'reviewed';
+    }
+    const item = watchlistMap[movieId];
+    if (item) {
+      if (item.status === WATCHLIST_STATUS.COMPLETED || userLogsMap[movieId]) {
+        return 'watched';
+      }
+      return 'plan_to_watch';
+    }
+    if (userLogsMap[movieId]) {
+      return 'watched';
+    }
+    return 'not_added';
+  }, [watchlistMap, userLogsMap, userReviewsMap]);
+
+  const registerMovieLog = useCallback((movieId: number) => {
+    setUserLogsMap(prev => ({ ...prev, [movieId]: true }));
+  }, []);
+
+  const registerMovieReview = useCallback((movieId: number) => {
+    setUserReviewsMap(prev => ({ ...prev, [movieId]: true }));
+  }, []);
 
   const watchlistArray = useMemo(() => Object.values(watchlistMap), [watchlistMap]);
 
@@ -300,6 +362,10 @@ function useWatchlistProviderLogic() {
     toast,
     hideToast,
     clearData,
+    getMovieStatus,
+    registerMovieLog,
+    registerMovieReview,
+    isHydrated,
   };
 }
 

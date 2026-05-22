@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Modal, View, Text, TouchableOpacity, TextInput, 
-  StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform 
+  StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform,
+  Dimensions
 } from 'react-native';
 import { X, Camera, Check } from 'lucide-react-native';
 import Avatar from '@/components/common/Avatar';
@@ -10,9 +11,10 @@ import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme
 interface ProfileEditModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: { username: string; bio: string; avatarUrl?: string | null }) => Promise<void>;
+  onSave: (data: { username: string; full_name: string; bio: string; avatarUrl?: string | null }) => Promise<void>;
   initialData: {
     username: string;
+    full_name: string;
     bio: string;
     avatarUrl?: string | null;
   };
@@ -31,16 +33,22 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   t
 }) => {
   const [username, setUsername] = useState(initialData.username || '');
+  const [fullName, setFullName] = useState(initialData.full_name || '');
   const [bio, setBio] = useState(initialData.bio || '');
 
   React.useEffect(() => {
-    if (visible && Platform.OS === 'web') {
-      (document.activeElement as HTMLElement)?.blur();
+    if (visible) {
+      setUsername(initialData.username || '');
+      setFullName(initialData.full_name || '');
+      setBio(initialData.bio || '');
+      if (visible && Platform.OS === 'web') {
+        (document.activeElement as HTMLElement)?.blur();
+      }
     }
   }, [visible]);
 
   const handleSave = () => {
-    onSave({ username, bio });
+    onSave({ username, full_name: fullName, bio });
   };
 
   return (
@@ -79,15 +87,33 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
             {/* Form */}
             <View style={styles.form}>
+              {/* Display Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('username')}</Text>
+                <Text style={styles.label}>Display Name</Text>
                 <TextInput
                   style={styles.input}
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder={t('username')}
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="Your full name"
                   placeholderTextColor="rgba(255,255,255,0.3)"
                 />
+              </View>
+
+              {/* Username Handle */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t('username')} (@handle)</Text>
+                <View style={styles.usernameRow}>
+                  <Text style={styles.atSign}>@</Text>
+                  <TextInput
+                    style={[styles.input, styles.usernameInput]}
+                    value={username}
+                    onChangeText={(v) => setUsername(v.toLowerCase().replace(/\s/g, '_'))}
+                    placeholder="unique_handle"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
               </View>
 
               <View style={styles.inputGroup}>
@@ -114,15 +140,56 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalRoot: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)' },
-  modalContent: { flex: 1, backgroundColor: Colors.background, marginTop: 50, borderTopLeftRadius: Radius.xxl, borderTopRightRadius: Radius.xxl, overflow: 'hidden' },
+  modalRoot: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
+  },
+  modalContent: { 
+    flex: Platform.OS === 'web' ? undefined : 1, 
+    width: Platform.OS === 'web' ? Math.min(Dimensions.get('window').width * 0.9, 500) : '100%',
+    maxHeight: Platform.OS === 'web' ? '85%' : '100%',
+    backgroundColor: Colors.background, 
+    marginTop: Platform.OS === 'web' ? 0 : 50, 
+    borderTopLeftRadius: Radius.xxl, 
+    borderTopRightRadius: Radius.xxl, 
+    borderBottomLeftRadius: Platform.OS === 'web' ? Radius.xxl : 0,
+    borderBottomRightRadius: Platform.OS === 'web' ? Radius.xxl : 0,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
+      }
+    })
+  },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, height: 60, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
   headerTitle: { color: Colors.white, fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  closeBtn: { padding: 4 },
-  saveBtn: { padding: 4 },
+  closeBtn: { 
+    padding: 8,
+    ...Platform.select({
+      web: { cursor: 'pointer' }
+    })
+  },
+  saveBtn: { 
+    padding: 8,
+    ...Platform.select({
+      web: { cursor: 'pointer' }
+    })
+  },
   scrollBody: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
-  avatarSection: { alignItems: 'center', marginTop: Spacing.xxl },
+  avatarSection: { 
+    alignItems: 'center', 
+    marginTop: Spacing.xxl,
+    ...Platform.select({
+      web: { cursor: 'pointer' }
+    })
+  },
   avatarContainer: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden', position: 'relative' },
   cameraOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   changePhotoText: { color: Colors.primary, fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginTop: Spacing.md },
@@ -132,6 +199,9 @@ const styles = StyleSheet.create({
   label: { color: Colors.text.secondary, fontSize: FontSize.xs, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 1 },
   charCount: { color: 'rgba(255,255,255,0.3)', fontSize: 10 },
   input: { color: Colors.white, fontSize: FontSize.base, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingVertical: Spacing.sm },
+  usernameRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
+  atSign: { color: Colors.text.secondary, fontSize: FontSize.base, paddingVertical: Spacing.sm, marginRight: 2 },
+  usernameInput: { flex: 1, borderBottomWidth: 0 },
   textArea: { minHeight: 80, textAlignVertical: 'top' },
 });
 

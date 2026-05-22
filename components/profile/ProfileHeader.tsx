@@ -1,25 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert, Platform, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import Avatar from '@/components/common/Avatar';
 import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
-import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
-import { Copy } from 'lucide-react-native';
-import { cursorPointer } from '@/utils/webStyles';
 
 interface ProfileHeaderProps {
+  /** The user's display / full name shown as the primary bold heading */
   displayName: string;
+  /** The user's unique @handle (without the @ prefix) */
+  username?: string | null;
   avatarUrl?: string | null;
   bio?: string;
   isOwner?: boolean;
-  userId?: string;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   displayName,
+  username,
   avatarUrl,
   bio,
-  userId,
 }) => {
   return (
     <View style={styles.heroContainer}>
@@ -28,22 +26,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       </View>
       
       <View style={styles.identityBox}>
-        <Text style={[styles.displayName, Platform.select({ web: { textWrap: 'balance' } as any })]} allowFontScaling={false} selectable={true}>{displayName}</Text>
-        
-        {!!userId && (
-          <Pressable
-            onPress={async () => {
-              await Clipboard.setStringAsync(userId);
-              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Sukses', 'ID disalin ke papan klip');
-            }}
-            style={({ pressed }) => [styles.idContainer, cursorPointer, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }]}
-            accessibilityRole="button"
-            accessibilityLabel="Salin ID pengguna"
-          >
-            <Text style={styles.idText} allowFontScaling={false} selectable={true}>#{userId.slice(0, 8).toUpperCase()}</Text>
-            <Copy size={12} color={Colors.text.secondary} />
-          </Pressable>
+        {/* Primary bold display name */}
+        <Text
+          style={[styles.displayName, Platform.select({ web: { textWrap: 'balance' } as any })]}
+          allowFontScaling={false}
+          selectable={true}
+        >
+          {displayName}
+        </Text>
+
+        {/* @username handle — only shown when username is set */}
+        {!!username && (
+          <Text style={styles.usernameHandle} allowFontScaling={false} selectable={true}>
+            @{username}
+          </Text>
         )}
 
         {!!bio && (
@@ -70,25 +66,28 @@ const styles = StyleSheet.create({
     overflow: 'hidden' 
   },
   identityBox: { alignItems: 'center', marginTop: 12, width: '100%' },
-  displayName: { color: Colors.white, fontSize: FontSize.xxl, fontWeight: FontWeight.black, letterSpacing: -0.5, textAlign: 'center' },
-  idContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 99,
-    backgroundColor: Colors.overlay.light10,
-    marginTop: 6,
-    marginBottom: 4,
+  displayName: {
+    color: Colors.white,
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.black,
+    letterSpacing: -0.5,
+    textAlign: 'center',
   },
-  idText: {
-    fontSize: FontSize.xs,
+  usernameHandle: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  bioText: {
     color: Colors.text.secondary,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontWeight: 'bold',
+    fontSize: FontSize.sm,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
   },
-  bioText: { color: Colors.text.secondary, fontSize: FontSize.sm, lineHeight: 20, textAlign: 'center', marginTop: Spacing.xs, paddingHorizontal: Spacing.xl },
 });
 
 export default ProfileHeader;

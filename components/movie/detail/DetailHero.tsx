@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Animated, ViewStyle } from 'react-native';
-import { Image } from 'expo-image';
+import SafeImage from '@/components/common/SafeImage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Star } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from '@/constants/theme';
@@ -28,8 +28,9 @@ export const DetailHero: React.FC<DetailHeroProps> = ({ movie, userRating, bp, a
   return (
     <>
       <View style={[styles.heroWrap, bp.isLarge && { width: '100%', maxWidth: bp.maxContentWidth, height: 450 }]}>
-        <Image 
-          source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${movie.backdrop_path}` }} 
+        <SafeImage 
+          uri={movie.backdrop_path ? `${TMDB_IMAGE_SIZES.backdrop}${movie.backdrop_path}` : null} 
+          fallbackType="movie"
           style={styles.backdrop} 
           contentFit="cover"
           cachePolicy="memory-disk"
@@ -53,8 +54,9 @@ export const DetailHero: React.FC<DetailHeroProps> = ({ movie, userRating, bp, a
       <View style={[bp.isLarge && { flexDirection: 'row', width: '100%', maxWidth: bp.maxContentWidth, paddingHorizontal: 40 }]}>
         <View style={[bp.isLarge && { width: 300, marginRight: 40 }]}>
           {bp.isLarge && (
-            <Image 
-              source={{ uri: `${TMDB_IMAGE_SIZES.large}${movie.poster_path}` }} 
+            <SafeImage 
+              uri={movie.poster_path ? `${TMDB_IMAGE_SIZES.large}${movie.poster_path}` : null} 
+              fallbackType="movie"
               style={{ width: 300, height: 450, borderRadius: Radius.lg, marginTop: -200, borderWidth: 1, borderColor: Colors.overlay.light10 } as any} 
               contentFit="cover" 
               cachePolicy="memory-disk"

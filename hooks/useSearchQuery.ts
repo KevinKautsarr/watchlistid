@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { MediaItem, FetchState } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
@@ -26,8 +26,8 @@ export const useSearchQuery = (initialCat: any, initialFilter: string) => {
   const [searchText, setSearchText] = useState("");
   const debouncedQ = useDebounce(searchText, 450);
 
-  const [itemsState, setItemsState] = useState<FetchState<MediaItem[]>>({ status: 'idle', data: [], error: null });
-  const [personState, setPersonState] = useState<FetchState<any[]>>({ status: 'idle', data: [], error: null });
+  const [itemsState, setItemsState] = useState<FetchState<MediaItem[]>>({ status: 'loading', data: [], error: null });
+  const [personState, setPersonState] = useState<FetchState<any[]>>({ status: 'loading', data: [], error: null });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
@@ -94,6 +94,7 @@ export const useSearchQuery = (initialCat: any, initialFilter: string) => {
       setPersonState({ status: 'success', data: [], error: null });
       setTotalPages(tp);
       setTotalResults(tr);
+      setPage(p);
     } catch(e) { 
       setItemsState(prev => ({ ...prev, status: 'error', error: (e as Error).message }));
       setPersonState(prev => ({ ...prev, status: 'error', error: (e as Error).message }));
@@ -117,10 +118,13 @@ export const useSearchQuery = (initialCat: any, initialFilter: string) => {
       setTotalPages(d.total_pages ?? 1);
       setTotalResults(d.total_results ?? raw.length);
       setPersonState({ status: 'success', data: [], error: null });
+      setPage(p);
     } catch(e) { 
       setItemsState(prev => ({ ...prev, status: 'error', error: (e as Error).message }));
     } finally { setLoadingMore(false); }
   }, []);
+
+
 
   return {
     activeCat, setActiveCat,

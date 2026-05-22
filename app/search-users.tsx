@@ -21,6 +21,7 @@ function debounce<T extends (...args: string[]) => void>(func: T, wait: number):
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
 import { useSocial } from '@/context/SocialContext';
 import { UserProfile, FetchState } from '@/types';
+import Avatar from '@/components/common/Avatar';
 
 export default function UserSearchScreen() {
   const router = useRouter();
@@ -71,10 +72,11 @@ export default function UserSearchScreen() {
         router.push({ pathname: '/user/[userId]', params: { userId: item.id } } as any);
       }}
     >
-      <Image 
-        source={item.avatar_url || 'https://via.placeholder.com/50'} 
+      <Avatar 
+        uri={item.avatar_url} 
+        name={item.username}
+        size={50}
         style={s.avatar}
-        contentFit="cover"
       />
       <View style={s.userInfo}>
         <Text style={s.username}>{item.username}</Text>

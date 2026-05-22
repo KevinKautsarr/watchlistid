@@ -46,7 +46,7 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
         <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
           <View style={styles.btnContent}>
             <Share2 size={16} color={Colors.accentBlue} />
-            <Text style={styles.shareText} allowFontScaling={false}>Bagikan</Text>
+            <Text style={styles.shareText} allowFontScaling={false}>{t('share')}</Text>
           </View>
         </Pressable>
       </View>
@@ -83,7 +83,7 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
       <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
         <View style={styles.btnContent}>
           <Share2 size={16} color={Colors.accentBlue} />
-          <Text style={styles.shareText} allowFontScaling={false}>Bagikan</Text>
+          <Text style={styles.shareText} allowFontScaling={false}>{t('share')}</Text>
         </View>
       </Pressable>
     </View>

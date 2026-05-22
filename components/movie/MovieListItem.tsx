@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
-import { Check, Circle, Trash2, Plus, Eye } from 'lucide-react-native';
+import SafeImage from '@/components/common/SafeImage';
+import { Check, Circle, Trash2, Plus, Eye, MessageSquare } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
 import { MediaItem } from '@/types/tmdb';
@@ -16,8 +16,11 @@ interface MovieListItemProps {
   watched?:     boolean;
   onToggleWatched?: () => void;
   onRemove?:    () => void;
+  onWriteReview?: () => void;
   rank?:        number;
   inWatchlist?: boolean;
+  status?:      'not_added' | 'plan_to_watch' | 'watched' | 'reviewed';
+  hideActions?: boolean;
 }
 
 const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
@@ -28,8 +31,11 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
   watched,
   onToggleWatched,
   onRemove,
+  onWriteReview,
   rank,
   inWatchlist,
+  status,
+  hideActions,
 }) => {
   // Safe extraction without 'any'
   const isMovie = ('mediaType' in movie && movie.mediaType === 'movie') || ('media_type' in movie && movie.media_type === 'movie');
@@ -56,8 +62,9 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
         activeOpacity={0.8}
         onPress={onPress}
       >
-        <Image 
-          source={{ uri: `https://image.tmdb.org/t/p/w154${movie.poster_path}` }} 
+        <SafeImage 
+          uri={movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null} 
+          fallbackType="movie"
           style={StyleSheet.absoluteFill} 
           contentFit="cover"
           cachePolicy="memory-disk"
@@ -86,52 +93,83 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
           ) : null}
         </View>
         <RatingBadge rating={movie.vote_average} size="sm" style={styles.rating} />
+        {status && (
+          <View style={styles.badgeRow}>
+            {status === 'plan_to_watch' && (
+              <View style={[styles.statusBadge, styles.planBadge]}>
+                <View style={[styles.badgeDot, styles.planDot]} />
+                <Text style={styles.planBadgeText} allowFontScaling={false}>Ingin Ditonton</Text>
+              </View>
+            )}
+            {status === 'watched' && (
+              <View style={[styles.statusBadge, styles.watchedBadge]}>
+                <View style={[styles.badgeDot, styles.watchedDot]} />
+                <Text style={styles.watchedBadgeText} allowFontScaling={false}>Sudah Ditonton</Text>
+              </View>
+            )}
+            {status === 'reviewed' && (
+              <View style={[styles.statusBadge, styles.reviewedBadge]}>
+                <Text style={styles.reviewedBadgeText} allowFontScaling={false}>★ Sudah Direview</Text>
+              </View>
+            )}
+          </View>
+        )}
         <Text style={styles.overview} numberOfLines={2} allowFontScaling={false}>
           {movie.overview}
         </Text>
       </View>
-      <View style={styles.actionCol}>
-        {showWatched ? (
-          <>
+      {!hideActions && (
+        <View style={styles.actionCol}>
+          {showWatched ? (
+            <>
+              {status !== 'reviewed' && (
+                <TouchableOpacity 
+                  style={[
+                    styles.actionBtn, 
+                    status === 'watched' ? styles.reviewBtn : (watched ? styles.watchedBtn : styles.unwatchedBtn), 
+                    cursorPointer
+                  ]}
+                  activeOpacity={0.75}
+                  onPress={status === 'watched' && onWriteReview ? onWriteReview : onToggleWatched}
+                  accessibilityRole="button"
+                  accessibilityLabel={status === 'watched' ? "Tulis ulasan" : (watched ? "Mark as unwatched" : "Mark as watched")}
+                >
+                  {status === 'watched' ? (
+                    <MessageSquare size={IconSize.sm} color={Colors.ratingGold} strokeWidth={2.5} />
+                  ) : watched ? (
+                    <Check size={IconSize.md} color={Colors.primary} strokeWidth={3} />
+                  ) : (
+                    <Eye size={IconSize.sm} color={Colors.primary} strokeWidth={2.5} />
+                  )}
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity 
+                style={[styles.deleteBtn, cursorPointer]}
+                activeOpacity={0.75}
+                onPress={onRemove}
+                accessibilityRole="button"
+                accessibilityLabel="Remove from watchlist"
+              >
+                <Trash2 size={IconSize.sm} color={Colors.text.secondary} strokeWidth={2} />
+              </TouchableOpacity>
+            </>
+          ) : (
             <TouchableOpacity 
-              style={[styles.actionBtn, watched ? styles.watchedBtn : styles.unwatchedBtn, cursorPointer]}
+              style={[styles.wlCircle, inWatchlist && styles.wlCircleActive, cursorPointer]}
               activeOpacity={0.75}
-              onPress={onToggleWatched}
+              onPress={onAdd}
               accessibilityRole="button"
-              accessibilityLabel={watched ? "Mark as unwatched" : "Mark as watched"}
+              accessibilityLabel={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
             >
-              {watched ? (
+              {inWatchlist ? (
                 <Check size={IconSize.md} color={Colors.primary} strokeWidth={3} />
               ) : (
-                <Eye size={IconSize.md} color={Colors.white} strokeWidth={2} />
+                <Plus size={IconSize.md} color={Colors.primary} strokeWidth={2.5} />
               )}
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.deleteBtn, cursorPointer]}
-              activeOpacity={0.75}
-              onPress={onRemove}
-              accessibilityRole="button"
-              accessibilityLabel="Remove from watchlist"
-            >
-              <Trash2 size={IconSize.sm} color={Colors.text.secondary} strokeWidth={2} />
-            </TouchableOpacity>
-          </>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.wlCircle, inWatchlist && styles.wlCircleActive, cursorPointer]}
-            activeOpacity={0.75}
-            onPress={onAdd}
-            accessibilityRole="button"
-            accessibilityLabel={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-          >
-            {inWatchlist ? (
-              <Check size={IconSize.md} color={Colors.white} strokeWidth={3} />
-            ) : (
-              <Plus size={IconSize.md} color={Colors.primary} strokeWidth={2.5} />
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+          )}
+        </View>
+      )}
     </View>
   );
 });
@@ -143,7 +181,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg, 
     borderBottomWidth: 1, 
     borderColor: Colors.overlay.light, 
-    gap: Spacing.lg 
+    gap: Spacing.lg,
+    alignItems: 'center'
   },
   rankBadge: { 
     position: 'absolute', 
@@ -200,7 +239,10 @@ const styles = StyleSheet.create({
     lineHeight: 17 
   },
   actionCol: { 
-    gap: Spacing.sm 
+    gap: Spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 36
   },
   actionBtn: { 
     width: 36, 
@@ -213,7 +255,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface 
   },
   unwatchedBtn: { 
-    backgroundColor: Colors.primary 
+    backgroundColor: 'rgba(229, 9, 20, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.3)',
+  },
+  reviewBtn: {
+    backgroundColor: 'rgba(255, 193, 7, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.3)',
   },
   actionIcon: { 
     fontWeight: FontWeight.bold 
@@ -239,17 +288,19 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary 
   },
   wlCircle: { 
-    width: 32, 
-    height: 32, 
-    borderRadius: Radius.full, 
-    backgroundColor: Colors.surface, 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: 'rgba(229, 9, 20, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.3)',
     justifyContent: 'center', 
     alignItems: 'center', 
     flexShrink: 0, 
-    marginTop: Spacing.xs 
   },
   wlCircleActive: { 
-    backgroundColor: Colors.primary 
+    backgroundColor: Colors.surface, 
+    borderWidth: 0,
   },
   wlIcon: { 
     fontSize: FontSize.xl, 
@@ -257,6 +308,57 @@ const styles = StyleSheet.create({
   },
   wlIconActive: { 
     color: Colors.white 
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  badgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  planBadge: {
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+  },
+  planDot: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  planBadgeText: {
+    fontSize: 10,
+    color: Colors.text.secondary,
+    fontWeight: FontWeight.bold,
+  },
+  watchedBadge: {
+    borderColor: `${Colors.primary}40`,
+    backgroundColor: `${Colors.primary}0D`,
+  },
+  watchedDot: {
+    backgroundColor: Colors.primary,
+  },
+  watchedBadgeText: {
+    fontSize: 10,
+    color: Colors.primary,
+    fontWeight: FontWeight.bold,
+  },
+  reviewedBadge: {
+    borderColor: `${Colors.ratingGold}40`,
+    backgroundColor: `${Colors.ratingGold}0D`,
+  },
+  reviewedBadgeText: {
+    fontSize: 10,
+    color: Colors.ratingGold,
+    fontWeight: FontWeight.bold,
   },
 });
 

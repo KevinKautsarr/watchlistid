@@ -5,28 +5,56 @@ import {
   StyleSheet,
   Animated,
   ActivityIndicator,
+  Easing,
 } from 'react-native';
 import { Film } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
 import { nativeDriver } from '@/utils/animation';
-import { boxShadow } from '@/utils/webStyles';
 
 const SplashScreen: React.FC = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  // Nilai Animasi Terpisah untuk efek bertahap
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoTranslateY = useRef(new Animated.Value(20)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  const taglineOpacity = useRef(new Animated.Value(0)).current;
+  const loaderOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    // Animasi sekuensial bergaya sinematik
+    Animated.sequence([
+      // 1. Ikon muncul dan naik perlahan
+      Animated.parallel([
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.out(Easing.ease),
+          ...nativeDriver,
+        }),
+        Animated.timing(logoTranslateY, {
+          toValue: 0,
+          duration: 700,
+          easing: Easing.out(Easing.ease),
+          ...nativeDriver,
+        }),
+      ]),
+      // 2. Nama Aplikasi muncul
+      Animated.timing(textOpacity, {
         toValue: 1,
-        duration: 800,
+        duration: 400,
         ...nativeDriver,
       }),
-      Animated.spring(scaleAnim, {
+      // 3. Tagline muncul
+      Animated.timing(taglineOpacity, {
         toValue: 1,
-        friction: 8,
-        tension: 20,
+        duration: 400,
+        ...nativeDriver,
+      }),
+      // 4. Jeda sejenak, lalu tampilkan indikator loading
+      Animated.timing(loaderOpacity, {
+        toValue: 1,
+        duration: 500,
+        delay: 200,
         ...nativeDriver,
       }),
     ]).start();
@@ -34,22 +62,35 @@ const SplashScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#7E050B', '#141414', '#141414']} style={StyleSheet.absoluteFill} />
+      {/* Ambient Glow: Gradasi dibuat seolah memancar dari tengah */}
+      <LinearGradient 
+        colors={['#1A0405', '#141414', '#141414']} 
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill} 
+      />
       
-      <Animated.View style={[styles.centerContent, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-        <Film size={64} color={Colors.primary} strokeWidth={1.5} style={styles.icon} />
+      <View style={styles.centerContent}>
+        <Animated.View style={{ opacity: logoOpacity, transform: [{ translateY: logoTranslateY }] }}>
+          <View style={styles.iconWrapper}>
+            <Film size={56} color={Colors.primary} strokeWidth={1.5} style={styles.icon} />
+          </View>
+        </Animated.View>
         
-        <Text style={styles.appName} allowFontScaling={false}>
-          WATCHLISTID
-        </Text>
+        <Animated.View style={{ opacity: textOpacity }}>
+          <Text style={styles.appName} allowFontScaling={false}>
+            WATCHLIST<Text style={styles.appAccent}>ID</Text>
+          </Text>
+        </Animated.View>
         
-        <Text style={styles.tagline} allowFontScaling={false}>
-          Your personal movie universe
-        </Text>
-      </Animated.View>
+        <Animated.View style={{ opacity: taglineOpacity }}>
+          <Text style={styles.tagline} allowFontScaling={false}>
+            Your Personal Movie Universe
+          </Text>
+        </Animated.View>
+      </View>
 
-      <Animated.View style={[styles.bottomContainer, { opacity: fadeAnim }]}>
-        <ActivityIndicator size="large" color={Colors.primary} style={styles.loader} />
+      <Animated.View style={[styles.bottomContainer, { opacity: loaderOpacity }]}>
+        <ActivityIndicator size="small" color={Colors.primary} />
       </Animated.View>
     </View>
   );
@@ -58,45 +99,50 @@ const SplashScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#141414', // Warna dasar solid
     justifyContent: 'center',
     alignItems: 'center',
   },
   centerContent: {
     alignItems: 'center',
-    marginTop: -40, // Visually center it better
+    marginTop: -50, // Angkat sedikit ke atas agar lebih proporsional di mata
+  },
+  iconWrapper: {
+    marginBottom: Spacing.xl,
+    padding: 16,
+    borderRadius: 24,
+    // Memberikan background transparan yang subtle di belakang ikon
+    backgroundColor: 'rgba(229, 9, 20, 0.03)', 
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.1)',
   },
   icon: {
-    marginBottom: Spacing.lg,
-    ...boxShadow(Colors.primary, 0, 4, 12, 0.4, 8),
+    // Hapus atau kurangi boxShadow di sini agar tidak terlihat 'kotor'
   },
   appName: {
-    fontSize: 42,
+    fontSize: 40,
     fontWeight: FontWeight.black,
     color: Colors.white,
-    letterSpacing: 1,
+    letterSpacing: 4, // Jarak huruf diperlebar agar lebih elegan
     textAlign: 'center',
   },
   appAccent: {
-    color: Colors.primary,
+    color: Colors.primary, // 'ID' akan memiliki warna merah
   },
   tagline: {
-    fontSize: FontSize.base,
-    color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 1.5,
+    fontSize: FontSize.sm,
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 3,
     textAlign: 'center',
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
+    textTransform: 'uppercase', // Membuatnya terlihat seperti poster film
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 50,
     width: '100%',
     alignItems: 'center',
-  },
-  loader: {
-    transform: [{ scale: 1.1 }],
   },
 });
 
 export default SplashScreen;
-

@@ -91,14 +91,14 @@ export default function OfflineGuard() {
     >
       <View style={styles.content}>
         {showReconnected ? (
-          <Wifi size={18} color="#FFFFFF" strokeWidth={2.5} />
+          <Wifi size={18} color={Colors.white} strokeWidth={2.5} />
         ) : (
-          <WifiOff size={18} color="#FFFFFF" strokeWidth={2.5} />
+          <WifiOff size={18} color={Colors.white} strokeWidth={2.5} />
         )}
         <Text style={styles.text} allowFontScaling={false}>
           {showReconnected
-            ? 'Koneksi internet pulih kembali.'
-            : 'Koneksi internet terputus. Mode offline.'}
+            ? 'Koneksi internet pulih'
+            : 'Mode offline'}
         </Text>
       </View>
     </Animated.View>
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   containerOnline: {
-    backgroundColor: '#22C55E',
+    backgroundColor: Colors.success,
   },
   content: {
     flexDirection: 'row',
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   text: {
-    color: '#FFFFFF',
+    color: Colors.white,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     flexShrink: 1,

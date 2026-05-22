@@ -38,14 +38,14 @@ export default function ResetPasswordScreen() {
     // 1. Password length validation
     if (password.length < 8) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError('Password harus minimal 8 karakter.');
+      setError(t('passwordMin8Err'));
       return;
     }
 
     // 2. Confirm password match validation
     if (password !== confirmPassword) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError('Password baru dan konfirmasi password tidak cocok.');
+      setError(t('passwordsDontMatch'));
       return;
     }
 
@@ -57,11 +57,11 @@ export default function ResetPasswordScreen() {
       setLoading(false);
 
       if (errMessage) {
-        // Map error message to user friendly Indonesian
+        // Map error message using translation keys
         if (errMessage.includes('same as old')) {
-          setError('Password baru tidak boleh sama dengan password lama.');
+          setError(t('newPasswordSameAsOldErr'));
         } else if (errMessage.includes('session') || errMessage.includes('invalid claim')) {
-          setError('Sesi pemulihan tidak valid atau telah kedaluwarsa. Silakan minta tautan baru.');
+          setError(t('recoverySessionExpiredErr'));
         } else {
           setError(errMessage);
         }
@@ -76,7 +76,7 @@ export default function ResetPasswordScreen() {
       }
     } catch (err: any) {
       setLoading(false);
-      setError(err?.message || 'Terjadi kesalahan sistem saat mengatur ulang kata sandi.');
+      setError(err?.message || t('resetPasswordSystemErr'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
@@ -103,7 +103,7 @@ export default function ResetPasswordScreen() {
               WatchList<Text style={s.logoAccent}>ID</Text>
             </Text>
             <Text style={s.logoSub} allowFontScaling={false}>
-              Atur Ulang Kata Sandi
+              {t('resetPassword')}
             </Text>
           </View>
 
@@ -112,22 +112,22 @@ export default function ResetPasswordScreen() {
             {success ? (
               <View style={s.successContainer}>
                 <CheckCircle size={56} color="#22C55E" strokeWidth={2} />
-                <Text style={s.successTitle} allowFontScaling={false}>Berhasil!</Text>
+                <Text style={s.successTitle} allowFontScaling={false}>{t('successResetTitle')}</Text>
                 <Text style={s.successMessage} allowFontScaling={false}>
-                  Password Anda telah diperbarui. Mengalihkan Anda ke halaman utama...
+                  {t('successResetMsg')}
                 </Text>
               </View>
             ) : (
               <>
-                <Text style={s.cardTitle} allowFontScaling={false}>Kata Sandi Baru</Text>
+                <Text style={s.cardTitle} allowFontScaling={false}>{t('resetPasswordTitle')}</Text>
                 <Text style={s.cardSub} allowFontScaling={false}>
-                  Masukkan kata sandi baru minimal 8 karakter.
+                  {t('resetPasswordSub')}
                 </Text>
 
                 {/* Password Input */}
                 <View style={s.fieldLabel}>
                   <Lock size={15} color={BRAND_PRIMARY} strokeWidth={2} />
-                  <Text style={s.label} allowFontScaling={false}>Password Baru</Text>
+                  <Text style={s.label} allowFontScaling={false}>{t('newPassword')}</Text>
                 </View>
                 <View style={s.inputRow}>
                   <TextInput
@@ -155,7 +155,7 @@ export default function ResetPasswordScreen() {
                 {/* Confirm Password Input */}
                 <View style={s.fieldLabel}>
                   <Lock size={15} color={BRAND_PRIMARY} strokeWidth={2} />
-                  <Text style={s.label} allowFontScaling={false}>Konfirmasi Password Baru</Text>
+                  <Text style={s.label} allowFontScaling={false}>{t('confirmNewPassword')}</Text>
                 </View>
                 <View style={s.inputRow}>
                   <TextInput
@@ -197,7 +197,7 @@ export default function ResetPasswordScreen() {
                   {loading ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
-                    <Text style={s.btnText} allowFontScaling={false}>Simpan Password</Text>
+                    <Text style={s.btnText} allowFontScaling={false}>{t('savePassword')}</Text>
                   )}
                 </TouchableOpacity>
               </>

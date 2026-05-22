@@ -37,6 +37,7 @@ const REDIRECT_URL = Platform.OS === 'web'
  *  displaying other users. This type uses optional fields for the auth context. */
 interface AuthUserProfile {
   username?: string | null;
+  full_name?: string | null;
   avatar_url?: string | null;
   bio?: string | null;
 }
@@ -124,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfileWithRetry = async (retryCount = 0) => {
       setProfile(prev => ({ ...prev, status: 'loading' }));
       try {
-        const { data, error } = await typedFrom('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
+        const { data, error } = await typedFrom('profiles').select('username, full_name, avatar_url, bio').eq('id', user.id).single();
         
         if (data) {
           setProfile({ status: 'success', data, error: null });
@@ -135,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (needsSync) {
             await typedFrom('profiles').update({
               username: data.username || metaUsername,
+              full_name: data.full_name || user.user_metadata?.full_name || user.user_metadata?.name || null,
               avatar_url: data.avatar_url || metaAvatar,
             }).eq('id', user.id);
           }
@@ -189,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (!user) return;
-    const { data } = await typedFrom('profiles').select('username, avatar_url, bio').eq('id', user.id).single();
+    const { data } = await typedFrom('profiles').select('username, full_name, avatar_url, bio').eq('id', user.id).single();
     if (data) setProfile({ status: 'success', data: data as AuthUserProfile, error: null });
   };
 
