@@ -43,31 +43,39 @@ export default function OfflineGuard() {
     ]).start(callback);
   };
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      const offline = state.isConnected === false;
+  const handleSlideOutComplete = () => {
+    setShowReconnected(false);
+  };
 
-      if (offline) {
-        // Coming online → offline
-        wasOfflineRef.current = true;
-        setShowReconnected(false);
-        setIsOffline(true);
-        if (reconnectTimer.current) {
-          clearTimeout(reconnectTimer.current);
-          reconnectTimer.current = null;
-        }
-        slideIn();
-      } else if (!offline && wasOfflineRef.current) {
-        // Coming back online after being offline — show reconnected toast
-        wasOfflineRef.current = false;
-        setShowReconnected(true);
-        setIsOffline(false);
-        slideIn();
-        reconnectTimer.current = setTimeout(() => {
-          slideOut(() => setShowReconnected(false));
-        }, 2500);
+  const handleReconnectTimeout = () => {
+    slideOut(handleSlideOutComplete);
+  };
+
+  const handleNetInfoChange = (state: any) => {
+    const offline = state.isConnected === false;
+
+    if (offline) {
+      // Coming online → offline
+      wasOfflineRef.current = true;
+      setShowReconnected(false);
+      setIsOffline(true);
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+        reconnectTimer.current = null;
       }
-    });
+      slideIn();
+    } else if (!offline && wasOfflineRef.current) {
+      // Coming back online after being offline — show reconnected toast
+      wasOfflineRef.current = false;
+      setShowReconnected(true);
+      setIsOffline(false);
+      slideIn();
+      reconnectTimer.current = setTimeout(handleReconnectTimeout, 2500);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(handleNetInfoChange);
 
     return () => {
       unsubscribe();

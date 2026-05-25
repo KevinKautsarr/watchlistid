@@ -5,7 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Bookmark, Plus, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES, IconSize } from '@/constants/theme';
 import { MediaItem } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 import { textShadow, cursorPointer } from '@/utils/webStyles';
+
 
 
 interface HeroCarouselProps {
@@ -20,6 +22,7 @@ interface HeroCarouselProps {
 export const HeroCarousel: React.FC<HeroCarouselProps> = ({ 
   data, width, height, onPressItem, onToggleWL, isInWatchlist 
 }) => {
+  const { t } = useLanguage();
   const [idx, setIdx] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const ref = useRef<ScrollView>(null);
@@ -55,7 +58,12 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [startAuto, isReady]);
 
-  const resetAuto = () => { if (timer.current) clearInterval(timer.current); startAuto(); };
+  const resetAuto = () => {
+    if (timer.current) {
+      clearInterval(timer.current);
+    }
+    startAuto();
+  };
 
   if (!slides.length) return null;
   const cur = slides[idx];
@@ -63,25 +71,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   return (
     <View style={{ width, height, minHeight: height }}>
-      {!isReady ? (
-        <View style={{ width, height }}>
-          <Image
-            source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${slides[0].backdrop_path}` }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={200}
-            priority="high"
-            accessibilityLabel="Hero banner backdrop loading"
-            alt="Hero banner backdrop loading"
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
-            locations={[0, 0.4, 0.7, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-      ) : (
+      {isReady ? (
         <ScrollView ref={ref} horizontal pagingEnabled scrollEnabled={false} showsHorizontalScrollIndicator={false}>
           {slides.map((m, i) => (
             <View key={m.id} style={{ width, height }}>
@@ -103,6 +93,24 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             </View>
           ))}
         </ScrollView>
+      ) : (
+        <View style={{ width, height }}>
+          <Image
+            source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${slides[0].backdrop_path}` }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+            priority="high"
+            accessibilityLabel="Hero banner backdrop loading"
+            alt="Hero banner backdrop loading"
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
+            locations={[0, 0.4, 0.7, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
       )}
 
       {/* Overlay content */}
@@ -126,7 +134,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             onPress={() => onPressItem(cur.id, cur.media_type)}
           >
             <Play size={IconSize.sm} color={Colors.dark} fill={Colors.dark} strokeWidth={0} />
-            <Text style={s.playBtnText} allowFontScaling={false}>Watch Now</Text>
+            <Text style={s.playBtnText} allowFontScaling={false}>{t('watchNow')}</Text>
           </TouchableOpacity>
           {onToggleWL && (
             <TouchableOpacity 
@@ -135,7 +143,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
               onPress={() => onToggleWL(cur)}
             >
               {inWL ? <Bookmark size={IconSize.sm} color={Colors.white} fill={Colors.white} strokeWidth={0} /> : <Plus size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />}
-              <Text style={s.wlBtnText} allowFontScaling={false}>My List</Text>
+              <Text style={s.wlBtnText} allowFontScaling={false}>{t('myList')}</Text>
             </TouchableOpacity>
           )}
         </View>

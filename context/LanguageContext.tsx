@@ -289,6 +289,18 @@ const translations = {
     deleteAccountConfirmDesc:
       "This action cannot be undone. All your data including watchlist and watched history will be permanently deleted.",
     deleteAccountConfirmLabel: "Delete Account",
+    watchNow: "Watch Now",
+    myList: "My List",
+    statusWatched: "Watched",
+    statusPlanToWatch: "Plan to Watch",
+    statusReviewed: "Reviewed",
+    markUnwatched: "Mark as unwatched",
+    removeFromWatchlistLabel: "Remove from watchlist",
+    sortAdded: "Added",
+    sortRating: "Rating",
+    sortRelease: "Release",
+    sortTitle: "Title",
+    sort: "Sort",
   },
 
   id: {
@@ -431,7 +443,7 @@ const translations = {
 
     // Tabs
     tabHome: "Beranda",
-    tabDiscover: "Eksplor",
+    tabDiscover: "Temukan",
     tabWatchlist: "Watchlist",
     tabProfile: "Profil",
 
@@ -576,6 +588,18 @@ const translations = {
     deleteAccountConfirmDesc:
       "Tindakan ini tidak bisa dibatalkan. Semua data kamu termasuk watchlist dan daftar tontonan akan dihapus permanen.",
     deleteAccountConfirmLabel: "Hapus Akun",
+    watchNow: "Tonton Sekarang",
+    myList: "Daftar Saya",
+    statusWatched: "Sudah Ditonton",
+    statusPlanToWatch: "Ingin Ditonton",
+    statusReviewed: "Sudah Direview",
+    markUnwatched: "Tandai Belum Ditonton",
+    removeFromWatchlistLabel: "Hapus dari daftar tontonan",
+    sortAdded: "Ditambahkan",
+    sortRating: "Rating",
+    sortRelease: "Rilis",
+    sortTitle: "Judul",
+    sort: "Urutkan",
   },
 };
 

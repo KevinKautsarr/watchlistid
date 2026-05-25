@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import SafeImage from '@/components/common/SafeImage';
-import { Star } from 'lucide-react-native';
+import { Star, Bookmark, Check } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '@/constants/theme';
 import { MediaItem } from '@/types';
+import { useWatchlist } from '@/context/WatchlistContext';
 
 interface PosterCardProps {
   movie:       MediaItem;
@@ -24,6 +25,9 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
   textColor,
   onPress 
 }) => {
+  const { getMovieStatus } = useWatchlist();
+  const status = getMovieStatus(movie.id);
+
   const containerStyle = React.useMemo(() => [
     styles.container, 
     { width },
@@ -32,6 +36,34 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
 
   const textColorStyle = React.useMemo(() => (textColor ? { color: textColor } : {}), [textColor]);
   const textColorOpacityStyle = React.useMemo(() => (textColor ? { color: textColor, opacity: 0.7 } : {}), [textColor]);
+
+  const renderStatusBadge = () => {
+    if (status === 'not_added') return null;
+
+    let bgColor = '#1565C0';
+    let IconComponent: any = Bookmark;
+    let fill = '#fff';
+
+    if (status === 'watched') {
+      bgColor = '#B71C1C';
+      IconComponent = Check;
+      fill = 'none';
+    } else if (status === 'reviewed') {
+      bgColor = '#F9A825';
+      IconComponent = Star;
+    }
+
+    return (
+      <View style={[styles.statusBadge, { backgroundColor: bgColor }]}>
+        <IconComponent 
+          size={13} 
+          color="#fff" 
+          fill={fill === 'none' ? undefined : fill} 
+          strokeWidth={status === 'watched' ? 3 : 2} 
+        />
+      </View>
+    );
+  };
 
   return (
     <TouchableOpacity 
@@ -48,13 +80,14 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
           cachePolicy="memory-disk"
           transition={200}
           priority="low"
-          accessibilityLabel={`${('title' in movie ? movie.title : (movie as any).name) || 'Media'} poster`}
+          accessibilityLabel={`${('title' in movie ? movie.title : movie.name) || 'Media'} poster`}
         />
         {showRank && rank != null && (
           <View style={styles.rankBadge}>
             <Text style={styles.rankText} allowFontScaling={false}>{rank}</Text>
           </View>
         )}
+        {renderStatusBadge()}
       </View>
       <View style={styles.infoRow}>
         <Star size={12} color="#F5C518" fill="#F5C518" strokeWidth={0} />
@@ -63,10 +96,10 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
         </Text>
       </View>
       <Text style={[styles.title, textColorStyle]} numberOfLines={2} allowFontScaling={false}>
-        {('title' in movie) ? movie.title : (movie as any).name}
+        {('title' in movie) ? movie.title : movie.name}
       </Text>
       <Text style={[styles.year, textColorOpacityStyle]} allowFontScaling={false}>
-        {('release_date' in movie) ? movie.release_date?.split('-')[0] : (movie as any).first_air_date?.split('-')[0]}
+        {('release_date' in movie) ? movie.release_date?.split('-')[0] : movie.first_air_date?.split('-')[0]}
       </Text>
     </TouchableOpacity>
   );
@@ -103,6 +136,18 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },
+  statusBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadow.sm,
+    zIndex: 10,
+  },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -127,7 +172,8 @@ const styles = StyleSheet.create({
   },
   year: {
     fontSize: FontSize.xs,
-    color: Colors.text.secondary,
+    color: '#C5B0B8',
+    fontWeight: '500',
     marginTop: 2,
   },
 });

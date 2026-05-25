@@ -143,7 +143,6 @@ export default function TabLayout() {
   const { width } = useWindowDimensions();
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1100;
-  const isDesktop = width >= 1100;
   const isLarge   = !isMobile;
   const collapsed = isTablet; // tablet = icon-only sidebar
   const [loginPromptVisible, setLoginPromptVisible] = React.useState(false);

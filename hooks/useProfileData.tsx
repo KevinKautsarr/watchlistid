@@ -1,18 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Platform } from 'react-native';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Platform, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import * as Haptics from 'expo-haptics';
+import { useRouter, useNavigation } from 'expo-router';
+import { ArrowLeft, Settings as SettingsIcon } from 'lucide-react-native';
 import { supabase, typedFrom } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useSocial } from '@/context/SocialContext';
-import { FetchState, UserProfile } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { FetchState, UserProfile, Movie } from '@/types';
 import { decodeBase64ToArrayBuffer } from '@/utils/base64';
+import { exportWatchlistToCSV } from '@/utils/exportWatchlist';
+import { Colors, IconSize } from '@/constants/theme';
+import { cursorPointer } from '@/utils/webStyles';
+
+type ContentTab = 'Diary' | 'Reviews' | 'Watchlist';
 
 export const useProfileData = (userId: string | undefined) => {
-  const { user, profile, refreshProfile } = useAuth();
-  const { getFollowStatus, followUser, unfollowUser } = useSocial();
+  const router = useRouter();
+  const navigation = useNavigation();
+  const { t } = useLanguage();
+  const { signOut, deleteAccount, profile, user, refreshProfile } = useAuth();
+  const { getFollowStatus, followUser, unfollowUser, userLogs } = useSocial();
+  const { watchlist, getMovieStatus, isHydrated, userRatings } = useWatchlist();
 
   const targetUserId = userId || user?.id;
   const isOwner = !userId || userId === user?.id;
@@ -45,7 +58,22 @@ export const useProfileData = (userId: string | undefined) => {
   const [socialUsers, setSocialUsers] = useState<any[]>([]);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
 
-  // Fetch target user's data when viewing another user (runs once per targetUserId/isOwner change)
+  // Modal display states
+  const [activeTab, setActiveTab] = useState<ContentTab>('Reviews');
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [existingLog, setExistingLog] = useState<any>(undefined);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Dialog confirmation states
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLangSheet, setShowLangSheet] = useState(false);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch target user's data when viewing another user
   useEffect(() => {
     if (!targetUserId) return;
     
@@ -90,8 +118,6 @@ export const useProfileData = (userId: string | undefined) => {
       fetchUserContent();
     }
   }, [isOwner, profile.status, profile.data, user?.id]);
-
-
 
   const fetchUserContent = useCallback(async () => {
     if (!targetUserId) return;
@@ -324,7 +350,7 @@ export const useProfileData = (userId: string | undefined) => {
     }
   };
 
-  const handleSaveProfile = async (data: { username: string; full_name: string; bio: string }, t: any) => {
+  const handleSaveProfile = async (data: { username: string; full_name: string; bio: string }) => {
     if (!user) return;
     setIsSaving(true);
     try {
@@ -347,19 +373,17 @@ export const useProfileData = (userId: string | undefined) => {
     }
   };
 
-  const handleUpdateAvatar = async (uri: string, t: any) => {
+  const handleUpdateAvatar = async (uri: string) => {
     if (!user) return;
     setIsSaving(true);
     setUploadProgress(0);
     try {
-      // 1. Kompres gambar menggunakan expo-image-manipulator (Universal Web/Native)
-      // Kita ubah ukurannya menjadi max 400x400 untuk optimalisasi avatar & format JPEG/PNG
       const manipResult = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 400, height: 400 } }],
         { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
-      // 2. Baca data file secara universal sebagai Blob di Web dan ArrayBuffer di Native (menghindari bug Blob di React Native)
+      
       let fileData: Blob | ArrayBuffer;
       let contentType = 'image/jpeg';
       const MAX_SIZE = 5 * 1024 * 1024; // 5 Megabytes
@@ -374,30 +398,19 @@ export const useProfileData = (userId: string | undefined) => {
         });
         fileData = decodeBase64ToArrayBuffer(base64);
         
-        // Deteksi tipe konten dari uri manipulasi jika memungkinkan
         if (manipResult.uri.toLowerCase().endsWith('.png')) {
           contentType = 'image/png';
         }
       }
 
-      // 3. Validasi batas ukuran file
       const fileSize = Platform.OS === 'web' ? (fileData as Blob).size : (fileData as ArrayBuffer).byteLength;
       if (fileSize > MAX_SIZE) {
         throw new Error('Ukuran gambar terlalu besar (maksimal 5MB).');
       }
 
-      // 4. Deteksi ekstensi file secara dinamis
       const fileExt = contentType === 'image/png' ? 'png' : 'jpg';
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      console.log('--- Submitting Upload to Supabase Storage ---');
-      console.log('File Name:', fileName);
-      console.log('File Size (bytes):', fileSize);
-      console.log('Content Type:', contentType);
-      console.log('Platform:', Platform.OS);
-      console.log('File Data Instance:', fileData?.constructor?.name);
-
-      // 5. Upload ke Supabase Storage dengan memantau progress
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, fileData, {
@@ -411,7 +424,6 @@ export const useProfileData = (userId: string | undefined) => {
 
       if (uploadError) throw uploadError;
 
-      // 6. Dapatkan URL publik baru dan perbarui tabel profil
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
       
       const { error: updateError } = await typedFrom('profiles')
@@ -425,7 +437,6 @@ export const useProfileData = (userId: string | undefined) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
       console.error('Avatar update error detail:', JSON.stringify(err, null, 2));
-      console.error('Avatar update error object:', err);
       alert(err.message || t('avatarError'));
     } finally {
       setIsSaving(false);
@@ -433,10 +444,286 @@ export const useProfileData = (userId: string | undefined) => {
     }
   };
 
+  // Combine explicit watchlist and logs to build a single comprehensive duplicate-free collection
+  const mergedList = useMemo(() => {
+    if (!isOwner) return [];
+    const map = new Map<number, any>();
+    
+    watchlist.forEach(item => {
+      map.set(item.id, item);
+    });
+    
+    userLogs.forEach(log => {
+      if (!map.has(log.movie_id)) {
+        const isTV = log.media_type === 'tv';
+        const mappedItem = isTV ? {
+          id: log.movie_id,
+          mediaType: 'tv',
+          name: log.movie_title,
+          poster_path: log.poster_path || null,
+          backdrop_path: null,
+          addedAt: log.watched_at || log.created_at || new Date().toISOString(),
+          status: 'completed',
+          vote_average: log.rating || 0,
+          vote_count: 0,
+          first_air_date: '',
+          overview: '',
+        } : {
+          id: log.movie_id,
+          mediaType: 'movie',
+          title: log.movie_title,
+          poster_path: log.poster_path || null,
+          backdrop_path: null,
+          addedAt: log.watched_at || log.created_at || new Date().toISOString(),
+          status: 'completed',
+          vote_average: log.rating || 0,
+          vote_count: 0,
+          release_date: '',
+          overview: '',
+        };
+        map.set(log.movie_id, mappedItem);
+      }
+    });
+    
+    return Array.from(map.values());
+  }, [isOwner, watchlist, userLogs]);
+
+  const userReviewsList = useMemo(() => {
+    return targetReviews;
+  }, [targetReviews]);
+
+  const userLogsList = useMemo(() => {
+    if (isOwner) {
+      const ownerWatchedItems = mergedList.filter(m => {
+        const status = getMovieStatus(m.id);
+        return status === 'watched';
+      });
+      return ownerWatchedItems.map(item => {
+        const matchingLog = userLogs.find(l => l.movie_id === item.id);
+        return {
+          id: matchingLog?.id || `watch-${item.id}`,
+          user_id: user?.id || '',
+          movie_id: item.id,
+          movie_title: item.mediaType === 'movie' ? item.title : item.name,
+          poster_path: item.poster_path,
+          watched_at: matchingLog?.watched_at || item.addedAt,
+          rating: matchingLog?.rating || userRatings[item.id] || undefined,
+          review_text: matchingLog?.review_text || undefined,
+          is_spoiler: matchingLog?.is_spoiler || false,
+          media_type: item.mediaType,
+          created_at: matchingLog?.created_at || item.addedAt,
+        };
+      });
+    }
+    const reviewedIds = new Set(targetReviews.map((r: any) => r.movie_id));
+    const filteredTargetLogs = targetLogs.filter((l: any) => !reviewedIds.has(l.movie_id));
+    const loggedIds = new Set(filteredTargetLogs.map((l: any) => l.movie_id));
+    const watchedFromWatchlist = targetWatchlist
+      .filter(item => item.status === 'completed' && !loggedIds.has(item.id) && !reviewedIds.has(item.id))
+      .map(item => ({
+        id: `watch-${item.id}`,
+        movie_id: item.id,
+        movie_title: item.title || item.name,
+        poster_path: item.poster_path,
+        watched_at: item.addedAt,
+        rating: item.vote_average || null,
+        review_text: undefined,
+        is_spoiler: false,
+        media_type: item.mediaType,
+      }));
+    return [...filteredTargetLogs, ...watchedFromWatchlist];
+  }, [isOwner, mergedList, userLogs, userRatings, targetLogs, targetWatchlist, targetReviews, getMovieStatus]);
+
+  const watchlistList = useMemo(() => {
+    if (isOwner) {
+      return mergedList.filter(m => getMovieStatus(m.id) === 'plan_to_watch');
+    }
+    // For other users: exclude items already counted in logs (watched) or reviews
+    // so the three tab counts are mutually exclusive and don't double-count.
+    const loggedIds = new Set(targetLogs.map((l: any) => l.movie_id));
+    const reviewedIds = new Set(targetReviews.map((r: any) => r.movie_id));
+    return targetWatchlist.filter(
+      item => item.status === 'plan_to_watch'
+        && !loggedIds.has(item.id)
+        && !reviewedIds.has(item.id)
+    );
+  }, [isOwner, mergedList, targetWatchlist, targetLogs, targetReviews, getMovieStatus]);
+
+  const listData = useMemo(() => {
+    if (activeTab === 'Diary') return userLogsList;
+    if (activeTab === 'Reviews') return userReviewsList;
+    if (activeTab === 'Watchlist') return watchlistList;
+    return [];
+  }, [activeTab, userLogsList, userReviewsList, watchlistList]);
+
+  const avgRating = useMemo(() => {
+    const movieRatings = new Map<number, number>();
+    
+    if (isOwner) {
+      Object.entries(userRatings).forEach(([mId, r]) => {
+        if (r && r > 0) movieRatings.set(Number(mId), r);
+      });
+      targetReviews.forEach(rev => {
+        if (rev.rating && rev.rating > 0) movieRatings.set(rev.movie_id, rev.rating);
+      });
+      userLogs.forEach(l => {
+        if (l.rating && l.rating > 0) movieRatings.set(l.movie_id, l.rating);
+      });
+    } else {
+      targetLogs.forEach(l => {
+        if (l.rating && l.rating > 0) movieRatings.set(l.movie_id, l.rating);
+      });
+      targetReviews.forEach(rev => {
+        if (rev.rating && rev.rating > 0) movieRatings.set(rev.movie_id, rev.rating);
+      });
+    }
+    
+    const uniqueRatings = Array.from(movieRatings.values());
+    return uniqueRatings.length > 0 
+      ? uniqueRatings.reduce((sum, r) => sum + r, 0) / uniqueRatings.length 
+      : 0;
+  }, [isOwner, userRatings, targetReviews, userLogs, targetLogs]);
+
+  const exportLogsCount = useMemo(() => {
+    if (isOwner) {
+      return mergedList.filter(m => {
+        const status = getMovieStatus(m.id);
+        return status === 'watched' || status === 'reviewed';
+      }).length;
+    }
+    return 0;
+  }, [isOwner, mergedList, getMovieStatus]);
+
+  const totalItems = watchlist.length + exportLogsCount;
+  const estimatedKb = Math.max(1, Math.round((totalItems * 150) / 1024));
+  const exportMessage = t('cancel') === 'Batal'
+    ? `Data watchlist (${watchlist.length} item) dan daftar tontonan (${exportLogsCount} item) akan diekspor dalam format spreadsheet CSV (perkiraan ukuran ~${estimatedKb} KB). Kamu bisa membukanya di Microsoft Excel atau Google Sheets.`
+    : `Watchlist data (${watchlist.length} items) and watched list (${exportLogsCount} items) will be exported in CSV spreadsheet format (estimated size ~${estimatedKb} KB). You can open it in Microsoft Excel or Google Sheets.`;
+
+  const handleSignOut = async () => {
+    setShowSignOutConfirm(false);
+    await signOut();
+    router.replace('/auth/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    setShowDeleteConfirm(false);
+    setIsDeleting(true);
+    const err = await deleteAccount();
+    setIsDeleting(false);
+    if (!err) router.replace('/auth/login');
+  };
+
+  const handleExport = () => {
+    setShowExportConfirm(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    const allLogs = isOwner 
+      ? mergedList.filter(m => {
+          const status = getMovieStatus(m.id);
+          return status === 'watched' || status === 'reviewed';
+        }).map(item => {
+          const matchingLog = userLogs.find(l => l.movie_id === item.id);
+          return {
+            id: matchingLog?.id || `watch-${item.id}`,
+            user_id: user?.id || '',
+            movie_id: item.id,
+            movie_title: item.mediaType === 'movie' ? item.title : item.name,
+            poster_path: item.poster_path,
+            watched_at: matchingLog?.watched_at || item.addedAt,
+            rating: matchingLog?.rating || userRatings[item.id] || undefined,
+            review_text: matchingLog?.review_text || undefined,
+            is_spoiler: matchingLog?.is_spoiler || false,
+            media_type: item.mediaType,
+            created_at: matchingLog?.created_at || item.addedAt,
+          };
+        })
+      : [];
+
+    exportWatchlistToCSV(
+      watchlist,
+      allLogs,
+      profile.data?.username ?? 'user',
+    );
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await Promise.all([fetchUserContent(), fetchSocialStats()]);
+    setIsRefreshing(false);
+  }, [fetchUserContent, fetchSocialStats]);
+
+  const handleOpenLogModal = useCallback((logItem: any) => {
+    const movieObj: Movie = {
+      id: logItem.movie_id,
+      media_type: logItem.media_type || 'movie',
+      title: logItem.media_type === 'movie' ? logItem.movie_title : '',
+      name: logItem.media_type === 'tv' ? logItem.movie_title : '',
+      poster_path: logItem.poster_path,
+      overview: '',
+      vote_average: logItem.rating || 0,
+      vote_count: 0,
+      popularity: 0,
+      original_language: 'en',
+      genre_ids: [],
+      release_date: '',
+    } as any;
+    
+    const matchLog = userLogs.find(l => l.movie_id === logItem.movie_id);
+    setExistingLog(matchLog);
+    setSelectedMovie(movieObj);
+    setLogModalVisible(true);
+  }, [userLogs]);
+
+  // focus listener useEffect (navigation focus -> refetch)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchUserContent();
+      fetchSocialStats();
+    });
+    return unsubscribe;
+  }, [navigation, fetchUserContent, fetchSocialStats]);
+
+  // dynamic header title configuration useEffect
+  const profileData = targetProfile.data;
+  useEffect(() => {
+    navigation.setOptions({
+      title: profileData?.username || 'Profile',
+      headerLeft: userId ? () => (
+        <Pressable
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)/search');
+            }
+          }}
+          style={({ pressed }) => [{ marginLeft: 8, padding: 8, opacity: pressed ? 0.6 : 1, justifyContent: 'center', alignItems: 'center' }, cursorPointer]}
+          accessibilityRole="button"
+          accessibilityLabel="Kembali"
+        >
+          <ArrowLeft color={Colors.white} size={IconSize.md || 24} />
+        </Pressable>
+      ) : undefined,
+      headerRight: () => isOwner ? (
+        <Pressable
+          onPress={() => setShowSettingsSheet(true)}
+          style={({ pressed }) => [{ marginRight: 16, padding: 8, opacity: pressed ? 0.6 : 1 }, cursorPointer]}
+          accessibilityRole="button"
+          accessibilityLabel={t('settings')}
+        >
+          <SettingsIcon color={Colors.white} size={IconSize.md || 24} />
+        </Pressable>
+      ) : null
+    });
+  }, [navigation, isOwner, t, router, userId, profileData?.username]);
+
   return {
+    user,
     isOwner,
     targetUserId,
     targetProfile,
+    profileData,
     followers,
     following,
     isFollowing,
@@ -462,6 +749,38 @@ export const useProfileData = (userId: string | undefined) => {
     socialUsers,
     isSocialLoading,
     fetchSocialList,
-    handleSocialFollowToggle
+    handleSocialFollowToggle,
+    // List/Tab states
+    activeTab, setActiveTab,
+    logModalVisible, setLogModalVisible,
+    selectedMovie, setSelectedMovie,
+    existingLog, setExistingLog,
+    isRefreshing, setIsRefreshing,
+    // Dialog confirm states
+    showSignOutConfirm, setShowSignOutConfirm,
+    showDeleteConfirm, setShowDeleteConfirm,
+    showPasswordModal, setShowPasswordModal,
+    showLangSheet, setShowLangSheet,
+    showExportConfirm, setShowExportConfirm,
+    isDeleting, setIsDeleting,
+    // Calculations
+    mergedList,
+    userReviewsList,
+    userLogsList,
+    watchlistList,
+    listData,
+    avgRating,
+    estimatedKb,
+    exportMessage,
+    // Handlers
+    handleSignOut,
+    handleDeleteAccount,
+    handleExport,
+    handleRefresh,
+    handleOpenLogModal,
+    isHydrated,
+    t,
+    router,
+    navigation
   };
 };

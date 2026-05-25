@@ -114,13 +114,13 @@ export default function HomeScreen() {
             style={[s.tabItem, homeTab === 'discover' && s.tabItemActive]}
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setHomeTab('discover'); }}
           >
-            <Text style={[s.tabItemText, homeTab === 'discover' && s.tabItemTextActive]}>Discover</Text>
+            <Text style={[s.tabItemText, homeTab === 'discover' && s.tabItemTextActive]}>{t('tabDiscover')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[s.tabItem, homeTab === 'following' && s.tabItemActive]}
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setHomeTab('following'); }}
           >
-            <Text style={[s.tabItemText, homeTab === 'following' && s.tabItemTextActive]}>Following</Text>
+            <Text style={[s.tabItemText, homeTab === 'following' && s.tabItemTextActive]}>{t('following')}</Text>
           </TouchableOpacity>
         </View>
       </View>

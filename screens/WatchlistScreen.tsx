@@ -193,7 +193,7 @@ const WatchlistScreen: React.FC = () => {
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watchlist'); }}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'Watchlist' }}
-          accessibilityLabel="Ingin Ditonton"
+          accessibilityLabel={t('planToWatch')}
         >
           <Text style={[styles.tabText, activeTab === 'Watchlist' && styles.tabTextActive]}>
             {t('planToWatch')}
@@ -208,7 +208,7 @@ const WatchlistScreen: React.FC = () => {
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watched'); }}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'Watched' }}
-          accessibilityLabel="Sudah Ditonton"
+          accessibilityLabel={t('diary')}
         >
           <Text style={[styles.tabText, activeTab === 'Watched' && styles.tabTextActive]}>
             {t('diary')}
@@ -223,7 +223,7 @@ const WatchlistScreen: React.FC = () => {
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Reviewed'); }}
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'Reviewed' }}
-          accessibilityLabel="Sudah Direview"
+          accessibilityLabel={t('reviewed')}
         >
           <Text style={[styles.tabText, activeTab === 'Reviewed' && styles.tabTextActive]}>
             {t('reviewed')}
@@ -247,7 +247,7 @@ const WatchlistScreen: React.FC = () => {
           accessibilityLabel={`Sort direction: ${isAscending ? 'ascending' : 'descending'}`}
           accessibilityHint="Toggles sort order"
         >
-          <Text style={styles.sortByLbl}>Sort</Text>
+          <Text style={styles.sortByLbl}>{t('sort')}</Text>
           {isAscending ? (
             <ArrowUp size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
           ) : (
@@ -256,21 +256,24 @@ const WatchlistScreen: React.FC = () => {
         </TouchableOpacity>
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-          {SORTS.map(s => (
-            <TouchableOpacity
-              key={s}
-              activeOpacity={0.75}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
-              style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
-              accessibilityRole="button"
-              accessibilityLabel={`Sort by ${s}`}
-              accessibilityState={{ selected: activeSort === s }}
-            >
-              <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} allowFontScaling={false}>
-                {s}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {SORTS.map(s => {
+            const label = s === 'Added' ? t('sortAdded') : s === 'Rating' ? t('sortRating') : s === 'Release' ? t('sortRelease') : t('sortTitle');
+            return (
+              <TouchableOpacity
+                key={s}
+                activeOpacity={0.75}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
+                style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('sort')} ${label}`}
+                accessibilityState={{ selected: activeSort === s }}
+              >
+                <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} allowFontScaling={false}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 

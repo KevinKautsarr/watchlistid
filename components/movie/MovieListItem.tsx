@@ -7,6 +7,8 @@ import { cursorPointer } from '@/utils/webStyles';
 import { MediaItem } from '@/types/tmdb';
 import { WatchlistItem } from '@/types/watchlist';
 import RatingBadge from '@/components/common/RatingBadge';
+import { useLanguage } from '@/context/LanguageContext';
+
 
 interface MovieListItemProps {
   movie:        MediaItem | WatchlistItem;
@@ -37,9 +39,7 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
   status,
   hideActions,
 }) => {
-  // Safe extraction without 'any'
-  const isMovie = ('mediaType' in movie && movie.mediaType === 'movie') || ('media_type' in movie && movie.media_type === 'movie');
-  
+  const { t } = useLanguage();
   const title = 'title' in movie 
     ? movie.title 
     : 'name' in movie 
@@ -98,18 +98,18 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
             {status === 'plan_to_watch' && (
               <View style={[styles.statusBadge, styles.planBadge]}>
                 <View style={[styles.badgeDot, styles.planDot]} />
-                <Text style={styles.planBadgeText} allowFontScaling={false}>Ingin Ditonton</Text>
+                <Text style={styles.planBadgeText} allowFontScaling={false}>{t('statusPlanToWatch')}</Text>
               </View>
             )}
             {status === 'watched' && (
               <View style={[styles.statusBadge, styles.watchedBadge]}>
                 <View style={[styles.badgeDot, styles.watchedDot]} />
-                <Text style={styles.watchedBadgeText} allowFontScaling={false}>Sudah Ditonton</Text>
+                <Text style={styles.watchedBadgeText} allowFontScaling={false}>{t('statusWatched')}</Text>
               </View>
             )}
             {status === 'reviewed' && (
               <View style={[styles.statusBadge, styles.reviewedBadge]}>
-                <Text style={styles.reviewedBadgeText} allowFontScaling={false}>★ Sudah Direview</Text>
+                <Text style={styles.reviewedBadgeText} allowFontScaling={false}>{t('statusReviewed')}</Text>
               </View>
             )}
           </View>
@@ -132,7 +132,7 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
                   activeOpacity={0.75}
                   onPress={status === 'watched' && onWriteReview ? onWriteReview : onToggleWatched}
                   accessibilityRole="button"
-                  accessibilityLabel={status === 'watched' ? "Tulis ulasan" : (watched ? "Mark as unwatched" : "Mark as watched")}
+                  accessibilityLabel={status === 'watched' ? t('writeReview') : (watched ? t('markUnwatched') : t('markWatched'))}
                 >
                   {status === 'watched' ? (
                     <MessageSquare size={IconSize.sm} color={Colors.ratingGold} strokeWidth={2.5} />
@@ -148,7 +148,7 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
                 activeOpacity={0.75}
                 onPress={onRemove}
                 accessibilityRole="button"
-                accessibilityLabel="Remove from watchlist"
+                accessibilityLabel={t('removeFromWatchlistLabel')}
               >
                 <Trash2 size={IconSize.sm} color={Colors.text.secondary} strokeWidth={2} />
               </TouchableOpacity>
@@ -159,7 +159,7 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
               activeOpacity={0.75}
               onPress={onAdd}
               accessibilityRole="button"
-              accessibilityLabel={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+              accessibilityLabel={inWatchlist ? t('removeFromWatchlistLabel') : t('addToWatchlist')}
             >
               {inWatchlist ? (
                 <Check size={IconSize.md} color={Colors.primary} strokeWidth={3} />
@@ -224,7 +224,8 @@ const styles = StyleSheet.create({
   },
   metaText: { 
     fontSize: FontSize.xs, 
-    color: Colors.text.secondary 
+    color: '#C5B0B8',
+    fontWeight: '500'
   },
   metaDot: { 
     color: Colors.text.secondary 
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs, 
     color: Colors.text.secondary, 
     marginTop: Spacing.sm, 
-    lineHeight: 17 
+    lineHeight: 19 
   },
   actionCol: { 
     gap: Spacing.sm,
