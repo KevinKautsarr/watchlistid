@@ -1,0 +1,27 @@
+<svg width="100%" viewBox="0 0 690 150" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">WatchListID Wordmark v6</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Horizontal wordmark fixed — no overlap between WATCHLIST and ID</desc>
+
+  <rect width="680" height="140" fill="#0D0D14" style="fill:rgb(13, 13, 20);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- W mark -->
+  <polyline points="44,40 62,95 76,56 84,76 92,56 106,95 124,40" fill="none" stroke="#F0EDE6" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" style="fill:none;stroke:rgb(240, 237, 230);color:rgb(255, 255, 255);stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <rect x="60" y="102" width="48" height="2" rx="1" fill="#B8922A" style="fill:rgb(184, 146, 42);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Separator -->
+  <rect x="148" y="30" width="1" height="78" rx="0.5" fill="#252535" style="fill:rgb(37, 37, 53);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Strategy: use textLength to pin exact rendered width of WATCHLIST -->
+  <!-- WATCHLIST pinned to exactly 290px wide, starting x=165 -->
+  <text x="165" y="82" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="38" font-weight="800" textLength="290" lengthAdjust="spacingAndGlyphs" fill="#F0EDE6" style="fill:rgb(240, 237, 230);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:38px;font-weight:800;text-anchor:start;dominant-baseline:auto">WATCHLIST</text>
+
+  <!-- ID starts exactly at x = 165+290+6 = 461 -->
+  <text x="461" y="82" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="38" font-weight="200" textLength="52" lengthAdjust="spacingAndGlyphs" fill="#B8922A" style="fill:rgb(184, 146, 42);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:38px;font-weight:200;text-anchor:start;dominant-baseline:auto">ID</text>
+
+  <!-- Underline: from 165 to 461+52=513 → width=348 -->
+  <rect x="165" y="95" width="348" height="1" rx="0.5" fill="#B8922A" opacity="0.22" style="fill:rgb(184, 146, 42);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.22;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Tagline centered -->
+  <text x="340" y="120" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="300" letter-spacing="4" fill="#F0EDE6" opacity="0.30" style="fill:rgb(240, 237, 230);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.3;font-family:&quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:10px;font-weight:300;text-anchor:middle;dominant-baseline:auto">TRACK  ·  RATE  ·  DISCOVER</text>
+
+</svg>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Share, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Share, Platform, Image } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import { ChevronLeft, Globe, Twitter, Shield, FileText, Heart, Film, Github, ExternalLink } from 'lucide-react-native';
@@ -54,7 +54,11 @@ export default function AboutScreen() {
           <View style={s.hero}>
             <View style={s.logoContainer}>
               <View style={s.logoIcon}>
-                <Film color="#FFFFFF" size={40} strokeWidth={2.5} />
+                <Image 
+                  source={require('@/assets/images/android-icon-foreground.png')} 
+                  style={{ width: 56, height: 56 }}
+                  resizeMode="contain"
+                />
               </View>
             </View>
             <Text style={s.appName}>WatchlistID</Text>

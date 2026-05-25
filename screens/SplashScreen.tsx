@@ -6,8 +6,9 @@ import {
   Animated,
   ActivityIndicator,
   Easing,
+  Image,
 } from 'react-native';
-import { Film } from 'lucide-react-native';
+// Remove Film import on line 10 if not used elsewhere, let's keep others
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
 import { nativeDriver } from '@/utils/animation';
@@ -72,7 +73,11 @@ const SplashScreen: React.FC = () => {
       <View style={styles.centerContent}>
         <Animated.View style={{ opacity: logoOpacity, transform: [{ translateY: logoTranslateY }] }}>
           <View style={styles.iconWrapper}>
-            <Film size={56} color={Colors.primary} strokeWidth={1.5} style={styles.icon} />
+            <Image 
+              source={require('@/assets/images/android-icon-foreground.png')} 
+              style={{ width: 84, height: 84 }}
+              resizeMode="contain"
+            />
           </View>
         </Animated.View>
         

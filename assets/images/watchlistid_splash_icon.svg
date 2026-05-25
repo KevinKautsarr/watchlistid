@@ -1,0 +1,27 @@
+<svg width="100%" viewBox="0 0 690 690" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">WatchListID Splash Icon</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Centered W brandmark on deep dark background for splash screen</desc>
+
+  <!-- Full splash background -->
+  <rect x="0" y="0" width="680" height="680" fill="#0D0D14" style="fill:rgb(13, 13, 20);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Outer ring — faint -->
+  <circle cx="340" cy="310" r="195" fill="none" stroke="#1E1E2E" stroke-width="1" style="fill:none;stroke:rgb(30, 30, 46);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- Inner ring -->
+  <circle cx="340" cy="310" r="155" fill="none" stroke="#1E1E2E" stroke-width="1" style="fill:none;stroke:rgb(30, 30, 46);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Warm glow -->
+  <ellipse cx="340" cy="310" rx="120" ry="100" fill="#6B1414" opacity="0.10" style="fill:rgb(107, 20, 20);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- W mark — ivory, same style as icon -->
+  <polyline points="195,210 248,400 310,268 340,358 370,268 432,400 485,210" fill="none" stroke="#F0EDE6" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" style="fill:none;stroke:rgb(240, 237, 230);color:rgb(255, 255, 255);stroke-width:26px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Gold underline accent -->
+  <rect x="270" y="425" width="140" height="2.5" rx="1.25" fill="#B8922A" style="fill:rgb(184, 146, 42);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Wordmark below -->
+  <text x="340" y="476" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="8" fill="#F0EDE6" opacity="0.92" style="fill:rgb(240, 237, 230);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.92;font-family:&quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:22px;font-weight:700;text-anchor:middle;dominant-baseline:auto">WATCHLIST</text>
+
+  <text x="340" y="502" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="10" fill="#B8922A" opacity="0.85" style="fill:rgb(184, 146, 42);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.85;font-family:&quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:12px;font-weight:400;text-anchor:middle;dominant-baseline:auto">I D</text>
+
+</svg>
