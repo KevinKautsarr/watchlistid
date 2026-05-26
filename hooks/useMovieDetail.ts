@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   getCriticalMovieDetails, 
   getCriticalTVDetails, 
@@ -22,6 +23,35 @@ export interface MovieDetailData {
 // In-Memory Cache for complete movie/TV details
 const detailCache: Record<string, { data: MovieDetailData; timestamp: number }> = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const DETAIL_STORAGE_PREFIX = '@movie_detail:';
+const DETAIL_DISK_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+async function hydrateDetailCache(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const detailKeys = keys.filter(k => k.startsWith(DETAIL_STORAGE_PREFIX));
+    if (detailKeys.length === 0) return;
+    const pairs = await AsyncStorage.multiGet(detailKeys);
+    const now = Date.now();
+    pairs.forEach(([key, value]) => {
+      if (!value) return;
+      try {
+        const entry = JSON.parse(value);
+        if (entry.timestamp + DETAIL_DISK_TTL > now) {
+          const cacheKey = key.replace(DETAIL_STORAGE_PREFIX, '');
+          detailCache[cacheKey] = entry;
+        } else {
+          AsyncStorage.removeItem(key).catch(() => {});
+        }
+      } catch {}
+    });
+  } catch (e) {
+    console.warn('[useMovieDetail] Failed to hydrate detail cache', e);
+  }
+}
+
+hydrateDetailCache();
 
 export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
   const { getAverageRating } = useSocial();
@@ -123,6 +153,10 @@ export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
         if (finalCacheKey !== cacheKey) {
           detailCache[finalCacheKey] = cacheEntry;
         }
+        AsyncStorage.setItem(DETAIL_STORAGE_PREFIX + cacheKey, JSON.stringify(cacheEntry)).catch(() => {});
+        if (finalCacheKey !== cacheKey) {
+          AsyncStorage.setItem(DETAIL_STORAGE_PREFIX + finalCacheKey, JSON.stringify(cacheEntry)).catch(() => {});
+        }
 
         if (isMounted) {
           setState({
@@ -151,3 +185,14 @@ export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
 
   return state;
 };
+
+export async function clearDetailCache(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const detailKeys = keys.filter(k => k.startsWith(DETAIL_STORAGE_PREFIX));
+    if (detailKeys.length > 0) await AsyncStorage.multiRemove(detailKeys);
+    Object.keys(detailCache).forEach(k => delete detailCache[k]);
+  } catch (e) {
+    console.warn('[useMovieDetail] Failed to clear detail cache', e);
+  }
+}

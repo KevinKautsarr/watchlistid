@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, Platform, ScrollView
+  View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform, ScrollView
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+const TypedFlashList = FlashList as unknown as React.ComponentType<any>;
+import { Shimmer } from '@/components/common/Shimmer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -83,18 +86,17 @@ const WatchlistScreen: React.FC = () => {
     }
   }, [removeFromWatchlist, userLogs, deleteLog]);
 
-  // Combine explicit watchlist and logs to build a single comprehensive duplicate-free collection
+  // Stable Set of watchlist IDs — avoids rebuilding a Map on every log iteration
+  const watchlistIds = useMemo(() => new Set(watchlist.map(w => w.id)), [watchlist]);
+
+  // Combine explicit watchlist and logs into a single duplicate-free collection
   const mergedList = useMemo(() => {
-    const map = new Map<number, WatchlistItem>();
-    
-    // 1. Add all items from the explicit watchlist
-    watchlist.forEach(item => {
-      map.set(item.id, item);
-    });
-    
-    // 2. Add all items from user logs (mapping them to WatchlistItem shape)
+    const result: WatchlistItem[] = [...watchlist];
+    const seenIds = new Set<number>(watchlistIds);
+
     userLogs.forEach(log => {
-      if (!map.has(log.movie_id)) {
+      if (!seenIds.has(log.movie_id)) {
+        seenIds.add(log.movie_id);
         const isTV = log.media_type === 'tv';
         const mappedItem: WatchlistItem = isTV ? {
           id: log.movie_id,
@@ -121,12 +123,12 @@ const WatchlistScreen: React.FC = () => {
           release_date: '',
           overview: '',
         };
-        map.set(log.movie_id, mappedItem);
+        result.push(mappedItem);
       }
     });
-    
-    return Array.from(map.values());
-  }, [watchlist, userLogs]);
+
+    return result;
+  }, [watchlist, userLogs, watchlistIds]);
 
   const planToWatchList = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'plan_to_watch'), [mergedList, getMovieStatus]);
   const watchedList     = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'watched'), [mergedList, getMovieStatus]);
@@ -168,7 +170,47 @@ const WatchlistScreen: React.FC = () => {
     return list;
   }, [filteredList, activeSort, isAscending]);
 
-  if (!isHydrated) return null;
+  const renderItem = useCallback(({ item, index }: { item: WatchlistItem; index: number }) => (
+    <MovieListItem
+      movie={item}
+      onPress={() => handlePress(item.id, item.mediaType)}
+      showWatched={true}
+      watched={getMovieStatus(item.id) !== 'plan_to_watch'}
+      inWatchlist={isInWatchlist(item.id)}
+      onToggleWatched={() => handleToggleWatched(item.id)}
+      onRemove={() => handleRemove(item.id)}
+      onWriteReview={() => handleOpenLogModal(item)}
+      rank={index + 1}
+      status={getMovieStatus(item.id)}
+    />
+  ), [handlePress, handleToggleWatched, handleRemove, handleOpenLogModal, getMovieStatus, isInWatchlist]);
+
+  if (!isHydrated) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="light-content" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <View
+            key={i}
+            style={{
+              flexDirection: 'row',
+              gap: 12,
+              padding: 16,
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: 'rgba(255,255,255,0.05)',
+            }}
+          >
+            <Shimmer width={56} height={80} borderRadius={6} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Shimmer width="65%" height={12} borderRadius={4} />
+              <Shimmer width="40%" height={9} borderRadius={3} />
+              <Shimmer width="80%" height={8} borderRadius={3} />
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -280,36 +322,13 @@ const WatchlistScreen: React.FC = () => {
 
       {/* ── List ── */}
       <View style={{ flex: 1 }}>
-        <FlatList
-          style={{ flex: 1 }}
+        <TypedFlashList
           data={sortedList}
-          keyExtractor={item => item.id.toString()}
-          numColumns={1}
-          renderItem={({ item, index }) => (
-            <MovieListItem
-              movie={item}
-              onPress={() => handlePress(item.id, item.mediaType)}
-              showWatched={true}
-              watched={getMovieStatus(item.id) !== 'plan_to_watch'}
-              inWatchlist={isInWatchlist(item.id)}
-              onToggleWatched={() => handleToggleWatched(item.id)}
-              onRemove={() => handleRemove(item.id)}
-              onWriteReview={() => handleOpenLogModal(item)}
-              rank={index + 1}
-              status={getMovieStatus(item.id)}
-            />
-          )}
+          keyExtractor={(item: WatchlistItem) => item.id.toString()}
+          renderItem={renderItem}
+          estimatedItemSize={ITEM_HEIGHT}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          getItemLayout={(_, index) => ({
-            length: ITEM_HEIGHT,
-            offset: ITEM_HEIGHT * index,
-            index,
-          })}
-          windowSize={5}
-          maxToRenderPerBatch={10}
-          initialNumToRender={8}
-          removeClippedSubviews={true}
           ListEmptyComponent={(
             <View style={styles.empty}>
               <EmptyStateIcon
@@ -324,17 +343,17 @@ const WatchlistScreen: React.FC = () => {
                 style={{ marginBottom: Spacing.xl }}
               />
               <Text style={styles.emptyTitle} allowFontScaling={false}>
-                {activeTab === 'Watchlist' 
-                  ? t('watchlistEmptyTitle') 
-                  : activeTab === 'Watched' 
-                    ? t('emptyWatchedTitle') 
+                {activeTab === 'Watchlist'
+                  ? t('watchlistEmptyTitle')
+                  : activeTab === 'Watched'
+                    ? t('emptyWatchedTitle')
                     : t('emptyReviewsTitle')}
               </Text>
               <Text style={styles.emptySub} allowFontScaling={false}>
-                {activeTab === 'Watchlist' 
-                  ? t('watchlistEmptySub') 
-                  : activeTab === 'Watched' 
-                    ? t('emptyWatchedSub') 
+                {activeTab === 'Watchlist'
+                  ? t('watchlistEmptySub')
+                  : activeTab === 'Watched'
+                    ? t('emptyWatchedSub')
                     : t('emptyReviewsSub')}
               </Text>
             </View>

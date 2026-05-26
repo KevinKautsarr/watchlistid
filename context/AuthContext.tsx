@@ -8,6 +8,8 @@ import { mapAuthError } from '@/utils/authErrors';
 import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeClearCorruptStorage, clearStaleSupabaseSession } from '@/utils/storage';
+import { clearPersistedCache } from '@/services/api';
+import { clearDetailCache } from '@/hooks/useMovieDetail';
 
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();
@@ -302,14 +304,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Fix 8: Non-destructive Cleanup
-    // Note: clearData() di WatchlistProvider otomatis mendeteksi perubahan userId (menjadi null)
-    // dan menghapus cache lokal (@watchlist, @userRatings, dll) tanpa merusak preferensi sistem.
     try {
       await supabase.auth.signOut();
     } catch (err) {
       console.warn('[Auth] SignOut error (expected if offline):', err);
     }
+    // Clear cached TMDB data on logout (user might switch accounts)
+    await Promise.allSettled([clearPersistedCache(), clearDetailCache()]);
   };
 
   return (

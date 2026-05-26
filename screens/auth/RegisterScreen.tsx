@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
@@ -8,62 +8,140 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Mail, Lock, Eye, EyeOff, User, UserPlus } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, User, UserPlus, CheckCircle2, XCircle, Loader } from 'lucide-react-native';
 import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 import { useAuth } from '@/context/AuthContext';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
 import CaptchaModal from '@/components/auth/CaptchaModal';
 import { useLanguage } from '@/context/LanguageContext';
+import { typedFrom } from '@/supabase';
 
+// ─── Username validation ──────────────────────────────────────────────────────
+const USERNAME_REGEX = /^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$/i;
+const DOUBLE_SYMBOL   = /[._-]{2,}/;
+const FORBIDDEN_NAMES = ['admin', 'administrator', 'owner', 'official', 'support', 'staff', 'mod', 'moderator'];
+
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
+function validateUsername(raw: string): string | null {
+  if (/\s/.test(raw))                   return 'Username tidak boleh mengandung spasi';
+  if (raw.length < 3)                   return 'Username minimal 3 karakter';
+  if (raw.length > 30)                  return 'Username maksimal 30 karakter';
+  if (!/^[a-zA-Z0-9._-]+$/.test(raw))  return 'Hanya huruf, angka, titik, underscore, dan strip yang diperbolehkan';
+  if (/^[._-]|[._-]$/.test(raw))       return 'Username tidak boleh diawali atau diakhiri dengan simbol';
+  if (DOUBLE_SYMBOL.test(raw))          return 'Tidak boleh ada dua simbol berurutan';
+  const lower = raw.toLowerCase();
+  if (FORBIDDEN_NAMES.some(n => lower.includes(n))) return 'Nama ini tidak diizinkan untuk alasan keamanan';
+  return null; // valid
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function RegisterScreen() {
   const router = useRouter();
   const { signUp, signInWithGoogle } = useAuth();
   const { t } = useLanguage();
 
-  const [username,  setUsername]  = useState('');
-  const [email,     setEmail]     = useState('');
-  const [password,  setPassword]  = useState('');
-  const [confirm,   setConfirm]   = useState('');
-  const [showPass,  setShowPass]  = useState(false);
-  const [loading,   setLoading]   = useState(false);
+  const [username,      setUsernameRaw] = useState('');
+  const [email,         setEmail]       = useState('');
+  const [password,      setPassword]    = useState('');
+  const [confirm,       setConfirm]     = useState('');
+  const [showPass,      setShowPass]    = useState(false);
+  const [loading,       setLoading]     = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [showCaptcha, setShowCaptcha] = useState(false);
-  const [error,     setError]     = useState<string | null>(null);
-  const [success,   setSuccess]   = useState(false);
+  const [showCaptcha,   setShowCaptcha] = useState(false);
+  const [error,         setError]       = useState<string | null>(null);
+  const [success,       setSuccess]     = useState(false);
 
+  // Username live status
+  const [usernameStatus,  setUsernameStatus]  = useState<UsernameStatus>('idle');
+  const [usernameHint,    setUsernameHint]    = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Handle username change ──────────────────────────────────────────────────
+  const handleUsernameChange = (raw: string) => {
+    // Strip spaces immediately — never allowed
+    const cleaned = raw.replace(/\s/g, '');
+    setUsernameRaw(cleaned);
+    setUsernameStatus('idle');
+    setUsernameHint(null);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!cleaned) return;
+
+    // Instant local format validation
+    const formatErr = validateUsername(cleaned);
+    if (formatErr) {
+      setUsernameStatus('invalid');
+      setUsernameHint(formatErr);
+      return;
+    }
+
+    // Debounce availability check
+    setUsernameStatus('checking');
+    debounceRef.current = setTimeout(() => checkAvailability(cleaned), 500);
+  };
+
+  const checkAvailability = async (name: string) => {
+    try {
+      const { data } = await typedFrom('profiles')
+        .select('id')
+        .ilike('username', name)
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setUsernameStatus('taken');
+        setUsernameHint('Username sudah dipakai');
+      } else {
+        setUsernameStatus('available');
+        setUsernameHint('Username tersedia');
+      }
+    } catch {
+      setUsernameStatus('idle');
+      setUsernameHint(null);
+    }
+  };
+
+  // Clean up debounce on unmount
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
   const handleRegister = async () => {
     setError(null);
+
     if (!username.trim() || !email.trim() || !password || !confirm) {
       setError(t('allFieldsRequired'));
       return;
     }
-    if (password !== confirm) {
-      setError(t('passwordsDontMatch'));
+
+    // Block if username not yet validated as available
+    if (usernameStatus === 'checking') {
+      setError('Sedang memeriksa ketersediaan username, harap tunggu...');
       return;
     }
-    
-    // Fix 6: Email Regex Validation
+    if (usernameStatus === 'taken') {
+      setError('Username sudah dipakai, pilih username lain');
+      return;
+    }
+    if (usernameStatus === 'invalid') {
+      setError(usernameHint || 'Username tidak valid');
+      return;
+    }
+
+    const formatErr = validateUsername(username);
+    if (formatErr) { setError(formatErr); return; }
+
+    if (password !== confirm) { setError(t('passwordsDontMatch')); return; }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       setError('Format email tidak valid.');
       return;
     }
 
-    if (password.length < 6) {
-      setError(t('passwordTooShort'));
-      return;
-    }
+    if (password.length < 6) { setError(t('passwordTooShort')); return; }
 
-    // Username protection
-    const forbiddenNames = ['admin', 'administrator', 'owner', 'official', 'support', 'staff', 'mod', 'moderator'];
-    const lowerName = username.trim().toLowerCase();
-    if (forbiddenNames.some(name => lowerName.includes(name))) {
-      setError('Nama ini tidak diizinkan untuk alasan keamanan.');
-      return;
-    }
-    
-    // Step 1: Show Captcha before final sign up
     setShowCaptcha(true);
   };
 
@@ -71,11 +149,11 @@ export default function RegisterScreen() {
     setShowCaptcha(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    
-    // Step 2: Call signUp with the captcha token
-    const err = await signUp(email.trim().toLowerCase(), password, username.trim(), token);
+
+    // Always store username as lowercase
+    const err = await signUp(email.trim().toLowerCase(), password, username.trim().toLowerCase(), token);
     setLoading(false);
-    
+
     if (err) {
       setError(err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -91,16 +169,15 @@ export default function RegisterScreen() {
     setError(null);
     const err = await signInWithGoogle();
     setGoogleLoading(false);
-    
     if (err) {
       setError(err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Redirect handled by AuthContext listener
     }
   };
 
+  // ── Success screen ──────────────────────────────────────────────────────────
   if (success) {
     return (
       <SafeAreaView style={s.root} edges={['top', 'bottom']}>
@@ -108,9 +185,7 @@ export default function RegisterScreen() {
         <View style={s.successWrap}>
           <Text style={s.successEmoji}>🎉</Text>
           <Text style={s.successTitle} allowFontScaling={false}>{t('accountCreated')}</Text>
-          <Text style={s.successSub} allowFontScaling={false}>
-            {t('checkEmailVerification')}
-          </Text>
+          <Text style={s.successSub} allowFontScaling={false}>{t('checkEmailVerification')}</Text>
           <TouchableOpacity style={s.btn} onPress={() => router.replace('/auth/login')}>
             <Text style={s.btnText} allowFontScaling={false}>{t('backToLogin')}</Text>
           </TouchableOpacity>
@@ -119,36 +194,61 @@ export default function RegisterScreen() {
     );
   }
 
+  // ── Username status indicator ───────────────────────────────────────────────
+  const renderUsernameStatus = () => {
+    if (!username || usernameStatus === 'idle') return null;
+    if (usernameStatus === 'checking') {
+      return (
+        <View style={s.hintRow}>
+          <ActivityIndicator size={12} color={Colors.text.secondary} />
+          <Text style={[s.hintText, { color: Colors.text.secondary }]} allowFontScaling={false}>
+            Memeriksa ketersediaan...
+          </Text>
+        </View>
+      );
+    }
+    if (usernameStatus === 'available') {
+      return (
+        <View style={s.hintRow}>
+          <CheckCircle2 size={13} color="#22c55e" strokeWidth={2.5} />
+          <Text style={[s.hintText, { color: '#22c55e' }]} allowFontScaling={false}>
+            {usernameHint}
+          </Text>
+        </View>
+      );
+    }
+    // taken or invalid
+    return (
+      <View style={s.hintRow}>
+        <XCircle size={13} color="#ef4444" strokeWidth={2.5} />
+        <Text style={[s.hintText, { color: '#ef4444' }]} allowFontScaling={false}>
+          {usernameHint}
+        </Text>
+      </View>
+    );
+  };
+
+  // ── Main render ─────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={['#7E050B', '#141414', '#141414']} style={StyleSheet.absoluteFill} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={s.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
           {/* Logo */}
           <View style={s.logoWrap}>
             <Text style={s.logo} allowFontScaling={false}>
               WatchList<Text style={s.logoAccent}>ID</Text>
             </Text>
-            <Text style={s.logoSub} allowFontScaling={false}>
-              {t('joinCommunity')}
-            </Text>
+            <Text style={s.logoSub} allowFontScaling={false}>{t('joinCommunity')}</Text>
           </View>
 
           {/* Card */}
           <View style={s.card}>
             <Text style={s.cardTitle} allowFontScaling={false}>{t('signUp')}</Text>
-            <Text style={s.cardSub} allowFontScaling={false}>
-              {t('createAccount')} ✨
-            </Text>
+            <Text style={s.cardSub} allowFontScaling={false}>{t('createAccount')} ✨</Text>
 
             {/* Username */}
             <View style={s.fieldLabel}>
@@ -156,15 +256,21 @@ export default function RegisterScreen() {
               <Text style={s.label} allowFontScaling={false}>{t('username')}</Text>
             </View>
             <TextInput
-              style={s.input}
+              style={[
+                s.input,
+                usernameStatus === 'available' && s.inputValid,
+                (usernameStatus === 'taken' || usernameStatus === 'invalid') && s.inputError,
+              ]}
               value={username}
-              onChangeText={setUsername}
+              onChangeText={handleUsernameChange}
               placeholder="moviefan123"
               placeholderTextColor={Colors.text.secondary}
               autoCapitalize="none"
               autoCorrect={false}
               allowFontScaling={false}
+              maxLength={30}
             />
+            {renderUsernameStatus()}
 
             {/* Email */}
             <View style={s.fieldLabel}>
@@ -198,11 +304,7 @@ export default function RegisterScreen() {
                 secureTextEntry={!showPass}
                 allowFontScaling={false}
               />
-              <TouchableOpacity
-                style={s.eyeBtn}
-                onPress={() => setShowPass(v => !v)}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)} activeOpacity={0.7}>
                 {showPass
                   ? <EyeOff size={18} color={Colors.text.secondary} strokeWidth={2} />
                   : <Eye    size={18} color={Colors.text.secondary} strokeWidth={2} />}
@@ -248,7 +350,7 @@ export default function RegisterScreen() {
                 )}
             </TouchableOpacity>
 
-            {/* Google Signup Button */}
+            {/* Google Signup */}
             <TouchableOpacity
               style={[s.googleBtn, (loading || googleLoading) && { opacity: 0.7 }]}
               onPress={handleGoogleLogin}
@@ -273,11 +375,7 @@ export default function RegisterScreen() {
             </View>
 
             {/* Back to login */}
-            <TouchableOpacity
-              style={s.backBtn}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={s.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
               <Text style={s.backText} allowFontScaling={false}>
                 {t('alreadyHaveAccount')} {t('signIn')}
               </Text>
@@ -295,13 +393,14 @@ export default function RegisterScreen() {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root:   { flex: 1 },
   scroll: {
-    flexGrow:         1,
-    justifyContent:   'center',
+    flexGrow:          1,
+    justifyContent:    'center',
     paddingHorizontal: Spacing.xl,
-    paddingVertical:  Spacing.xxl,
+    paddingVertical:   Spacing.xxl,
   },
 
   logoWrap:   { alignItems: 'center', marginBottom: Spacing.xxl },
@@ -322,15 +421,23 @@ const s = StyleSheet.create({
   label:      { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.text.primary, letterSpacing: 0.3 },
 
   input: {
-    height:           50,
-    backgroundColor:  Colors.background,
-    borderRadius:     Radius.md,
+    height:            50,
+    backgroundColor:   Colors.background,
+    borderRadius:      Radius.md,
     paddingHorizontal: Spacing.lg,
-    fontSize:         FontSize.base,
-    color:            Colors.text.primary,
-    marginBottom:     Spacing.lg,
-    borderWidth:      1,
-    borderColor:      'rgba(255,255,255,0.1)',
+    fontSize:          FontSize.base,
+    color:             Colors.text.primary,
+    marginBottom:      Spacing.sm,
+    borderWidth:       1,
+    borderColor:       'rgba(255,255,255,0.1)',
+  },
+  inputValid: {
+    borderColor: '#22c55e',
+    borderWidth: 1.5,
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    borderWidth: 1.5,
   },
   inputRow: {
     flexDirection: 'row',
@@ -347,6 +454,19 @@ const s = StyleSheet.create({
     justifyContent:  'center',
     borderWidth:     1,
     borderColor:     'rgba(255,255,255,0.1)',
+  },
+
+  // Username hint row
+  hintRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            5,
+    marginBottom:   Spacing.md,
+    paddingLeft:    2,
+  },
+  hintText: {
+    fontSize:   FontSize.xs,
+    fontWeight: FontWeight.medium,
   },
 
   errorBox: {
@@ -373,27 +493,19 @@ const s = StyleSheet.create({
   btnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
 
   googleBtn: {
-    height:         54,
+    height:          54,
     backgroundColor: Colors.white,
-    borderRadius:   Radius.lg,
-    flexDirection:  'row',
-    alignItems:     'center',
-    justifyContent: 'center',
-    gap:            Spacing.md,
+    borderRadius:    Radius.lg,
+    flexDirection:   'row',
+    alignItems:      'center',
+    justifyContent:  'center',
+    gap:             Spacing.md,
     ...Shadow.sm,
   },
-  googleIconBg: {
-    width: 28,
-    height: 28,
-    backgroundColor: '#fff',
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   googleBtnText: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-    color: '#000',
+    fontSize:      FontSize.base,
+    fontWeight:    FontWeight.bold,
+    color:         '#000',
     letterSpacing: 0.2,
   },
 
@@ -404,7 +516,6 @@ const s = StyleSheet.create({
   backBtn:  { alignItems: 'center' },
   backText: { fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.semibold },
 
-  // Success state
   successWrap: {
     flex:           1,
     alignItems:     'center',
@@ -413,17 +524,17 @@ const s = StyleSheet.create({
   },
   successEmoji: { fontSize: 64, marginBottom: Spacing.xl },
   successTitle: {
-    fontSize:   FontSize.h2,
-    fontWeight: FontWeight.black,
-    color:      Colors.white,
-    textAlign:  'center',
+    fontSize:     FontSize.h2,
+    fontWeight:   FontWeight.black,
+    color:        Colors.white,
+    textAlign:    'center',
     marginBottom: Spacing.md,
   },
   successSub: {
-    fontSize:   FontSize.base,
-    color:      'rgba(255,255,255,0.7)',
-    textAlign:  'center',
-    lineHeight: 22,
+    fontSize:     FontSize.base,
+    color:        'rgba(255,255,255,0.7)',
+    textAlign:    'center',
+    lineHeight:   22,
     marginBottom: Spacing.xxl,
   },
 });

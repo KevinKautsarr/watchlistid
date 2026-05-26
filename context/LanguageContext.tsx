@@ -106,7 +106,9 @@ const translations = {
     findYourFriends: "Find your friends",
     findYourFriendsSub: "Search for movie enthusiasts by their username",
     viewProfile: "View Profile",
-    searchUserPlaceholder: "Search name or user ID...",
+    searchUserPlaceholder: "Search name or username...",
+    searchUsers: "Search Users",
+    usersTab: "Users",
 
     // Diary / Log Modal
     emptyDiary: "No watched movies yet.",
@@ -402,7 +404,9 @@ const translations = {
     findYourFriends: "Temukan temanmu",
     findYourFriendsSub: "Cari pencinta film lainnya menggunakan username",
     viewProfile: "Lihat Profil",
-    searchUserPlaceholder: "Cari nama atau ID pengguna...",
+    searchUserPlaceholder: "Cari nama atau username...",
+    searchUsers: "Cari Pengguna",
+    usersTab: "Pengguna",
 
     // Diary / Log Modal
     emptyDiary: "Belum ada film yang ditonton.",

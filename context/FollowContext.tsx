@@ -17,19 +17,25 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user } = useAuth();
 
   const searchUsers = async (query: string): Promise<UserProfile[]> => {
-    const trimmed = query.trim();
-    if (!trimmed) return [];
+    const trimmed = query.trim().toLowerCase();
 
-    // Search by username handle and full display name simultaneously
+    // Guard: no DB hit for very short queries
+    if (trimmed.length < 2) return [];
+
+    // Run both queries in parallel:
+    //   username → prefix match only (fast, uses index)
+    //   full_name → contains match (names need anywhere-match)
     const [byUsername, byFullName] = await Promise.all([
       typedFrom('profiles')
         .select('id, username, full_name, avatar_url')
-        .ilike('username', `%${trimmed}%`)
-        .limit(20),
+        .ilike('username', `${trimmed}%`)
+        .order('username', { ascending: true })
+        .limit(15),
       typedFrom('profiles')
         .select('id, username, full_name, avatar_url')
         .ilike('full_name', `%${trimmed}%`)
-        .limit(20),
+        .order('full_name', { ascending: true })
+        .limit(10),
     ]);
 
     // Merge and deduplicate by id
@@ -44,7 +50,24 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return true;
     });
 
-    return unique as UserProfile[];
+    // Rank results:
+    //   Priority 1 → username starts exactly with query  (most relevant)
+    //   Priority 2 → username contains query anywhere
+    //   Priority 3 → only full_name matches
+    //   Within each group → alphabetical by username
+    const ranked = unique.sort((a, b) => {
+      const ua = (a.username || '').toLowerCase();
+      const ub = (b.username || '').toLowerCase();
+
+      const rankA = ua.startsWith(trimmed) ? 0 : ua.includes(trimmed) ? 1 : 2;
+      const rankB = ub.startsWith(trimmed) ? 0 : ub.includes(trimmed) ? 1 : 2;
+
+      if (rankA !== rankB) return rankA - rankB;
+      return ua.localeCompare(ub);
+    });
+
+    // Cap at 20 results
+    return ranked.slice(0, 20) as UserProfile[];
   };
 
   const followUser = async (targetId: string) => {

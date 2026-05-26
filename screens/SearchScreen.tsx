@@ -1,4 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
+const TypedFlashList = FlashList as unknown as React.ComponentType<any>;
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
@@ -18,7 +19,6 @@ import {
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -36,10 +36,11 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-const TypedFlashList = FlashList as any;
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Avatar from "@/components/common/Avatar";
 import MovieListItem from "@/components/movie/MovieListItem";
+import { Shimmer } from "@/components/common/Shimmer";
 import {
   Colors,
   FontSize,
@@ -55,6 +56,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useWatchlist } from "@/context/WatchlistContext";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
+import { useLoginPrompt } from "@/hooks/useLoginPrompt";
 import { nativeDriver } from "@/utils/animation";
 import { cursorPointer } from "@/utils/webStyles";
 
@@ -70,10 +72,19 @@ import { FetchState, MediaItem, UserProfile } from "@/types";
 // Components
 import { PersonCard } from "@/components/search/PersonCard";
 import { SearchEmptyState } from "@/components/search/SearchEmptyState";
-import { SearchFilterRow } from "@/components/search/SearchFilterRow";
+import { SearchHeader } from "@/components/search/SearchHeader";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-const CATS: any = {
+// ─── Interfaces & Constants ──────────────────────────────────────────────────
+interface CatConfig {
+  label: string;
+  subtitle: string;
+  Icon: React.ComponentType<any>;
+  iconColor: string;
+  fetchFn: (page: number) => Promise<any>;
+  normalize?: boolean;
+}
+
+const CATS: Record<string, CatConfig> = {
   "trending-movies": {
     label: "trendingMovies",
     subtitle: "catTrendingMoviesSub",
@@ -135,6 +146,7 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { showLoginPrompt } = useLoginPrompt();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, isHydrated } =
     useWatchlist();
   const { searchUsers } = useSocial();
@@ -172,6 +184,7 @@ export default function SearchScreen() {
     data: [],
     error: null,
   });
+  
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
   const inputRef = useRef<TextInput>(null);
@@ -212,6 +225,22 @@ export default function SearchScreen() {
   const isLoading =
     itemsState.status === "loading" || personState.status === "loading";
 
+  // Load recent searches from AsyncStorage
+  useEffect(() => {
+    const loadRecent = async () => {
+      try {
+        const stored = await AsyncStorage.getItem("recent_searches");
+        if (stored) {
+          setRecentSearches(JSON.parse(stored));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadRecent();
+  }, []);
+
+  // Fetch trending keywords on mount
   useEffect(() => {
     const fetchTrending = async () => {
       try {
@@ -220,18 +249,13 @@ export default function SearchScreen() {
           (data.results ?? []).slice(0, 6).map((m: any) => m.title),
         );
       } catch (e) {
-        setTrendingKeywords([
-          "Dune",
-          "Oppenheimer",
-          "Spider-Man",
-          "Batman",
-          "Civil War",
-        ]);
+        setTrendingKeywords([]);
       }
     };
     fetchTrending();
   }, []);
 
+  // Sync recent searches and perform media fetch
   useEffect(() => {
     if (!isHydrated) return;
     if (activeCat) fetchCatPage(activeCat, 1, false, CATS);
@@ -244,6 +268,30 @@ export default function SearchScreen() {
     fetchCatPage,
     isHydrated,
   ]);
+
+  // Save successful search queries to history
+  const saveSearchTerm = useCallback(async (term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed || trimmed.length < 2) return;
+
+    setRecentSearches((prev) => {
+      const filtered = prev.filter(
+        (x) => x.toLowerCase() !== trimmed.toLowerCase()
+      );
+      const next = [trimmed, ...filtered].slice(0, 5);
+      AsyncStorage.setItem("recent_searches", JSON.stringify(next)).catch(
+        console.error
+      );
+      return next;
+    });
+  }, []);
+
+  // Watch debounced query for search saving
+  useEffect(() => {
+    if (debouncedQ.trim().length >= 2) {
+      saveSearchTerm(debouncedQ.trim());
+    }
+  }, [debouncedQ, saveSearchTerm]);
 
   // User search effect
   useEffect(() => {
@@ -276,7 +324,7 @@ export default function SearchScreen() {
 
   const toggleWL = (m: MediaItem) => {
     if (!user) {
-      (global as any).showLoginPrompt?.();
+      showLoginPrompt();
       return;
     }
     const has = isInWatchlist(m.id);
@@ -354,126 +402,7 @@ export default function SearchScreen() {
 
   if (!isHydrated) return null;
 
-  const renderSearchHeader = (withMargin: boolean) => {
-    if (activeCat) return null;
-    return (
-      <View style={{ width: "100%", paddingTop: 12 }}>
-        {/* Search Wrap */}
-        <Animated.View
-          style={[
-            styles.searchWrap,
-            {
-              marginHorizontal: withMargin ? bp.contentPadding : 0,
-              transform: [{ scale: inputScale }],
-            },
-          ]}
-        >
-          <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
-          <TextInput
-            ref={inputRef}
-            style={styles.searchInput}
-            placeholder={
-              searchMode === "users"
-                ? t("searchUserPlaceholder")
-                : t("searchMoviesTVPeople")
-            }
-            placeholderTextColor={Colors.text.secondary}
-            value={searchText}
-            onChangeText={setSearchText}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            returnKeyType="search"
-            allowFontScaling={false}
-            autoCorrect={false}
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity
-              style={styles.clearBtn}
-              onPress={() => setSearchText("")}
-            >
-              <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
-            </TouchableOpacity>
-          )}
-        </Animated.View>
-
-        {/* Pill Tab Switcher */}
-        <View
-          style={[
-            styles.tabSwitcher,
-            { marginHorizontal: withMargin ? bp.contentPadding : 0 },
-          ]}
-        >
-          <Pressable
-            style={({ pressed }) => [
-              styles.pill,
-              searchMode === "media" && styles.pillActive,
-              cursorPointer,
-              pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSearchMode("media");
-            }}
-            accessibilityRole="tab"
-            accessibilityLabel="Cari Film & TV"
-          >
-            <Text
-              style={[
-                styles.pillText,
-                searchMode === "media" && styles.pillTextActive,
-              ]}
-            >
-              🎬 Film & TV
-            </Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.pill,
-              searchMode === "users" && styles.pillActive,
-              cursorPointer,
-              pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              if (!user) {
-                (global as any).showLoginPrompt?.();
-              } else {
-                setSearchMode("users");
-              }
-            }}
-            accessibilityRole="tab"
-            accessibilityLabel="Cari Pengguna"
-          >
-            <Text
-              style={[
-                styles.pillText,
-                searchMode === "users" && styles.pillTextActive,
-              ]}
-            >
-              👥 Pengguna
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Filter Chips */}
-        {searchMode === "media" && (
-          <SearchFilterRow
-            filters={FILTER_CHIPS}
-            activeFilter={activeFilter}
-            onSelect={setActiveFilter}
-            t={t}
-          />
-        )}
-      </View>
-    );
-  };
-
-  const headerHeight = useMemo(() => {
-    if (activeCat) {
-      return insets.top + 60 + 52 + 16;
-    }
-    return insets.top + 60;
-  }, [insets.top, activeCat]);
+  const headerHeight = activeCat ? insets.top + 60 + 52 + 16 : insets.top + 60;
 
   return (
     <View style={styles.root}>
@@ -496,9 +425,11 @@ export default function SearchScreen() {
                 <ArrowLeft size={IconSize.md} color={Colors.white} />
               </TouchableOpacity>
               <View>
-                <Text style={styles.catTitle}>{t(CATS[activeCat]?.label)}</Text>
+                <Text style={styles.catTitle}>
+                  {activeCat && CATS[activeCat] ? t(CATS[activeCat].label as any) : ""}
+                </Text>
                 <Text style={styles.catSub}>
-                  {t(CATS[activeCat]?.subtitle)}
+                  {activeCat && CATS[activeCat] ? t(CATS[activeCat].subtitle as any) : ""}
                 </Text>
               </View>
             </View>
@@ -519,7 +450,7 @@ export default function SearchScreen() {
               style={styles.searchInput}
               placeholder={t("searchIn").replace(
                 "{category}",
-                t(CATS[activeCat]?.label),
+                activeCat && CATS[activeCat] ? t(CATS[activeCat].label as any) : ""
               )}
               placeholderTextColor={Colors.text.secondary}
               value={searchText}
@@ -529,6 +460,7 @@ export default function SearchScreen() {
               returnKeyType="search"
               allowFontScaling={false}
               autoCorrect={false}
+              autoCapitalize="none"
             />
             {searchText.length > 0 && (
               <TouchableOpacity
@@ -571,7 +503,24 @@ export default function SearchScreen() {
             }
             ListHeaderComponent={
               <View style={styles.headerWrapper}>
-                {renderSearchHeader(true)}
+                <SearchHeader
+                  activeCat={activeCat}
+                  searchText={searchText}
+                  setSearchText={setSearchText}
+                  searchMode={searchMode}
+                  setSearchMode={setSearchMode}
+                  activeFilter={activeFilter}
+                  setActiveFilter={setActiveFilter}
+                  inputRef={inputRef}
+                  inputScale={inputScale}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                  withMargin={true}
+                  contentPadding={bp.contentPadding}
+                  t={t}
+                  user={user}
+                  filterChips={FILTER_CHIPS}
+                />
                 {showDefault ? (
                   <View style={styles.defaultHeader}>
                     {recentSearches.length > 0 && (
@@ -686,14 +635,47 @@ export default function SearchScreen() {
                 <ChevronRight size={20} color={Colors.text.secondary} />
               </Pressable>
             )}
-            ListHeaderComponent={renderSearchHeader(false)}
+            ListHeaderComponent={
+              <SearchHeader
+                activeCat={activeCat}
+                searchText={searchText}
+                setSearchText={setSearchText}
+                searchMode={searchMode}
+                setSearchMode={setSearchMode}
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+                inputRef={inputRef}
+                inputScale={inputScale}
+                onFocus={onFocus}
+                onBlur={onBlur}
+                withMargin={false}
+                contentPadding={bp.contentPadding}
+                t={t}
+                user={user}
+                filterChips={FILTER_CHIPS}
+              />
+            }
             ListEmptyComponent={
               userResults.status === "loading" ? (
-                <ActivityIndicator
-                  size="large"
-                  color={Colors.accentBlue}
-                  style={styles.loadingIndicator}
-                />
+                <View style={{ paddingTop: 12 }}>
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 12,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Shimmer width={50} height={50} borderRadius={25} />
+                      <View style={{ flex: 1, gap: 6 }}>
+                        <Shimmer width="55%" height={12} borderRadius={4} />
+                        <Shimmer width="35%" height={9} borderRadius={3} />
+                      </View>
+                    </View>
+                  ))}
+                </View>
               ) : debouncedQ.trim() ? (
                 <View style={styles.center}>
                   <User size={48} color="rgba(255,255,255,0.1)" />
@@ -881,37 +863,6 @@ const styles = StyleSheet.create({
   loadingIndicator: { marginTop: 50 },
   headerWrapper: { width: "100%" },
 
-  // Pill Tab Switcher styles
-  tabSwitcher: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surface,
-    borderRadius: 99,
-    padding: 4,
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
-  },
-  pill: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 99,
-    backgroundColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pillActive: {
-    backgroundColor: Colors.accentBlue,
-  },
-  pillText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text.secondary,
-  },
-  pillTextActive: {
-    color: Colors.white,
-    fontWeight: FontWeight.bold,
-  },
   userCard: {
     flexDirection: "row",
     alignItems: "center",

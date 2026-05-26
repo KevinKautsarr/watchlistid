@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_BASE_URL } from '../config';
 import type { Movie, Person, Genre } from '@/types';
 
@@ -6,6 +7,9 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 interface CacheEntry<T> { data: T; expiresAt: number }
 const memCache = new Map<string, CacheEntry<any>>();
 const inflight  = new Map<string, Promise<any>>();
+
+const STORAGE_PREFIX = '@tmdb_cache:';
+const MAX_PERSISTED_ENTRIES = 50; // prevent unbounded storage growth
 
 // ── Core fetcher with cache & deduplication ───────────────────────────────────
 const NSFW_KEYWORDS = '10423,155477,231015,190370,10222,9350,158588,2945,183952'; // hentai, erotica, ecchi, adult animation, sex, softcore, pornography, nudity, softcore porn
@@ -37,12 +41,59 @@ async function tmdbGet<T>(
     if (!res.ok) throw new Error(`TMDB error ${res.status}: ${endpoint}`);
     const data = await res.json() as T;
     memCache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+    // Persist to storage — skip paginated results beyond page 1 to save space
+    const shouldPersist = !cacheKey.includes('page=') || cacheKey.includes('page=1');
+    if (shouldPersist) {
+      AsyncStorage.setItem(
+        STORAGE_PREFIX + cacheKey,
+        JSON.stringify({ data, expiresAt: Date.now() + CACHE_TTL_MS })
+      ).catch(() => {});
+    }
     inflight.delete(cacheKey);
     return data;
   })();
 
   inflight.set(cacheKey, promise);
   return promise;
+}
+
+// ── AsyncStorage persistence ─────────────────────────────────────────────────
+async function hydrateCacheFromStorage(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const tmdbKeys = keys.filter(k => k.startsWith(STORAGE_PREFIX));
+    if (tmdbKeys.length === 0) return;
+    const pairs = await AsyncStorage.multiGet(tmdbKeys);
+    const now = Date.now();
+    pairs.forEach(([key, value]) => {
+      if (!value) return;
+      try {
+        const entry: CacheEntry<any> = JSON.parse(value);
+        if (entry.expiresAt > now) {
+          const cacheKey = key.replace(STORAGE_PREFIX, '');
+          memCache.set(cacheKey, entry);
+        } else {
+          AsyncStorage.removeItem(key).catch(() => {});
+        }
+      } catch {}
+    });
+  } catch (e) {
+    console.warn('[api] Failed to hydrate cache from storage', e);
+  }
+}
+
+// Fire and forget — does not block first render
+hydrateCacheFromStorage();
+
+export async function clearPersistedCache(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const tmdbKeys = keys.filter(k => k.startsWith(STORAGE_PREFIX));
+    if (tmdbKeys.length > 0) await AsyncStorage.multiRemove(tmdbKeys);
+    memCache.clear();
+  } catch (e) {
+    console.warn('[api] Failed to clear persisted cache', e);
+  }
 }
 
 // ── Paginated response type ───────────────────────────────────────────────────

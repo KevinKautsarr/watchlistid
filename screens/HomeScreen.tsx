@@ -19,6 +19,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useHomeData } from '@/hooks/useHomeData';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 import { MediaItem } from '@/types';
 
 const GENRES = [
@@ -43,11 +44,13 @@ export default function HomeScreen() {
   const [visibleSections, setVisibleSections] = useState(1);
   const [homeTab, setHomeTab] = useState<'discover' | 'following'>('discover');
 
-  const { state: homeState, isRefreshing, onRefresh } = useHomeData();
+  const { state: homeState, isRefreshing, onRefresh, isDeferredLoading, deferredEnabled } = useHomeData();
   const { trending, popular, topRated, trendingTV, topRatedTV } = homeState.data || {
     trending: [], popular: [], topRated: [], trendingTV: [], topRatedTV: []
   };
   const isLoading = homeState.status === 'loading';
+
+  const { showLoginPrompt } = useLoginPrompt();
 
   const goToMovie = (id: number, type: 'movie' | 'tv') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -56,7 +59,7 @@ export default function HomeScreen() {
 
   const toggleWL = (item: MediaItem) => {
     if (!user) {
-      (global as any).showLoginPrompt?.();
+      showLoginPrompt();
       return;
     }
     const has = isInWatchlist(item.id);
@@ -169,7 +172,17 @@ export default function HomeScreen() {
       );
     }
 
-    if (item.data.length === 0 && !isLoading) return null;
+    if (item.data.length === 0 && !isLoading && !isDeferredLoading) return null;
+    if (item.data.length === 0 && isDeferredLoading) {
+      return (
+        <View style={s.rowSection}>
+          <SectionHeader title={item.title} Icon={item.icon} iconColor={item.iconColor} textColor={Colors.white} />
+          <View style={[s.skeletonRow, { paddingLeft: PAD }]}>
+            <MovieSkeleton layout="horizontal" count={6} />
+          </View>
+        </View>
+      );
+    }
 
     return (
       <View style={s.rowSection}>
