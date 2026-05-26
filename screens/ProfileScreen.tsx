@@ -10,6 +10,8 @@ import { useSharedValue } from 'react-native-reanimated';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { useProfileData } from '@/hooks/useProfileData';
+import Shimmer from '@/components/common/Shimmer';
+import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 // Components
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -75,8 +77,37 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
 
   if (targetProfile.status === 'loading' || isDeleting) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={[styles.root, { paddingTop: insets.top + 60, paddingHorizontal: 16 }]}>
+        {/* Header Shimmer */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+          <Shimmer width={64} height={64} borderRadius={32} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <Shimmer width="55%" height={13} />
+            <Shimmer width="35%" height={9} />
+          </View>
+        </View>
+
+        {/* Stats Row Shimmer */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 }}>
+          <Shimmer width="22%" height={68} borderRadius={10} />
+          <Shimmer width="22%" height={68} borderRadius={10} />
+          <Shimmer width="22%" height={68} borderRadius={10} />
+          <Shimmer width="22%" height={68} borderRadius={10} />
+        </View>
+
+        {/* Poster Grid Shimmer */}
+        <View style={{ gap: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Shimmer width={90} height={132} borderRadius={8} />
+            <Shimmer width={90} height={132} borderRadius={8} />
+            <Shimmer width={90} height={132} borderRadius={8} />
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Shimmer width={90} height={132} borderRadius={8} />
+            <Shimmer width={90} height={132} borderRadius={8} />
+            <Shimmer width={90} height={132} borderRadius={8} />
+          </View>
+        </View>
       </View>
     );
   }
@@ -194,6 +225,16 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
         }}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
+            <EmptyStateIcon
+              name={
+                activeTab === 'Diary'
+                  ? 'diary'
+                  : activeTab === 'Reviews'
+                    ? 'reviews'
+                    : 'watchlist'
+              }
+              size={96}
+            />
             <Text style={styles.emptyText} allowFontScaling={false}>
               {isOwner ? (
                 activeTab === 'Diary' ? t('emptyWatchedTitle') : activeTab === 'Reviews' ? t('emptyReviewsTitle') : t('noWatchlistYet')

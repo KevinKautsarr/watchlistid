@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import SafeImage from '@/components/common/SafeImage';
-import { Colors, FontWeight } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
+import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 interface AvatarProps {
   uri?: string | null;
@@ -13,11 +14,10 @@ interface AvatarProps {
 }
 
 /**
- * Professional Avatar component with automatic fallback to initials.
+ * Professional Avatar component with automatic fallback to brand icon.
  * Handles empty strings and null values gracefully.
  */
 const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 40, style, textStyle, priority = 'normal' }) => {
-  const initial = (name || 'U').charAt(0).toUpperCase();
   const hasValidUri = uri && typeof uri === 'string' && uri.trim() !== '';
 
   const containerStyle = [
@@ -46,12 +46,7 @@ const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 40, style, textStyle,
 
   return (
     <View style={[containerStyle, styles.placeholder]}>
-      <Text 
-        style={[styles.initial, { fontSize: size * 0.4 }, textStyle]} 
-        allowFontScaling={false}
-      >
-        {initial}
-      </Text>
+      <EmptyStateIcon name="avatar" size={size * 0.7} />
     </View>
   );
 };
@@ -69,10 +64,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  initial: {
-    color: Colors.white,
-    fontWeight: FontWeight.black,
   },
 });
 

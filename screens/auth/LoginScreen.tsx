@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 import { useAuth } from '@/context/AuthContext';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
@@ -189,9 +189,7 @@ export default function LoginScreen() {
                 ? <ActivityIndicator color={Colors.text.primary} />
                 : (
                   <>
-                    <View style={s.googleIconBg}>
-                      <FontAwesome name="google" size={16} color="#4285F4" />
-                    </View>
+                    <EmptyStateIcon name="google" size={24} />
                     <Text style={s.googleBtnText} allowFontScaling={false}>{t('orContinueWith')} {t('google')}</Text>
                   </>
                 )}

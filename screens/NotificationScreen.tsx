@@ -5,13 +5,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Bell, BellOff, CheckCircle2, Info, AlertTriangle, ChevronLeft, Trash2, ChevronRight } from 'lucide-react-native';
+import { Bell, CheckCircle2, Info, AlertTriangle, ChevronLeft, Trash2, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
 import { useNotifications, Notification } from '@/context/NotificationContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { cursorPointer } from '@/utils/webStyles';
+import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
@@ -180,9 +181,7 @@ const NotificationScreen: React.FC = () => {
         }
         ListEmptyComponent={(
           <View style={s.empty}>
-            <View style={s.emptyIconWrap}>
-              <BellOff size={IconSize.xl} color={Colors.overlay.light10} strokeWidth={1.5} />
-            </View>
+            <EmptyStateIcon name="notifications" size={96} style={{ marginBottom: Spacing.xl }} />
             <Text style={s.emptyTitle} allowFontScaling={false}>{t('allCaughtUp')}</Text>
             <Text style={s.emptySub} allowFontScaling={false}>
               {t('noNotifications')}

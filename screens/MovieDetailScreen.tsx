@@ -24,7 +24,8 @@ import MovieDetailTable from '@/components/movie/MovieDetailTable';
 import PosterCard from '@/components/common/PosterCard';
 import LogModal from '@/components/movie/LogModal';
 import ReviewFeed from '@/components/movie/ReviewFeed';
-import { MovieDetailSkeleton, PulsingSkeleton } from '@/components/common/DetailSkeleton';
+import { MovieDetailSkeleton } from '@/components/common/DetailSkeleton';
+import Shimmer from '@/components/common/Shimmer';
 
 import { DetailHero } from '@/components/movie/detail/DetailHero';
 import { DetailRatings } from '@/components/movie/detail/DetailRatings';
@@ -337,9 +338,9 @@ export default function MovieDetailScreen() {
                 {/* Episode list */}
                 {episodesLoading ? (
                   <View style={{ gap: Spacing.sm, marginVertical: 20 }}>
-                    <PulsingSkeleton height={60} borderRadius={Radius.md} />
-                    <PulsingSkeleton height={60} borderRadius={Radius.md} />
-                    <PulsingSkeleton height={60} borderRadius={Radius.md} />
+                    <Shimmer height={60} borderRadius={Radius.md} />
+                    <Shimmer height={60} borderRadius={Radius.md} />
+                    <Shimmer height={60} borderRadius={Radius.md} />
                   </View>
                 ) : (
                   <View style={styles.episodeList}>

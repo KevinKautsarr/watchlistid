@@ -17,6 +17,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { cursorPointer } from '@/utils/webStyles';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSocial } from '@/context/SocialContext';
+import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
 
@@ -311,9 +312,17 @@ const WatchlistScreen: React.FC = () => {
           removeClippedSubviews={true}
           ListEmptyComponent={(
             <View style={styles.empty}>
-              <View style={styles.emptyIconWrap}>
-                <Film size={IconSize.xl} color={Colors.primary} strokeWidth={1.5} />
-              </View>
+              <EmptyStateIcon
+                name={
+                  activeTab === 'Watchlist'
+                    ? 'watchlist'
+                    : activeTab === 'Watched'
+                      ? 'diary'
+                      : 'reviews'
+                }
+                size={120}
+                style={{ marginBottom: Spacing.xl }}
+              />
               <Text style={styles.emptyTitle} allowFontScaling={false}>
                 {activeTab === 'Watchlist' 
                   ? t('watchlistEmptyTitle') 

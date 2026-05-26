@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image, ImageProps } from 'expo-image';
-import { Film, User, EyeOff } from 'lucide-react-native';
+import { EyeOff } from 'lucide-react-native';
 import { Colors } from '@/constants/theme';
+import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
 export interface SafeImageProps extends Omit<ImageProps, 'source'> {
   uri?: string | null;
@@ -24,10 +25,15 @@ export const SafeImage: React.FC<SafeImageProps> = ({
   const hasValidUri = uri && typeof uri === 'string' && uri.trim() !== '';
 
   if (error || !hasValidUri) {
-    const Icon = fallbackType === 'movie' ? Film : fallbackType === 'user' ? User : EyeOff;
     return (
       <View style={[styles.fallbackContainer, style]}>
-        <Icon size={fallbackIconSize} color={Colors.text.secondary} />
+        {fallbackType === 'movie' ? (
+          <EmptyStateIcon name="default-poster" size={fallbackIconSize * 3} />
+        ) : fallbackType === 'user' ? (
+          <EmptyStateIcon name="avatar" size={fallbackIconSize * 2.5} />
+        ) : (
+          <EyeOff size={fallbackIconSize} color={Colors.text.secondary} />
+        )}
       </View>
     );
   }

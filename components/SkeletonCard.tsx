@@ -1,44 +1,24 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Animated } from 'react-native';
-import { Colors, Radius } from '@/constants/theme';
-import { nativeDriver } from '@/utils/animation';
+import React from 'react';
+import { Radius } from '@/constants/theme';
+import Shimmer from '@/components/common/Shimmer';
 
 interface SkeletonProps {
-  width?:        number | string;
-  height?:       number;
+  width?: number | string;
+  height?: number;
   borderRadius?: number;
 }
 
-const SkeletonCard: React.FC<SkeletonProps> = ({ 
+export const SkeletonCard: React.FC<SkeletonProps> = ({ 
   width = 140, 
   height = 275, 
   borderRadius = Radius.md 
 }) => {
-  const shimmerAnim = useRef(new Animated.Value(0.4)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerAnim, {
-          toValue: 0.8,
-          duration: 1200,
-          ...nativeDriver,
-        }),
-        Animated.timing(shimmerAnim, {
-          toValue: 0.4,
-          duration: 1200,
-          ...nativeDriver,
-        }),
-      ])
-    ).start();
-  }, []);
-
   return (
-    <Animated.View 
-      style={[
-        styles.skeleton, 
-        { width, height, borderRadius, opacity: shimmerAnim } as import('react-native').ViewStyle
-      ]} 
+    <Shimmer
+      width={width}
+      height={height}
+      borderRadius={borderRadius}
+      style={{ marginRight: 14 }}
     />
   );
 };
@@ -47,45 +27,14 @@ export const SkeletonListItem: React.FC<SkeletonProps> = ({
   height = 100, 
   borderRadius = Radius.md 
 }) => {
-  const shimmerAnim = useRef(new Animated.Value(0.4)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerAnim, {
-          toValue: 0.8,
-          duration: 1200,
-          ...nativeDriver,
-        }),
-        Animated.timing(shimmerAnim, {
-          toValue: 0.4,
-          duration: 1200,
-          ...nativeDriver,
-        }),
-      ])
-    ).start();
-  }, []);
-
   return (
-    <Animated.View 
-      style={[
-        styles.skeletonList, 
-        { height, borderRadius, opacity: shimmerAnim } as import('react-native').ViewStyle
-      ]} 
+    <Shimmer
+      width="100%"
+      height={height}
+      borderRadius={borderRadius}
+      style={{ marginBottom: 12 }}
     />
   );
 };
-
-const styles = StyleSheet.create({
-  skeleton: {
-    backgroundColor: Colors.surface,
-    marginRight: 14,
-  },
-  skeletonList: {
-    backgroundColor: Colors.surface,
-    width: '100%',
-    marginBottom: 12,
-  }
-});
 
 export default SkeletonCard;
