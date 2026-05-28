@@ -66,6 +66,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     <View 
       style={styles.tabBar}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      accessibilityRole="tablist"
     >
       {tabs.map(({ key, Icon, count, label }, tabIndex) => {
         const isActive = activeIndex === tabIndex;

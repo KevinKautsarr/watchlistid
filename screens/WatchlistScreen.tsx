@@ -230,7 +230,7 @@ const WatchlistScreen: React.FC = () => {
       </View>
  
       {/* ── IMDb Style Tabs ── */}
-      <View style={styles.tabContainer}>
+      <View style={styles.tabContainer} accessibilityRole="tablist">
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'Watchlist' && styles.tabActive, cursorPointer]} 
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watchlist'); }}

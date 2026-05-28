@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import SafeImage from '@/components/common/SafeImage';
 import { Star, Bookmark, Check } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '@/constants/theme';
@@ -73,7 +73,7 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
     >
       <View style={styles.posterWrap}>
         <SafeImage
-          uri={movie.poster_path ? `${TMDB_IMAGE_SIZES.medium}${movie.poster_path}` : null}
+          uri={movie.poster_path ? `${Platform.OS === 'web' ? TMDB_IMAGE_SIZES.small : TMDB_IMAGE_SIZES.medium}${movie.poster_path}` : null}
           fallbackType="movie"
           style={StyleSheet.absoluteFill}
           contentFit="cover"

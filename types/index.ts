@@ -123,6 +123,8 @@ export interface MovieLog {
   likes_count?: number;
   is_liked_by_me?: boolean;
   genre_ids?: number[];
+  overview?: string;
+  vote_average?: number;
 }
 
 export interface UserProfile {

@@ -16,7 +16,7 @@ interface PersonCardProps {
 }
 
 export const PersonCard: React.FC<PersonCardProps> = ({ person, onPress, t }) => {
-  const uri = person.profile_path ? `${TMDB_IMAGE_SIZES.small}${person.profile_path}` : null;
+  const uri = person.profile_path ? `${TMDB_IMAGE_SIZES.thumb}${person.profile_path}` : null;
   
   return (
     <TouchableOpacity style={[styles.personRow, cursorPointer]} onPress={onPress} activeOpacity={0.75}>

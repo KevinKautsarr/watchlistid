@@ -7,6 +7,7 @@ import { cursorPointer } from '@/utils/webStyles';
 import { MovieLog } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { formatHumanDate } from '@/utils/dateFormatter';
+import RatingBadge from '@/components/common/RatingBadge';
 
 interface DiaryCardProps {
   log: MovieLog;
@@ -83,17 +84,28 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
         <View style={styles.info}>
           <Text style={styles.title} allowFontScaling={false}>{log.movie_title}</Text>
           
-          {log.rating ? (
-            <View style={styles.ratingContainer}>
-              {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  size={IconSize.xs * 0.8} 
-                  color={Colors.ratingGold} 
-                  fill={i < Math.floor(log.rating! / 2) ? Colors.ratingGold : "transparent"} 
-                />
-              ))}
-            </View>
+          <View style={styles.ratingsWrapper}>
+            {log.rating ? (
+              <View style={styles.ratingContainer}>
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    size={IconSize.xs * 0.8} 
+                    color={Colors.ratingGold} 
+                    fill={i < Math.floor(log.rating! / 2) ? Colors.ratingGold : "transparent"} 
+                  />
+                ))}
+              </View>
+            ) : null}
+            {log.vote_average ? (
+              <RatingBadge rating={log.vote_average} size="sm" style={styles.globalRating} />
+            ) : null}
+          </View>
+
+          {log.overview ? (
+            <Text style={styles.overview} numberOfLines={2} allowFontScaling={false}>
+              {log.overview}
+            </Text>
           ) : null}
           {log.review_text && (
             <View style={styles.reviewWrapper}>
@@ -220,7 +232,22 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     gap: 2,
+  },
+  ratingsWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
     marginBottom: 8,
+  },
+  globalRating: {
+    marginTop: 0,
+  },
+  overview: {
+    fontSize: FontSize.xs,
+    color: Colors.text.secondary,
+    marginTop: 4,
+    lineHeight: 18,
+    marginBottom: 6,
   },
   reviewWrapper: {
     marginTop: 4,

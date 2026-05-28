@@ -11,6 +11,9 @@ config.transformer.minifierConfig = {
   mangle: {
     keep_classnames: false,
     keep_fnames: false
+  },
+  output: {
+    comments: false
   }
 };
 

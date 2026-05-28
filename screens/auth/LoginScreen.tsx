@@ -461,7 +461,7 @@ export default function LoginScreen() {
                 {/* Minimalist footer brand */}
                 <View style={s.footerBrand}>
                   <Text style={s.footerText} allowFontScaling={false}>
-                    🍿 WatchListID © 2024
+                    🍿 WatchListID © 2026
                   </Text>
                 </View>
               </View>

@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo export --platform web",
+  "buildCommand": "EXPO_UNSTABLE_TREE_SHAKING=1 EXPO_UNSTABLE_METRO_OPTIMIZE_GRAPH=1 npx expo export --platform web",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
@@ -23,7 +23,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
+          "value": "no-cache, must-revalidate"
         },
         {
           "key": "Pragma",

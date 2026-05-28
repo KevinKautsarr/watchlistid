@@ -152,7 +152,8 @@ export const useProfileData = (userId: string | undefined) => {
           mediaType: row.media_type || 'movie',
           status: row.watched ? 'completed' : 'plan_to_watch',
           addedAt: row.added_at,
-          vote_average: row.vote_average || 0
+          vote_average: row.vote_average || 0,
+          overview: row.overview || ''
         }));
         setTargetWatchlist(mappedWl);
       }
@@ -176,6 +177,8 @@ export const useProfileData = (userId: string | undefined) => {
             poster_path: matchingLog?.poster_path || matchingWl?.poster_path || null,
             review_text: r.content,
             watched_at: matchingLog?.watched_at || r.created_at,
+            overview: matchingWl?.overview || '',
+            vote_average: matchingWl?.vote_average || 0,
           };
         });
         setTargetReviews(mappedReviews);
@@ -500,6 +503,7 @@ export const useProfileData = (userId: string | undefined) => {
       });
       return ownerWatchedItems.map(item => {
         const matchingLog = userLogs.find(l => l.movie_id === item.id);
+        const matchingWatchlistItem = watchlist.find(w => w.id === item.id);
         return {
           id: matchingLog?.id || `watch-${item.id}`,
           user_id: user?.id || '',
@@ -512,6 +516,8 @@ export const useProfileData = (userId: string | undefined) => {
           is_spoiler: matchingLog?.is_spoiler || false,
           media_type: item.mediaType,
           created_at: matchingLog?.created_at || item.addedAt,
+          overview: matchingWatchlistItem?.overview || item.overview || '',
+          vote_average: matchingWatchlistItem?.vote_average || item.vote_average || 0,
         };
       });
     }
@@ -530,9 +536,19 @@ export const useProfileData = (userId: string | undefined) => {
         review_text: undefined,
         is_spoiler: false,
         media_type: item.mediaType,
+        overview: item.overview || '',
+        vote_average: item.vote_average || 0,
       }));
-    return [...filteredTargetLogs, ...watchedFromWatchlist];
-  }, [isOwner, mergedList, userLogs, userRatings, targetLogs, targetWatchlist, targetReviews, getMovieStatus]);
+    const mappedLogs = filteredTargetLogs.map((l: any) => {
+      const matchingWl = targetWatchlist.find((w: any) => w.id === l.movie_id);
+      return {
+        ...l,
+        overview: matchingWl?.overview || '',
+        vote_average: matchingWl?.vote_average || 0,
+      };
+    });
+    return [...mappedLogs, ...watchedFromWatchlist];
+  }, [isOwner, watchlist, mergedList, userLogs, userRatings, targetLogs, targetWatchlist, targetReviews, getMovieStatus]);
 
   const watchlistList = useMemo(() => {
     if (isOwner) {

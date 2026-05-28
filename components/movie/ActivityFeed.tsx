@@ -5,7 +5,7 @@ import { MessageSquare, Clock, Heart, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES } from '@/constants/theme';
 import { MovieLog } from '@/types';
 import { useSocial } from '@/context/SocialContext';
 import Avatar from '@/components/common/Avatar';
@@ -53,7 +53,7 @@ const ActivityFeedItem = React.memo(({ item }: { item: MovieLog }) => {
         onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.movie_id.toString(), type: item.media_type || 'movie' } })}
       >
         <Image 
-          source={`https://image.tmdb.org/t/p/w200${item.poster_path}`} 
+          source={{ uri: `${TMDB_IMAGE_SIZES.small}${item.poster_path}` }} 
           style={s.poster}
           contentFit="cover"
           cachePolicy="memory-disk"

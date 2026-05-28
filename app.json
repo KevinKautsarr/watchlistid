@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "moviewatchlist",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "backgroundColor": "#141414",
     "ios": {
       "supportsTablet": true,
@@ -28,7 +27,6 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "package": "com.watchlistid.app",
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -43,7 +41,14 @@
       "backgroundColor": "#141414"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": true
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {

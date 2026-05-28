@@ -23,7 +23,7 @@ const CastCard: React.FC<CastCardProps> = ({
     >
       <View style={styles.avatarWrap}>
         <SafeImage
-          uri={cast.profile_path ? `${TMDB_IMAGE_SIZES.small}${cast.profile_path}` : null}
+          uri={cast.profile_path ? `${TMDB_IMAGE_SIZES.thumb}${cast.profile_path}` : null}
           fallbackType="user"
           fallbackIconSize={IconSize.xl}
           style={StyleSheet.absoluteFill}

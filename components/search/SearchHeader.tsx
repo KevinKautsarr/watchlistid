@@ -104,6 +104,7 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
           styles.tabSwitcher,
           { marginHorizontal: withMargin ? contentPadding : 0 },
         ]}
+        accessibilityRole="tablist"
       >
         <Pressable
           style={({ pressed }) => [
