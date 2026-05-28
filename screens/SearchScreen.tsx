@@ -462,14 +462,16 @@ export default function SearchScreen() {
               autoCorrect={false}
               autoCapitalize="none"
             />
-            {searchText.length > 0 && (
+            {isLoading ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : searchText.length > 0 ? (
               <TouchableOpacity
                 style={styles.clearBtn}
                 onPress={() => setSearchText("")}
               >
                 <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
               </TouchableOpacity>
-            )}
+            ) : null}
           </Animated.View>
         </View>
       )}
@@ -478,7 +480,7 @@ export default function SearchScreen() {
       <View style={{ flex: 1 }}>
         {searchMode === "media" ? (
           <TypedFlashList
-            style={{ flex: 1 }}
+            style={{ flex: 1, opacity: isLoading ? 0.65 : 1 }}
             ref={mediaListRef}
             onScroll={handleScroll}
             scrollEventThrottle={16}
@@ -520,6 +522,7 @@ export default function SearchScreen() {
                   t={t}
                   user={user}
                   filterChips={FILTER_CHIPS}
+                  isLoading={isLoading}
                 />
                 {showDefault ? (
                   <View style={styles.defaultHeader}>
@@ -598,7 +601,7 @@ export default function SearchScreen() {
           />
         ) : (
           <TypedFlashList
-            style={{ flex: 1 }}
+            style={{ flex: 1, opacity: userResults.status === "loading" ? 0.65 : 1 }}
             ref={userListRef}
             onScroll={handleScroll}
             scrollEventThrottle={16}
@@ -653,6 +656,7 @@ export default function SearchScreen() {
                 t={t}
                 user={user}
                 filterChips={FILTER_CHIPS}
+                isLoading={userResults.status === "loading"}
               />
             }
             ListEmptyComponent={

@@ -8,6 +8,7 @@ import {
   Animated,
   StyleSheet,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -33,6 +34,7 @@ interface SearchHeaderProps {
   t: (key: any) => string;
   user: any;
   filterChips: { id: string; labelKey: string }[];
+  isLoading?: boolean;
 }
 
 export const SearchHeader: React.FC<SearchHeaderProps> = ({
@@ -52,6 +54,7 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
   t,
   user,
   filterChips,
+  isLoading,
 }) => {
   const { showLoginPrompt } = useLoginPrompt();
 
@@ -88,14 +91,16 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
           autoCorrect={false}
           autoCapitalize="none"
         />
-        {searchText.length > 0 && (
+        {isLoading ? (
+          <ActivityIndicator size="small" color={Colors.primary} />
+        ) : searchText.length > 0 ? (
           <TouchableOpacity
             style={styles.clearBtn}
             onPress={() => setSearchText('')}
           >
             <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
           </TouchableOpacity>
-        )}
+        ) : null}
       </Animated.View>
 
       {/* Pill Tab Switcher */}

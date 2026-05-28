@@ -9,6 +9,8 @@ import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow, TMDB_IMAGE_SIZES
 import { MovieLog } from '@/types';
 import { useSocial } from '@/context/SocialContext';
 import Avatar from '@/components/common/Avatar';
+import { useAuth } from '@/context/AuthContext';
+import { supabase, typedFrom } from '@/supabase';
 
 const formatTime = (dateString: string) => {
   const date = new Date(dateString);
@@ -85,6 +87,7 @@ ActivityFeedItem.displayName = 'ActivityFeedItem';
 
 export default function ActivityFeed() {
   const router = useRouter();
+  const { user } = useAuth();
   const { getActivityFeed } = useSocial();
   const [logs, setLogs] = useState<MovieLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,6 +102,62 @@ export default function ActivityFeed() {
   useEffect(() => {
     loadFeed();
   }, [loadFeed]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    let channel: any;
+    
+    const setupRealtimeSubscription = async () => {
+      // Get target following list for filtering
+      const { data: follows } = await typedFrom('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+      
+      const followingIds = new Set(follows?.map(f => f.following_id) || []);
+      if (followingIds.size === 0) return;
+
+      channel = supabase
+        .channel('public:movie_logs:feed')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'movie_logs' },
+          async (payload) => {
+            const newLog = payload.new;
+            if (followingIds.has(newLog.user_id)) {
+              // Fetch profile info for the user who made the insertion
+              const { data: profile } = await typedFrom('profiles')
+                .select('id, username, avatar_url')
+                .eq('id', newLog.user_id)
+                .single();
+              
+              const fullLog = {
+                ...newLog,
+                user: profile || null,
+              } as unknown as MovieLog;
+
+              setLogs(prev => {
+                // Avoid double insertion
+                if (prev.some(l => l.id === fullLog.id)) return prev;
+                return [fullLog, ...prev];
+              });
+
+              // Soft premium haptic feed notification
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [user?.id]);
 
   const renderItem = React.useCallback(({ item }: { item: MovieLog }) => (
     <ActivityFeedItem item={item} />

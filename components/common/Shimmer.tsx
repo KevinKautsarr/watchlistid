@@ -23,7 +23,7 @@ export const Shimmer: React.FC<ShimmerProps> = ({
     Animated.loop(
       Animated.timing(animatedValue, {
         toValue: 1,
-        duration: 1600,
+        duration: 1200,
         useNativeDriver: USE_NATIVE_DRIVER,
       })
     ).start();
