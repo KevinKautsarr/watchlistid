@@ -83,7 +83,10 @@ async function hydrateCacheFromStorage(): Promise<void> {
 }
 
 // Fire and forget — does not block first render
-hydrateCacheFromStorage();
+// Guard: AsyncStorage uses `window` which is not available during SSR/static rendering
+if (typeof window !== 'undefined') {
+  hydrateCacheFromStorage();
+}
 
 export async function clearPersistedCache(): Promise<void> {
   try {

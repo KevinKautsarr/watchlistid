@@ -51,7 +51,10 @@ async function hydrateDetailCache(): Promise<void> {
   }
 }
 
-hydrateDetailCache();
+// Guard: AsyncStorage uses `window` which is not available during SSR/static rendering
+if (typeof window !== 'undefined') {
+  hydrateDetailCache();
+}
 
 export const useMovieDetail = (actualId: number, type: 'movie' | 'tv') => {
   const { getAverageRating } = useSocial();

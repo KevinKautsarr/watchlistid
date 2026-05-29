@@ -8,8 +8,9 @@ import { mapAuthError } from '@/utils/authErrors';
 import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeClearCorruptStorage, clearStaleSupabaseSession } from '@/utils/storage';
-import { clearPersistedCache } from '@/services/api';
-import { clearDetailCache } from '@/hooks/useMovieDetail';
+// Note: clearPersistedCache and clearDetailCache are dynamically imported inside
+// signOut() to break the require cycle:
+// AuthContext → useMovieDetail → SocialContext → {LogContext/ReviewContext/FollowContext} → AuthContext
 
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();
@@ -309,8 +310,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('[Auth] SignOut error (expected if offline):', err);
     }
-    // Clear cached TMDB data on logout (user might switch accounts)
-    await Promise.allSettled([clearPersistedCache(), clearDetailCache()]);
+    // Dynamic import to break circular dependency:
+    // AuthContext → useMovieDetail → SocialContext → *Context → AuthContext
+    try {
+      const [{ clearPersistedCache }, { clearDetailCache }] = await Promise.all([
+        import('@/services/api'),
+        import('@/hooks/useMovieDetail'),
+      ]);
+      await Promise.allSettled([clearPersistedCache(), clearDetailCache()]);
+    } catch {
+      // Non-critical — cache will expire naturally
+    }
   };
 
   return (

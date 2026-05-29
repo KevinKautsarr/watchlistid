@@ -1,8 +1,16 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 const config = getDefaultConfig(__dirname);
 
 config.resolver.sourceExts.push('mjs');
 config.resolver.sourceExts.push('cjs');
+
+// Web shim: replace @react-native-community/netinfo with a browser-native
+// implementation to avoid the NativeEventEmitter / EventEmitter crash on web.
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  '@react-native-community/netinfo': path.resolve(__dirname, 'shims/netinfo.web.js'),
+};
 
 // Minifier optimization
 config.transformer.minifierConfig = {

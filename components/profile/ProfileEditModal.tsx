@@ -158,13 +158,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: Platform.OS === 'web' ? Radius.xxl : 0,
     overflow: 'hidden',
     ...Platform.select({
-      web: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
-      }
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 },
+      android: { elevation: 10 },
+      web:     { boxShadow: '0 10px 40px rgba(0,0,0,0.5)' } as any,
     })
   },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.xl, height: 60, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
