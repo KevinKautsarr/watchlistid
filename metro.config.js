@@ -5,11 +5,19 @@ const config = getDefaultConfig(__dirname);
 config.resolver.sourceExts.push('mjs');
 config.resolver.sourceExts.push('cjs');
 
-// Web shim: replace @react-native-community/netinfo with a browser-native
-// implementation to avoid the NativeEventEmitter / EventEmitter crash on web.
-config.resolver.extraNodeModules = {
-  ...config.resolver.extraNodeModules,
-  '@react-native-community/netinfo': path.resolve(__dirname, 'shims/netinfo.web.js'),
+// Web platform resolver: redirect @react-native-community/netinfo to our
+// browser-native shim when bundling for web. resolveRequest works for all
+// platforms including web (unlike extraNodeModules which is native-only).
+const netinfoShim = path.resolve(__dirname, 'shims/netinfo.web.js');
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (
+    platform === 'web' &&
+    moduleName === '@react-native-community/netinfo'
+  ) {
+    return { filePath: netinfoShim, type: 'sourceFile' };
+  }
+  // Fall back to default resolver for everything else
+  return context.resolveRequest(context, moduleName, platform);
 };
 
 // Minifier optimization
