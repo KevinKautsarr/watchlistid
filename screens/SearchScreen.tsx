@@ -28,6 +28,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
+  Platform,
   StatusBar,
   StyleSheet,
   Text,
