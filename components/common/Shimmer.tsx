@@ -20,6 +20,8 @@ export const Shimmer: React.FC<ShimmerProps> = ({
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     Animated.loop(
       Animated.timing(animatedValue, {
         toValue: 1,
@@ -34,6 +36,46 @@ export const Shimmer: React.FC<ShimmerProps> = ({
     inputRange: [0, 1],
     outputRange: [-600, 600],
   });
+
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            width: width as any,
+            height,
+            borderRadius,
+            backgroundColor: '#161622',
+          },
+          style,
+        ]}
+      >
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: '100%',
+              backgroundImage: 'linear-gradient(90deg, #161622 0%, #1E1E30 25%, #242438 50%, #1E1E30 75%, #161622 100%)',
+            } as any}
+            {...({ className: 'shimmer-slider' } as any)}
+          />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View

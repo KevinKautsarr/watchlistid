@@ -159,6 +159,13 @@ function RootLayoutNav() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#141414', justifyContent: 'center', alignItems: 'center' }}>
+        {/* LCP candidate: text is immediately visible so Lighthouse can measure it */}
+        <Text
+          style={{ color: '#E50914', fontSize: 28, fontWeight: '900', letterSpacing: 3, marginBottom: 24 }}
+          allowFontScaling={false}
+        >
+          WATCHLISTID
+        </Text>
         <ActivityIndicator color="#E50914" size="large" accessibilityLabel="Loading aplikasi" aria-label="Loading aplikasi" />
       </View>
     );

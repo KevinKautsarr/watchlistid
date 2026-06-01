@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View, Platform } from 'react-native';
 import SplashScreen from '@/screens/SplashScreen';
 import { Stack, Redirect } from 'expo-router';
 import Head from 'expo-router/head';
@@ -8,10 +8,12 @@ import { nativeDriver } from '@/utils/animation';
 
 export default function AppEntry() {
   const { isLoading } = useAuth();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(Platform.OS !== 'web');
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     // Sedikit dipercepat agar aplikasi terasa lebih responsif (snappy)
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
@@ -26,6 +28,14 @@ export default function AppEntry() {
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // On web: skip both splash and auth-loading wait. _layout.tsx → RootLayoutNav
+  // already guards protected routes and redirects to /auth/login when unauthenticated.
+  // Jumping straight to the redirect lets the browser paint the actual LCP element
+  // (the hero carousel / page content) as fast as possible.
+  if (Platform.OS === 'web') {
+    return <Redirect href="/(tabs)" />;
+  }
 
   if (isLoading || showSplash) {
     return (

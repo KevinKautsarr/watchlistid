@@ -87,6 +87,15 @@ export default function Root({ children }: PropsWithChildren) {
               -webkit-backdrop-filter: blur(12px);
               border: 1px solid rgba(42, 21, 32, 0.6);
             }
+
+            /* CSS Shimmer Animation for Performance */
+            @keyframes shimmer-animation {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
+            .shimmer-slider {
+              animation: shimmer-animation 1.2s infinite linear;
+            }
           `
         }} />
 
