@@ -576,6 +576,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 40,
+    paddingVertical: Spacing.xl,
   },
   desktopFormContainer: {
     width: "100%",
@@ -796,8 +797,8 @@ const s = StyleSheet.create({
   },
 
   footerBrand: {
-    position: "absolute",
-    bottom: 40,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.sm,
     alignSelf: "center",
   },
   footerText: {

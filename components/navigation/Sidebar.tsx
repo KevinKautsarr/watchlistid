@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ViewStyle, Platform } from 'react-native';
-import { Home, Compass, Bookmark, User, Film } from 'lucide-react-native';
+import { Home, Compass, Bookmark, User, Film, LogOut } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
@@ -24,7 +24,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const router   = useRouter();
   const segments = useSegments();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { t } = useLanguage();
 
   // On root layout, segments[0] can be '(tabs)' and segments[1] is the tab name.
@@ -94,6 +94,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
             );
           })}
         </ScrollView>
+
+        {/* Sign Out Button — only if logged in */}
+        {user && (
+          <View style={styles.footerLogout}>
+            <TouchableOpacity
+              style={[styles.logoutItem, collapsed && styles.logoutItemCollapsed]}
+              onPress={signOut}
+              activeOpacity={0.75}
+            >
+              <LogOut
+                size={20}
+                color="#C71F37"
+                strokeWidth={2}
+              />
+              {!collapsed && (
+                <Text style={styles.logoutLabel} allowFontScaling={false}>
+                  {t('signOut')}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Bottom — version */}
         {!collapsed && (
@@ -180,6 +202,33 @@ const styles = StyleSheet.create({
   },
   sidebarFooter: { paddingHorizontal: 20, paddingBottom: 20, paddingTop: 8 },
   footerText: { fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, textAlign: 'center' },
+  footerLogout: {
+    paddingHorizontal: 12,
+    marginBottom: 4,
+  },
+  logoutItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    gap: 14,
+    backgroundColor: 'rgba(199,31,55,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(199,31,55,0.15)',
+  },
+  logoutItemCollapsed: {
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+  },
+  logoutLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#C71F37',
+    flex: 1,
+  },
 });
 
 export default Sidebar;
