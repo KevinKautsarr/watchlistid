@@ -102,6 +102,7 @@ export const Radius = {
 } as const;
 
 export const FontSize = {
+  xxs:  10,
   xs:   12,
   sm:   14,
   base: 16,

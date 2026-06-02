@@ -2,10 +2,12 @@ import React, { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { Platform, View, ActivityIndicator, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import Sidebar from '@/components/navigation/Sidebar';
+import LoginPromptModal from '@/components/auth/LoginPromptModal';
 
 const GlassHeaderBackground = () => {
   if (Platform.OS === 'web') {
@@ -45,6 +47,7 @@ import { WatchlistProvider } from '@/context/WatchlistContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { SocialProvider } from '@/context/SocialContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { FavoritesProvider } from '@/context/FavoritesContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import OfflineGuard from '@/components/common/OfflineGuard';
 
@@ -137,6 +140,22 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { width } = useWindowDimensions();
+
+  const isMobile  = width < 768;
+  const isTablet  = width >= 768 && width < 1100;
+  const isLarge   = !isMobile;
+  const collapsed = isTablet;
+
+  const isAuthScreen = segments[0] === 'auth';
+  const showSidebar = isLarge && !isAuthScreen;
+
+  const [loginPromptVisible, setLoginPromptVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    (global as any).showLoginPrompt = () => setLoginPromptVisible(true);
+    return () => { (global as any).showLoginPrompt = undefined; };
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -175,7 +194,7 @@ function RootLayoutNav() {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="error" options={{ 
+          <Stack.Screen name="system-error" options={{ 
             title: 'Sistem Bermasalah',
             headerShown: true,
             headerStyle: { backgroundColor: '#141414' },
@@ -189,30 +208,39 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="auth" />
-        <Stack.Screen name="movie/[id]" />
-        <Stack.Screen name="person/[id]" />
-        <Stack.Screen name="user/[userId]" options={{ 
-          headerShown: true,
-          headerTransparent: true,
-          title: 'Profile',
-          headerTintColor: '#F5F0F1',
-          headerTitleAlign: 'left',
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: '800',
-            color: '#F5F0F1',
-          },
-          headerBackground: () => <GlassHeaderBackground />,
-          headerStyle: { backgroundColor: 'transparent' }
-        }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#0A0A0B' }}>
+        {showSidebar && <Sidebar collapsed={collapsed} />}
+        <View style={{ flex: 1, overflow: 'hidden' }}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="movie/[id]" />
+            <Stack.Screen name="person/[id]" />
+            <Stack.Screen name="user/[userId]" options={{ 
+              headerShown: true,
+              headerTransparent: true,
+              title: 'Profile',
+              headerTintColor: '#F5F0F1',
+              headerTitleAlign: 'left',
+              headerTitleStyle: {
+                fontSize: 18,
+                fontWeight: '800',
+                color: '#F5F0F1',
+              },
+              headerBackground: () => <GlassHeaderBackground />,
+              headerStyle: { backgroundColor: 'transparent' }
+            }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+        </View>
+      </View>
       <OfflineGuard />
       <StatusBar style="light" />
+      <LoginPromptModal 
+        visible={loginPromptVisible} 
+        onClose={() => setLoginPromptVisible(false)} 
+      />
     </ThemeProvider>
   );
 }
@@ -227,7 +255,9 @@ export default function RootLayout() {
             <NotificationProvider>
               <SocialProvider>
                 <WatchlistProvider>
-                  <RootLayoutNav />
+                  <FavoritesProvider>
+                    <RootLayoutNav />
+                  </FavoritesProvider>
                 </WatchlistProvider>
               </SocialProvider>
             </NotificationProvider>
