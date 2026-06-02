@@ -15,12 +15,15 @@ import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 // Components
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileStats from '@/components/profile/ProfileStats';
+import ProfileAnalyticsCharts from '@/components/profile/ProfileAnalyticsCharts';
+import FavoritesList from '@/components/profile/FavoritesList';
 import ProfileActions from '@/components/profile/ProfileActions';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import DiaryCard from '@/components/movie/DiaryCard';
 import MovieListItem from '@/components/movie/MovieListItem';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import ProfileModals from '@/components/profile/ProfileModals';
+import { useFavorites } from '@/context/FavoritesContext';
 
 type ContentTab = 'Diary' | 'Reviews' | 'Watchlist';
 
@@ -59,6 +62,19 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
     isHydrated,
     t
   } = profileState;
+
+  const { fetchFavorites } = useFavorites();
+  const [profileFavorites, setProfileFavorites] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (targetUserId) {
+      if (isOwner) {
+        // Managed by context
+      } else {
+        fetchFavorites(targetUserId).then(setProfileFavorites);
+      }
+    }
+  }, [targetUserId, isOwner, isRefreshing, fetchFavorites]);
 
   if (!isHydrated) return null;
 
@@ -156,6 +172,18 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
           userId={targetUserId}
           username={profileData?.username || 'User'}
         />
+
+        {targetUserId && (
+          <FavoritesList 
+            userId={targetUserId} 
+            isOwner={isOwner} 
+            data={isOwner ? undefined : profileFavorites} 
+          />
+        )}
+
+        {targetUserId && (
+          <ProfileAnalyticsCharts userId={targetUserId} />
+        )}
       </View>
 
       {/* ── Swipeable tabs — only the content scrolls ── */}
