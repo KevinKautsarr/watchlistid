@@ -33,6 +33,8 @@ const GENRES = [
   { id: 80,    nameKey: 'genreCrime',     image: '/cfT29Im5VDvjE0RpyKOSdCKZal7.jpg' },
 ] as const;
 
+const ALL_SECTIONS = 7; // update ini jika menambah section baru
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -51,6 +53,21 @@ export default function HomeScreen() {
   const isLoading = homeState.status === 'loading';
 
   const { showLoginPrompt } = useLoginPrompt();
+
+  if (homeState.status === 'error') {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#141414', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+        <Text style={{ color: Colors.white, fontSize: FontSize.lg, fontWeight: FontWeight.bold }}>
+          {t('failedToLoad')}
+        </Text>
+        <Text style={{ color: Colors.text.secondary }}>{t('checkConnection')}</Text>
+        <TouchableOpacity style={{ backgroundColor: Colors.danger, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 99 }}
+          onPress={onRefresh}>
+          <Text style={{ color: Colors.white, fontWeight: FontWeight.bold }}>{t('tryAgain')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const goToMovie = (id: number, type: 'movie' | 'tv') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -88,7 +105,7 @@ export default function HomeScreen() {
   const PAD = bp.isDesktop ? 36 : bp.isTablet ? 24 : 20;
 
   const loadMore = () => {
-    if (visibleSections < 5) setVisibleSections(prev => prev + 1);
+    if (visibleSections < ALL_SECTIONS) setVisibleSections(prev => prev + 1);
   };
 
   const renderHeader = () => (
@@ -131,7 +148,10 @@ export default function HomeScreen() {
   );
 
   const sections = useMemo(() => {
-    if (homeTab === 'following') return [{ id: 'activity-feed', type: 'feed' }];
+    if (homeTab === 'following') {
+      if (!user) return [{ id: 'login-prompt', type: 'login-prompt' }];
+      return [{ id: 'activity-feed', type: 'feed' }];
+    }
     const items = [
       { id: 'trending-movies', type: 'row', title: t('trendingMovies'), icon: Flame, iconColor: Colors.danger, data: trending, category: 'trending-movies', mediaType: 'movie' },
       { id: 'trending-tv',     type: 'row', title: t('trendingShows'),  icon: Flame, iconColor: "#FF6B35", data: trendingTV, category: 'trending-tv', mediaType: 'tv' },
@@ -141,10 +161,29 @@ export default function HomeScreen() {
       { id: 'genres',          type: 'genres' },
       { id: 'recent',          type: 'row', title: t('recentlyViewed'), icon: Clock, iconColor: Colors.danger, data: recentMovies, mediaType: 'movie' },
     ];
-    return items.slice(0, visibleSections + 2);
-  }, [homeTab, trending, trendingTV, popular, topRated, topRatedTV, recentMovies, visibleSections, t]);
+    return items
+      .filter(item => item.type === 'genres' || item.type === 'feed' || (item.data && item.data.length > 0))
+      .slice(0, visibleSections + 2);
+  }, [homeTab, user, trending, trendingTV, popular, topRated, topRatedTV, recentMovies, visibleSections, t]);
 
   const renderSection = ({ item }: { item: any }) => {
+    if (item.type === 'login-prompt') {
+      return (
+        <View style={{ alignItems: 'center', paddingVertical: 60, paddingHorizontal: PAD }}>
+          <UserPlus size={48} color={Colors.danger} />
+          <Text style={{ color: Colors.white, fontSize: FontSize.lg, fontWeight: FontWeight.bold, marginTop: 16 }}>
+            {t('loginToSeeActivity')}
+          </Text>
+          <TouchableOpacity style={{ marginTop: 20, backgroundColor: Colors.danger, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 99 }}
+            onPress={showLoginPrompt}>
+            <Text style={{ color: Colors.white, fontWeight: FontWeight.bold }}>
+              {t('signIn')} / {t('signUp')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     if (item.type === 'feed') {
       return (
         <View style={[s.feedContainer, { paddingHorizontal: PAD }]}>
@@ -242,7 +281,11 @@ export default function HomeScreen() {
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.danger} colors={[Colors.danger]} />}
-        contentContainerStyle={[s.listContent, { maxWidth: bp.maxContentWidth }]}
+        contentContainerStyle={[s.listContent, { maxWidth: contentWidth }]}
+        initialNumToRender={3}
+        windowSize={5}
+        maxToRenderPerBatch={3}
+        removeClippedSubviews={Platform.OS === 'android'}
       />
     </View>
   );
