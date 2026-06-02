@@ -242,10 +242,10 @@ export default function FavoritesList({ userId, isOwner, data }: FavoritesListPr
         />
       ) : (
         // Web + mobile non-edit: plain ScrollView
-        <View style={[styles.scrollContainer, bp.isLarge && styles.scrollContainerWeb]}>
+        <View style={styles.scrollWrapperRow}>
           {bp.isLarge && (
             <TouchableOpacity
-              style={[styles.navArrow, styles.navArrowLeft, cursorPointer]}
+              style={[styles.navArrowButton, cursorPointer]}
               onPress={() => scrollRef.current?.scrollTo({ x: -300, animated: true })}
             >
               <View style={styles.navArrowInner}>
@@ -258,6 +258,7 @@ export default function FavoritesList({ userId, isOwner, data }: FavoritesListPr
             ref={scrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
+            style={styles.scrollFlex}
             contentContainerStyle={styles.scrollContent}
           >
             {items.map((item, index) => (
@@ -277,7 +278,7 @@ export default function FavoritesList({ userId, isOwner, data }: FavoritesListPr
 
           {bp.isLarge && (
             <TouchableOpacity
-              style={[styles.navArrow, styles.navArrowRight, cursorPointer]}
+              style={[styles.navArrowButton, cursorPointer]}
               onPress={() => scrollRef.current?.scrollTo({ x: 300, animated: true })}
             >
               <View style={styles.navArrowInner}>
@@ -330,23 +331,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
-  scrollContainer: {
-    position: 'relative',
+  scrollWrapperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
-  scrollContainerWeb: {
-    paddingHorizontal: 48,
+  scrollFlex: {
+    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 24,
     gap: Spacing.md,
     paddingBottom: Spacing.sm,
   },
-  navArrow: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    zIndex: 10,
+  navArrowButton: {
     width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
@@ -367,8 +367,6 @@ const styles = StyleSheet.create({
       } as any,
     }),
   },
-  navArrowLeft: { left: 0 },
-  navArrowRight: { right: 0 },
   posterWrap: {
     width: POSTER_W,
   },
