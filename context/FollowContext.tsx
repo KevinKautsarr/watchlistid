@@ -95,7 +95,7 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (followingIds.length === 0) return [];
 
     const { data: logs, error: logsError } = await typedFrom('movie_logs')
-      .select('*')
+      .select('id, user_id, movie_id, movie_title, poster_path, media_type, rating, review_text, watched_at, is_spoiler')
       .in('user_id', followingIds)
       .order('watched_at', { ascending: false })
       .limit(30);

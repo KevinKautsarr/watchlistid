@@ -46,6 +46,7 @@ export type Database = {
           user_id: string | null
           watched_at: string | null
           genre_ids: number[] | null
+          media_type: string | null
         }
         Insert: {
           created_at?: string | null
@@ -60,6 +61,7 @@ export type Database = {
           user_id?: string | null
           watched_at?: string | null
           genre_ids?: number[] | null
+          media_type?: string | null
         }
         Update: {
           created_at?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           user_id?: string | null
           watched_at?: string | null
           genre_ids?: number[] | null
+          media_type?: string | null
         }
         Relationships: []
       }
@@ -87,6 +90,8 @@ export type Database = {
           title: string
           type: string | null
           user_id: string | null
+          actor_id: string | null
+          reference_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -97,6 +102,8 @@ export type Database = {
           title: string
           type?: string | null
           user_id?: string | null
+          actor_id?: string | null
+          reference_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -107,8 +114,18 @@ export type Database = {
           title?: string
           type?: string | null
           user_id?: string | null
+          actor_id?: string | null
+          reference_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
@@ -340,7 +357,125 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          }
+        ]
+      }
+      tv_episode_logs: {
+        Row: {
+          id: string
+          user_id: string
+          tv_show_id: number
+          season_number: number
+          episode_number: number
+          watched_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tv_show_id: number
+          season_number: number
+          episode_number: number
+          watched_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tv_show_id?: number
+          season_number?: number
+          episode_number?: number
+          watched_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tv_episode_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      review_comments: {
+        Row: {
+          id: string
+          user_id: string
+          review_id: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          review_id: string
+          content: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          review_id?: string
+          content?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_comments_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      favorites: {
+        Row: {
+          id: string
+          user_id: string
+          movie_id: number
+          media_type: string
+          title: string
+          poster_path: string | null
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          movie_id: number
+          media_type?: string
+          title: string
+          poster_path?: string | null
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          movie_id?: number
+          media_type?: string
+          title?: string
+          poster_path?: string | null
+          position?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }
@@ -357,6 +492,10 @@ export type Database = {
         }[]
       }
       toggle_review_like: { Args: { p_review_id: string }; Returns: boolean }
+      get_profile_analytics: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

@@ -40,7 +40,7 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLoadingLogs(true);
     try {
       const { data, error } = await typedFrom('movie_logs')
-        .select('id,movie_id,movie_title,poster_path,watched_at,rating,review_text,is_spoiler,created_at,genre_ids')
+        .select('id,movie_id,movie_title,poster_path,watched_at,rating,review_text,is_spoiler,created_at,genre_ids,media_type')
         .eq('user_id', user.id)
         .order('watched_at', { ascending: false })
         .order('created_at', { ascending: false });
@@ -85,6 +85,7 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           is_spoiler: logData.is_spoiler,
           watched_at: formattedDate,
           genre_ids: logData.genre_ids,
+          media_type: logData.media_type,
         });
 
       if (error) {
@@ -103,7 +104,7 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const getUserLogs = async (userId: string): Promise<MovieLog[]> => {
     const { data, error } = await typedFrom('movie_logs')
-      .select('id, movie_id, movie_title, poster_path, watched_at, rating, review_text, is_spoiler, created_at, genre_ids')
+      .select('id, movie_id, movie_title, poster_path, watched_at, rating, review_text, is_spoiler, created_at, genre_ids, media_type')
       .eq('user_id', userId)
       .order('watched_at', { ascending: false });
 

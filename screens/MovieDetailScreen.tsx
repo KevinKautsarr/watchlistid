@@ -546,7 +546,7 @@ export default function MovieDetailScreen() {
 
       <LogModal 
         visible={showLogModal} 
-        movie={movie} 
+        movie={{ ...movie, media_type: type } as any} 
         onClose={() => setShowLogModal(false)} 
         existingLog={userLogs.find(l => l.movie_id === movie.id)}
       />

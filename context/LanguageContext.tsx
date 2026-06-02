@@ -109,6 +109,13 @@ const translations = {
     searchUserPlaceholder: "Search name or username...",
     searchUsers: "Search Users",
     usersTab: "Users",
+    activityFeedEmpty: "Nothing to see here",
+    activityFeedEmptySub: "Follow your friends to see what they're watching!",
+    findFriends: "Find Friends",
+    watchedLabel: "Watched",
+    agoMin: "{n}m ago",
+    agoHour: "{n}h ago",
+    agoDay: "{n}d ago",
 
     // Diary / Log Modal
     emptyDiary: "No watched movies yet.",
@@ -430,6 +437,13 @@ const translations = {
     searchUserPlaceholder: "Cari nama atau username...",
     searchUsers: "Cari Pengguna",
     usersTab: "Pengguna",
+    activityFeedEmpty: "Belum ada aktivitas",
+    activityFeedEmptySub: "Ikuti teman untuk melihat apa yang mereka tonton!",
+    findFriends: "Cari Teman",
+    watchedLabel: "Menonton",
+    agoMin: "{n} mnt lalu",
+    agoHour: "{n} jam lalu",
+    agoDay: "{n} hari lalu",
 
     // Diary / Log Modal
     emptyDiary: "Belum ada film yang ditonton.",
