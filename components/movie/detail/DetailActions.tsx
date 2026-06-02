@@ -1,22 +1,24 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Play, Plus, BookmarkCheck, Check, Edit3, Star, MessageSquare } from 'lucide-react-native';
+import { Play, Plus, BookmarkCheck, Check, Edit3, Star, MessageSquare, Heart } from 'lucide-react-native';
 import { Colors, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
 
 interface DetailActionsProps {
   featuredTrailer: any;
   movieStatus: 'not_added' | 'plan_to_watch' | 'watched' | 'reviewed';
+  isFavorite: boolean;
   onPlay: () => void;
   onWatchlist: () => void;
   onMarkWatched: () => void;
   onWriteReview: () => void;
   onEditReview: () => void;
+  onToggleFavorite: () => void;
   t: any;
 }
 
 export const DetailActions: React.FC<DetailActionsProps> = ({ 
-  featuredTrailer, movieStatus, onPlay, onWatchlist, onMarkWatched, onWriteReview, onEditReview, t 
+  featuredTrailer, movieStatus, isFavorite, onPlay, onWatchlist, onMarkWatched, onWriteReview, onEditReview, onToggleFavorite, t 
 }) => {
   return (
     <View style={styles.actionRow}>
@@ -117,6 +119,19 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
             </TouchableOpacity>
           </>
         )}
+
+        {/* Favorite Button */}
+        <TouchableOpacity 
+          style={[styles.btnFavorite, isFavorite && styles.btnFavoriteActive, cursorPointer]}
+          onPress={onToggleFavorite}
+          activeOpacity={0.8}
+        >
+          <Heart 
+            size={20} 
+            color={isFavorite ? Colors.white : 'rgba(255,255,255,0.7)'} 
+            fill={isFavorite ? Colors.white : 'transparent'} 
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -138,6 +153,20 @@ const styles = StyleSheet.create({
   
   badgeGold: { height: 44, borderRadius: Radius.md, backgroundColor: `${Colors.ratingGold}1F`, borderWidth: 1, borderColor: `${Colors.ratingGold}4D`, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   badgeGoldText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.ratingGold },
+  btnFavorite: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnFavoriteActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
 });
 
 export default DetailActions;

@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useState } from 'react';
 import { supabase, typedFrom } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
-import { ReviewItem } from '@/types/review';
+import { ReviewItem, CommentItem } from '@/types/review';
 import Toast from '@/components/common/Toast';
 
 interface ReviewContextType {
   getReviews: (movieId: number) => Promise<ReviewItem[]>;
   addReview: (review: Omit<ReviewItem, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => Promise<boolean>;
   toggleLikeReview: (reviewId: string) => Promise<boolean>;
+  getComments: (reviewId: string) => Promise<CommentItem[]>;
+  addComment: (reviewId: string, content: string) => Promise<boolean>;
 }
 
 const ReviewContext = createContext<ReviewContextType | undefined>(undefined);
@@ -74,8 +76,40 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return data as boolean;
   };
 
+  const getComments = async (reviewId: string): Promise<CommentItem[]> => {
+    const { data, error } = await supabase
+      .from('review_comments')
+      .select('*, user:profiles(username, avatar_url)')
+      .eq('review_id', reviewId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('getComments error:', error);
+      return [];
+    }
+    return (data || []) as CommentItem[];
+  };
+
+  const addComment = async (reviewId: string, content: string): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase
+      .from('review_comments')
+      .insert({
+        review_id: reviewId,
+        user_id: user.id,
+        content: content.trim()
+      });
+
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
+    }
+    showToast('Komentar berhasil ditambahkan!', 'success');
+    return true;
+  };
+
   return (
-    <ReviewContext.Provider value={{ getReviews, addReview, toggleLikeReview }}>
+    <ReviewContext.Provider value={{ getReviews, addReview, toggleLikeReview, getComments, addComment }}>
       {children}
       <Toast visible={toast.visible} message={toast.message} type={toast.type} onHide={hideToast} />
     </ReviewContext.Provider>

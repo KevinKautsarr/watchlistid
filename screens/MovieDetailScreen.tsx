@@ -7,7 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { ChevronLeft, Share2, Info } from 'lucide-react-native';
+import { ChevronLeft, Share2, Info, CheckCircle2 } from 'lucide-react-native';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
@@ -17,6 +17,7 @@ import { useSocial } from '@/context/SocialContext';
 import { useMovieDetail } from '@/hooks/useMovieDetail';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useLanguage } from '@/context/LanguageContext';
+import { useFavorites } from '@/context/FavoritesContext';
 import type { MediaItem } from '@/types';
 
 import CastCard from '@/components/movie/CastCard';
@@ -45,8 +46,13 @@ export default function MovieDetailScreen() {
   const bp = useBreakpoint();
   const { session } = useAuth();
   const { t } = useLanguage();
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist, getRating, addToRecentlyViewed, getMovieStatus, registerMovieLog, toggleWatched, isHydrated } = useWatchlist();
+  const {
+    isInWatchlist, addToWatchlist, removeFromWatchlist, getRating,
+    addToRecentlyViewed, getMovieStatus, registerMovieLog, toggleWatched,
+    isHydrated, toggleEpisodeWatch, isEpisodeWatched, fetchWatchedEpisodes
+  } = useWatchlist();
   const { userLogs, addLog } = useSocial();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   
   const { status, data, error } = useMovieDetail(Number(actualId), type);
   
@@ -58,6 +64,9 @@ export default function MovieDetailScreen() {
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [expandedEpisodeId, setExpandedEpisodeId] = useState<number | null>(null);
+
+  const watchedCount = type === 'tv' ? episodes.filter(ep => isEpisodeWatched(Number(actualId), selectedSeason, ep.episode_number)).length : 0;
+  const progressPercent = type === 'tv' && episodes.length > 0 ? (watchedCount / episodes.length) * 100 : 0;
 
   const loadEpisodes = useCallback(async (tvId: number, season: number) => {
     setEpisodesLoading(true);
@@ -87,6 +96,13 @@ export default function MovieDetailScreen() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, status, actualId]);
+
+  // Load watched episodes list
+  useEffect(() => {
+    if (type === 'tv' && status === 'success' && actualId) {
+      fetchWatchedEpisodes(Number(actualId));
+    }
+  }, [type, status, actualId, fetchWatchedEpisodes]);
 
   if (!isHydrated || status === 'loading') {
     return <MovieDetailSkeleton />;
@@ -137,6 +153,25 @@ export default function MovieDetailScreen() {
     }
     if (inWatchlist) removeFromWatchlist(movie.id);
     else addToWatchlist({ ...movie, media_type: type } as any);
+  };
+
+  const handleToggleFavorite = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+    const isFav = isFavorite(movie.id);
+    if (isFav) {
+      await removeFavorite(movie.id);
+    } else {
+      await addFavorite({
+        movie_id: movie.id,
+        media_type: type,
+        title: ('title' in movie) ? movie.title : (movie as any).name || '',
+        poster_path: movie.poster_path,
+      });
+    }
   };
 
   const handleRate = () => {
@@ -225,20 +260,6 @@ export default function MovieDetailScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       <StatusBar barStyle="light-content" />
       
-      <TouchableOpacity 
-        style={[styles.backBtn, { top: insets.top + 10 }, cursorPointer]} 
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.goBack(); }}
-      >
-        <ChevronLeft size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
-      </TouchableOpacity>
-
-      <TouchableOpacity 
-        style={[styles.shareBtn, { top: insets.top + 10 }, cursorPointer]} 
-        onPress={handleShare}
-      >
-        <Share2 size={IconSize.sm} color={Colors.white} strokeWidth={2} />
-      </TouchableOpacity>
-
       <Animated.ScrollView 
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
@@ -267,164 +288,198 @@ export default function MovieDetailScreen() {
             <DetailActions 
               featuredTrailer={featuredTrailer} 
               movieStatus={getMovieStatus(movie.id)}
+              isFavorite={isFavorite(movie.id)}
               onPlay={() => featuredTrailer && openTrailer(featuredTrailer.key)} 
               onWatchlist={handleWatchlist} 
               onMarkWatched={handleMarkWatched}
               onWriteReview={handleWriteReview}
               onEditReview={handleEditReview}
+              onToggleFavorite={handleToggleFavorite}
               t={t} 
             />
 
-            <DetailTrailers 
-              videos={videos} 
-              featuredTrailer={featuredTrailer} 
-              onOpenTrailer={openTrailer} 
-              t={t} 
-            />
+          </View>
+        </View>
 
-            <DetailStory 
-              overview={movie.overview || ''} 
-              keywords={keywords} 
-              t={t} 
-            />
+        {/* Full-width sections on desktop for videos, cast, details, and reviews to maintain perfect symmetry */}
+        <View style={[bp.isLarge && styles.largeContentFull]}>
+          <DetailStory 
+            overview={movie.overview || ''} 
+            keywords={keywords} 
+            t={t} 
+          />
 
-            {/* ── TV Show Season & Episode Selector ─────────────── */}
-            {type === 'tv' && (movie as any).seasons && (movie as any).seasons.length > 0 && (
-              <View style={styles.episodesSection}>
-                <Text style={styles.sectionTitle} allowFontScaling={false}>
-                  {t('seasons' as any) || 'Seasons'}
-                  {'  '}
-                  <Text style={styles.sectionSubcount}>
-                    ({(movie as any).number_of_seasons || (movie as any).seasons.length})
-                  </Text>
+          <DetailTrailers 
+            videos={videos} 
+            featuredTrailer={featuredTrailer} 
+            onOpenTrailer={openTrailer} 
+            t={t} 
+          />
+
+          {/* ── TV Show Season & Episode Selector ─────────────── */}
+          {type === 'tv' && (movie as any).seasons && (movie as any).seasons.length > 0 && (
+            <View style={styles.episodesSection}>
+              <Text style={styles.sectionTitle} allowFontScaling={false}>
+                {t('seasons' as any) || 'Seasons'}
+                {'  '}
+                <Text style={styles.sectionSubcount}>
+                  ({(movie as any).number_of_seasons || (movie as any).seasons.length})
                 </Text>
+              </Text>
 
-                {/* Season pill selector */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.seasonPills}
-                >
-                  {((movie as any).seasons as any[]).map((s: any) => {
-                    const isActive = selectedSeason === s.season_number;
-                    return (
-                      <TouchableOpacity
-                        key={s.id ?? s.season_number}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setSelectedSeason(s.season_number);
-                          loadEpisodes(Number(actualId), s.season_number);
-                        }}
-                        style={[
-                          styles.seasonPill,
-                          isActive && styles.seasonPillActive,
-                        ]}
-                        activeOpacity={0.75}
-                      >
-                        <Text
-                          style={[
-                            styles.seasonPillText,
-                            isActive && styles.seasonPillTextActive,
-                          ]}
-                          allowFontScaling={false}
-                        >
-                          {s.name || `Season ${s.season_number}`}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-
-                {/* Episode list */}
-                {episodesLoading ? (
-                  <View style={{ gap: Spacing.sm, marginVertical: 20 }}>
-                    <Shimmer height={60} borderRadius={Radius.md} />
-                    <Shimmer height={60} borderRadius={Radius.md} />
-                    <Shimmer height={60} borderRadius={Radius.md} />
-                  </View>
-                ) : (
-                  <View style={styles.episodeList}>
-                    {episodes.map((ep: any) => {
-                      const isExpanded = expandedEpisodeId === ep.id;
-                      return (
-                        <TouchableOpacity
-                          key={ep.id}
-                          onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setExpandedEpisodeId(isExpanded ? null : ep.id);
-                          }}
-                          activeOpacity={0.8}
-                          style={[
-                            styles.episodeCard,
-                            isExpanded && styles.episodeCardExpanded,
-                          ]}
-                        >
-                          <View style={styles.episodeHeader}>
-                            <View style={{ flex: 1 }}>
-                              <Text
-                                style={styles.episodeNum}
-                                allowFontScaling={false}
-                              >
-                                EP {ep.episode_number}
-                              </Text>
-                              <Text
-                                style={styles.episodeTitle}
-                                numberOfLines={isExpanded ? undefined : 1}
-                                allowFontScaling={false}
-                              >
-                                {ep.name}
-                              </Text>
-                            </View>
-                            <Text
-                              style={styles.episodeDate}
-                              allowFontScaling={false}
-                            >
-                              {ep.air_date
-                                ? ep.air_date.substring(0, 4)
-                                : '—'}
-                            </Text>
-                          </View>
-                          {isExpanded && ep.overview ? (
-                            <Text
-                              style={styles.episodeOverview}
-                              allowFontScaling={false}
-                            >
-                              {ep.overview}
-                            </Text>
-                          ) : null}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                )}
-              </View>
-            )}
-
-            {credits.length > 0 && (
-              <View style={styles.castSection}>
-                <Text style={styles.sectionTitle} allowFontScaling={false}>{t('topCast')}</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
-                  {credits.map((actor) => (
-                    <CastCard 
-                      key={actor.id} 
-                      cast={actor} 
+              {/* Season pill selector */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.seasonPills}
+              >
+                {((movie as any).seasons as any[]).map((s: any) => {
+                  const isActive = selectedSeason === s.season_number;
+                  return (
+                    <TouchableOpacity
+                      key={s.id ?? s.season_number}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        router.push({ pathname: '/person/[id]', params: { id: actor.id, name: actor.name } });
+                        setSelectedSeason(s.season_number);
+                        loadEpisodes(Number(actualId), s.season_number);
                       }}
-                    />
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+                      style={[
+                        styles.seasonPill,
+                        isActive && styles.seasonPillActive,
+                      ]}
+                      activeOpacity={0.75}
+                    >
+                      <Text
+                        style={[
+                          styles.seasonPillText,
+                          isActive && styles.seasonPillTextActive,
+                        ]}
+                        allowFontScaling={false}
+                      >
+                        {s.name || `Season ${s.season_number}`}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
-            <View style={styles.detailsSection}>
-              <Text style={styles.sectionTitle} allowFontScaling={false}>{t('details')}</Text>
-              <MovieDetailTable movie={movie} />
+              {/* Season progress bar */}
+              {episodes.length > 0 && !episodesLoading && (
+                <View style={styles.progressContainer}>
+                  <View style={styles.progressTextRow}>
+                    <Text style={styles.progressText} allowFontScaling={false}>
+                      Progress: {watchedCount} dari {episodes.length} episode ({Math.round(progressPercent)}%)
+                    </Text>
+                  </View>
+                  <View style={styles.progressBarBg}>
+                    <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+                  </View>
+                </View>
+              )}
+
+              {/* Episode list */}
+              {episodesLoading ? (
+                <View style={{ gap: Spacing.sm, marginVertical: 20 }}>
+                  <Shimmer height={60} borderRadius={Radius.md} />
+                  <Shimmer height={60} borderRadius={Radius.md} />
+                  <Shimmer height={60} borderRadius={Radius.md} />
+                </View>
+              ) : (
+                <View style={styles.episodeList}>
+                  {episodes.map((ep: any) => {
+                    const isExpanded = expandedEpisodeId === ep.id;
+                    const isWatched = isEpisodeWatched(Number(actualId), selectedSeason, ep.episode_number);
+                    return (
+                      <View
+                        key={ep.id}
+                        style={[
+                          styles.episodeCard,
+                          isExpanded && styles.episodeCardExpanded,
+                        ]}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                          {/* Checkmark Button */}
+                          <TouchableOpacity
+                            style={[styles.checkBtn, cursorPointer]}
+                            onPress={() => {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                              toggleEpisodeWatch(Number(actualId), selectedSeason, ep.episode_number);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <CheckCircle2
+                              size={22}
+                              color={isWatched ? Colors.primary : 'rgba(255,255,255,0.2)'}
+                              fill={isWatched ? `${Colors.primary}30` : 'transparent'}
+                            />
+                          </TouchableOpacity>
+
+                          {/* Card Content (Expandable) */}
+                          <TouchableOpacity
+                            style={{ flex: 1 }}
+                            onPress={() => {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              setExpandedEpisodeId(isExpanded ? null : ep.id);
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <View style={styles.episodeHeader}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.episodeNum} allowFontScaling={false}>
+                                  EP {ep.episode_number}
+                                </Text>
+                                <Text
+                                  style={[styles.episodeTitle, isWatched && styles.episodeTitleWatched]}
+                                  numberOfLines={isExpanded ? undefined : 1}
+                                  allowFontScaling={false}
+                                >
+                                  {ep.name}
+                                </Text>
+                              </View>
+                              <Text style={styles.episodeDate} allowFontScaling={false}>
+                                {ep.air_date ? ep.air_date.substring(0, 4) : '—'}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        </View>
+
+                        {isExpanded && ep.overview ? (
+                          <Text style={styles.episodeOverview} allowFontScaling={false}>
+                            {ep.overview}
+                          </Text>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
             </View>
+          )}
 
-            <ReviewFeed movieId={Number(actualId)} />
+          {credits.length > 0 && (
+            <View style={styles.castSection}>
+              <Text style={styles.sectionTitle} allowFontScaling={false}>{t('topCast')}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
+                {credits.map((actor) => (
+                  <CastCard 
+                    key={actor.id} 
+                    cast={actor} 
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push({ pathname: '/person/[id]', params: { id: actor.id, name: actor.name } });
+                    }}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          <View style={styles.detailsSection}>
+            <Text style={styles.sectionTitle} allowFontScaling={false}>{t('details')}</Text>
+            <MovieDetailTable movie={movie} />
           </View>
+
+          <ReviewFeed movieId={Number(actualId)} />
         </View>
 
         <View style={[bp.isLarge && styles.largeContentFull]}>
@@ -449,6 +504,20 @@ export default function MovieDetailScreen() {
 
         <View style={styles.bottomSpacer} />
       </Animated.ScrollView>
+
+      <TouchableOpacity 
+        style={[styles.backBtn, { top: insets.top + 10 }, cursorPointer]} 
+        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.goBack(); }}
+      >
+        <ChevronLeft size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={[styles.shareBtn, { top: insets.top + 10 }, cursorPointer]} 
+        onPress={handleShare}
+      >
+        <Share2 size={IconSize.sm} color={Colors.white} strokeWidth={2} />
+      </TouchableOpacity>
 
       <LogModal 
         visible={showLogModal} 
@@ -563,6 +632,41 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
+  },
+  progressContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    gap: 8,
+  },
+  progressTextRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: Colors.overlay.light10,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+  },
+  checkBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  episodeTitleWatched: {
+    color: 'rgba(255,255,255,0.4)',
+    textDecorationLine: 'line-through',
   },
 
   errorWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, backgroundColor: Colors.background },

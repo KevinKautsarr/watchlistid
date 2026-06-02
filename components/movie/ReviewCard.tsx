@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Image } from 'expo-image';
 import { Star, Heart, MessageSquare, AlertTriangle, Eye, EyeOff } from 'lucide-react-native';
 import Markdown from 'react-native-markdown-display';
 import * as Haptics from 'expo-haptics';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight, Shadow } from '@/constants/theme';
-import { ReviewItem } from '@/types/review';
+import { ReviewItem, CommentItem } from '@/types/review';
 import { useSocial } from '@/context/SocialContext';
+import { useReviews } from '@/context/ReviewContext';
 import Avatar from '@/components/common/Avatar';
 
 interface ReviewCardProps {
@@ -16,9 +17,16 @@ interface ReviewCardProps {
 
 export default function ReviewCard({ review }: ReviewCardProps) {
   const { toggleLikeReview } = useSocial();
+  const { getComments, addComment } = useReviews();
   const [isLiked, setIsLiked] = useState(review.is_liked_by_me);
   const [likesCount, setLikesCount] = useState(review.likes_count);
   const [showSpoiler, setShowSpoiler] = useState(!review.is_spoiler);
+
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentInput, setCommentInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleLike = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -32,6 +40,31 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       setIsLiked(!newLiked);
       setLikesCount(prev => !newLiked ? prev + 1 : Math.max(0, prev - 1));
     }
+  };
+
+  const handleToggleComments = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nextShow = !showComments;
+    setShowComments(nextShow);
+    if (nextShow) {
+      setCommentsLoading(true);
+      const list = await getComments(review.id);
+      setComments(list);
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleSendComment = async () => {
+    if (!commentInput.trim() || submitting) return;
+    setSubmitting(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const success = await addComment(review.id, commentInput);
+    if (success) {
+      setCommentInput('');
+      const list = await getComments(review.id);
+      setComments(list);
+    }
+    setSubmitting(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -111,11 +144,68 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           <Text style={[s.actionText, isLiked && s.likedText]}>{likesCount}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
-          <MessageSquare size={18} color={Colors.text.secondary} />
-          <Text style={s.actionText}>Reply</Text>
+        <TouchableOpacity style={s.actionBtn} onPress={handleToggleComments} activeOpacity={0.7}>
+          <MessageSquare size={18} color={showComments ? Colors.primary : Colors.text.secondary} />
+          <Text style={[s.actionText, showComments && { color: Colors.primary }]}>
+            {showComments ? 'Hide Replies' : 'Reply'}
+          </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Comment Tray */}
+      {showComments && (
+        <View style={s.commentsSection}>
+          <Text style={s.commentsTitle} allowFontScaling={false}>Replies</Text>
+          
+          {commentsLoading ? (
+            <Text style={s.loadingText} allowFontScaling={false}>Loading comments...</Text>
+          ) : (
+            <View style={s.commentsList}>
+              {comments.length === 0 ? (
+                <Text style={s.noCommentsText} allowFontScaling={false}>No comments yet. Be the first to reply!</Text>
+              ) : (
+                comments.map(c => (
+                  <View key={c.id} style={s.commentCard}>
+                    <Avatar 
+                      uri={c.user?.avatar_url} 
+                      name={c.user?.username || 'Anonymous'} 
+                      size={24} 
+                      style={s.commentAvatar} 
+                    />
+                    <View style={s.commentContentWrapper}>
+                      <View style={s.commentHeaderRow}>
+                        <Text style={s.commentUsername} allowFontScaling={false}>{c.user?.username || 'Anonymous'}</Text>
+                        <Text style={s.commentDate} allowFontScaling={false}>{formatDate(c.created_at)}</Text>
+                      </View>
+                      <Text style={s.commentContent} allowFontScaling={false}>{c.content}</Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {/* Comment Input */}
+          <View style={s.inputRow}>
+            <TextInput
+              style={s.textInput}
+              placeholder="Write a reply..."
+              placeholderTextColor="rgba(255,255,255,0.4)"
+              value={commentInput}
+              onChangeText={setCommentInput}
+              multiline
+              allowFontScaling={false}
+            />
+            <TouchableOpacity 
+              style={[s.sendBtn, (!commentInput.trim() || submitting) && s.sendBtnDisabled]}
+              onPress={handleSendComment}
+              disabled={!commentInput.trim() || submitting}
+            >
+              <Text style={s.sendBtnText} allowFontScaling={false}>{submitting ? '...' : 'Send'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -236,6 +326,100 @@ const s = StyleSheet.create({
   },
   spoilerIcon: {
     marginBottom: 8,
+  },
+  commentsSection: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  commentsTitle: {
+    color: Colors.white,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.md,
+  },
+  loadingText: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.sm,
+  },
+  commentsList: {
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  noCommentsText: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.sm,
+    fontStyle: 'italic',
+  },
+  commentCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+  },
+  commentAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  commentContentWrapper: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  commentHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  commentUsername: {
+    color: Colors.white,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+  },
+  commentDate: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.xxs,
+  },
+  commentContent: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: FontSize.sm,
+    lineHeight: 18,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    color: Colors.white,
+    fontSize: FontSize.sm,
+    maxHeight: 80,
+  },
+  sendBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendBtnDisabled: {
+    backgroundColor: Colors.overlay.light10,
+  },
+  sendBtnText: {
+    color: Colors.white,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
 });
 

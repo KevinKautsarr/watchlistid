@@ -16,3 +16,16 @@ export interface FetchState<T> {
   isLoading: boolean;
   error: string | null;
 }
+
+export interface CommentItem {
+  id: string;
+  user_id: string;
+  review_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    username: string;
+    avatar_url: string | null;
+  };
+}
