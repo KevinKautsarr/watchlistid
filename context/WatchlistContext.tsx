@@ -74,6 +74,8 @@ function useWatchlistProviderLogic() {
   const [isHydrated,     setIsHydrated]     = useState(false);
   const [isAuthReady,    setIsAuthReady]    = useState(false);
 
+  const [watchedEpisodesMap, setWatchedEpisodesMap] = useState<Record<number, Record<number, number[]>>>({});
+
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
     visible: false, message: '', type: 'success',
   });
@@ -303,12 +305,113 @@ function useWatchlistProviderLogic() {
     });
   }, []);
 
+  const fetchWatchedEpisodes = useCallback(async (tvShowId: number) => {
+    if (!userId) return {};
+    try {
+      const { data, error } = await supabase
+        .from('tv_episode_logs')
+        .select('season_number, episode_number')
+        .eq('user_id', userId)
+        .eq('tv_show_id', tvShowId);
+      
+      if (error) throw error;
+      
+      const episodes: Record<number, number[]> = {};
+      data?.forEach(row => {
+        const s = row.season_number;
+        const e = row.episode_number;
+        if (!episodes[s]) episodes[s] = [];
+        episodes[s].push(e);
+      });
+      
+      setWatchedEpisodesMap(prev => ({
+        ...prev,
+        [tvShowId]: episodes
+      }));
+      return episodes;
+    } catch (e) {
+      console.error('Failed to fetch watched episodes', e);
+      return {};
+    }
+  }, [userId]);
+
+  const toggleEpisodeWatch = useCallback(async (tvShowId: number, seasonNumber: number, episodeNumber: number) => {
+    if (!userId) return false;
+    
+    const currentTv = watchedEpisodesMap[tvShowId] || {};
+    const currentSeason = currentTv[seasonNumber] || [];
+    const isWatched = currentSeason.includes(episodeNumber);
+    
+    try {
+      if (isWatched) {
+        const { error } = await supabase
+          .from('tv_episode_logs')
+          .delete()
+          .eq('user_id', userId)
+          .eq('tv_show_id', tvShowId)
+          .eq('season_number', seasonNumber)
+          .eq('episode_number', episodeNumber);
+          
+        if (error) throw error;
+        
+        setWatchedEpisodesMap(prev => {
+          const tv = prev[tvShowId] || {};
+          const season = tv[seasonNumber] || [];
+          return {
+            ...prev,
+            [tvShowId]: {
+              ...tv,
+              [seasonNumber]: season.filter(e => e !== episodeNumber)
+            }
+          };
+        });
+        return false;
+      } else {
+        const { error } = await supabase
+          .from('tv_episode_logs')
+          .insert({
+            user_id: userId,
+            tv_show_id: tvShowId,
+            season_number: seasonNumber,
+            episode_number: episodeNumber
+          });
+          
+        if (error) throw error;
+        
+        setWatchedEpisodesMap(prev => {
+          const tv = prev[tvShowId] || {};
+          const season = tv[seasonNumber] || [];
+          return {
+            ...prev,
+            [tvShowId]: {
+              ...tv,
+              [seasonNumber]: [...season, episodeNumber]
+            }
+          };
+        });
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to toggle episode watch', e);
+      return isWatched;
+    }
+  }, [userId, watchedEpisodesMap]);
+
+  const isEpisodeWatched = useCallback((tvShowId: number, seasonNumber: number, episodeNumber: number) => {
+    const tv = watchedEpisodesMap[tvShowId];
+    if (!tv) return false;
+    const season = tv[seasonNumber];
+    if (!season) return false;
+    return season.includes(episodeNumber);
+  }, [watchedEpisodesMap]);
+
   const clearData = async () => {
     setWatchlistMap({});
     setUserRatings({});
     setRecentlyViewed([]);
     setUserLogsMap({});
     setUserReviewsMap({});
+    setWatchedEpisodesMap({});
     try { await Promise.all([AsyncStorage.removeItem('@watchlist'), AsyncStorage.removeItem('@userRatings'), AsyncStorage.removeItem('@recentlyViewed')]); } catch (e) { console.error(e); }
   };
 
@@ -366,6 +469,10 @@ function useWatchlistProviderLogic() {
     registerMovieLog,
     registerMovieReview,
     isHydrated,
+    watchedEpisodesMap,
+    fetchWatchedEpisodes,
+    toggleEpisodeWatch,
+    isEpisodeWatched,
   };
 }
 
