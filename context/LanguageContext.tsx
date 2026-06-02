@@ -303,6 +303,23 @@ const translations = {
     sortRelease: "Release",
     sortTitle: "Title",
     sort: "Sort",
+
+    // Favorites
+    favoritesSection: "❤️ Favorites",
+    favoritesEmpty: "No favorite movies yet.\nAdd from the movie detail page!",
+    favoritesEdit: "Edit",
+    favoritesDone: "Done",
+
+    // Activity Heatmap
+    activityTitle: "Watching Activity",
+    activityNoLogs: "No activity on this day",
+    activityFilmsWatched: "films watched",
+    activityFew: "Few",
+    activityMany: "Many",
+    loginToSeeActivity: "Log in to see friends' activity",
+    failedToLoad: "Failed to load content",
+    checkConnection: "Please check your internet connection",
+    tryAgain: "Try Again",
   },
 
   id: {
@@ -604,6 +621,23 @@ const translations = {
     sortRelease: "Rilis",
     sortTitle: "Judul",
     sort: "Urutkan",
+
+    // Favorites
+    favoritesSection: "❤️ Favorit",
+    favoritesEmpty: "Belum ada film favorit.\nTambahkan dari halaman detail film!",
+    favoritesEdit: "Atur",
+    favoritesDone: "Selesai",
+
+    // Activity Heatmap
+    activityTitle: "Aktivitas Nonton",
+    activityNoLogs: "Tidak ada aktivitas hari ini",
+    activityFilmsWatched: "film ditonton",
+    activityFew: "Sedikit",
+    activityMany: "Banyak",
+    loginToSeeActivity: "Masuk untuk melihat aktivitas teman",
+    failedToLoad: "Gagal memuat konten",
+    checkConnection: "Periksa koneksi internet kamu",
+    tryAgain: "Coba Lagi",
   },
 };
 
