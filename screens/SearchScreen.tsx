@@ -189,6 +189,7 @@ export default function SearchScreen() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
   const inputRef = useRef<TextInput>(null);
+  const lastSearchId = useRef(0);
   const inputScale = useRef(new Animated.Value(1)).current;
   const mediaListRef = useRef<any>(null);
   const userListRef = useRef<any>(null);
@@ -245,10 +246,20 @@ export default function SearchScreen() {
   useEffect(() => {
     const fetchTrending = async () => {
       try {
+        const cached = await AsyncStorage.getItem("trending_keywords_cache");
+        const cachedTime = await AsyncStorage.getItem("trending_keywords_timestamp");
+        const now = Date.now();
+        if (cached && cachedTime && now - Number(cachedTime) < 3600000) {
+          setTrendingKeywords(JSON.parse(cached));
+          return;
+        }
+
         const data = await getTrendingMovies(1);
-        setTrendingKeywords(
-          (data.results ?? []).slice(0, 6).map((m: any) => m.title),
-        );
+        const keywords = (data.results ?? []).slice(0, 6).map((m: any) => m.title);
+        setTrendingKeywords(keywords);
+
+        await AsyncStorage.setItem("trending_keywords_cache", JSON.stringify(keywords));
+        await AsyncStorage.setItem("trending_keywords_timestamp", String(now));
       } catch (e) {
         setTrendingKeywords([]);
       }
@@ -287,6 +298,25 @@ export default function SearchScreen() {
     });
   }, []);
 
+  const deleteRecentSearch = useCallback(async (term: string) => {
+    setRecentSearches((prev) => {
+      const next = prev.filter((x) => x !== term);
+      AsyncStorage.setItem("recent_searches", JSON.stringify(next)).catch(
+        console.error
+      );
+      return next;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(async () => {
+    setRecentSearches([]);
+    try {
+      await AsyncStorage.removeItem("recent_searches");
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   // Watch debounced query for search saving
   useEffect(() => {
     if (debouncedQ.trim().length >= 2) {
@@ -302,19 +332,19 @@ export default function SearchScreen() {
       }
       return;
     }
-    let isMounted = true;
+    const searchId = ++lastSearchId.current;
     setUserResults((prev) => ({ ...prev, status: "loading" }));
     searchUsers(debouncedQ)
       .then((data) => {
-        if (isMounted) setUserResults({ status: "success", data, error: null });
+        if (searchId === lastSearchId.current) {
+          setUserResults({ status: "success", data, error: null });
+        }
       })
       .catch((err) => {
-        if (isMounted)
+        if (searchId === lastSearchId.current) {
           setUserResults({ status: "error", data: [], error: err.message });
+        }
       });
-    return () => {
-      isMounted = false;
-    };
   }, [debouncedQ, searchMode, searchUsers]);
 
   const loadMore = () => {
@@ -403,7 +433,8 @@ export default function SearchScreen() {
 
   if (!isHydrated) return null;
 
-  const headerHeight = activeCat ? insets.top + 60 + 52 + 16 : insets.top + 60;
+  const baseTop = Platform.OS === "web" ? 16 : insets.top;
+  const headerHeight = activeCat ? baseTop + 144 : baseTop + 76;
 
   return (
     <View style={styles.root}>
@@ -411,7 +442,7 @@ export default function SearchScreen() {
 
       {/* ── Absolute Header Container ── */}
       {activeCat && (
-        <View style={[styles.fixedHeader, { paddingTop: insets.top }]}>
+        <View style={[styles.fixedHeader, { paddingTop: baseTop }]}>
           <View
             style={[
               styles.headerContainer,
@@ -529,19 +560,32 @@ export default function SearchScreen() {
                   <View style={styles.defaultHeader}>
                     {recentSearches.length > 0 && (
                       <View style={styles.recentSection}>
-                        <Text style={styles.sectionLbl}>{t("recent")}</Text>
+                        <View style={styles.recentHeaderRow}>
+                          <Text style={styles.sectionLbl}>{t("recent")}</Text>
+                          <TouchableOpacity onPress={clearRecentSearches} style={styles.clearAllBtn}>
+                            <Text style={styles.clearAllTxt}>{t("clearAll")}</Text>
+                          </TouchableOpacity>
+                        </View>
                         {recentSearches.map((txt) => (
-                          <Pressable
-                            key={txt}
-                            style={({ pressed }) => [
-                              styles.recentRow,
-                              pressed && { opacity: 0.7 },
-                            ]}
-                            onPress={() => setSearchText(txt)}
-                          >
-                            <Clock size={IconSize.sm} color={Colors.primary} />
-                            <Text style={styles.recentTxt}>{txt}</Text>
-                          </Pressable>
+                          <View key={txt} style={styles.recentItemRow}>
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.recentRow,
+                                pressed && { opacity: 0.7 },
+                                { flex: 1 }
+                              ]}
+                              onPress={() => setSearchText(txt)}
+                            >
+                              <Clock size={IconSize.sm} color={Colors.primary} />
+                              <Text style={styles.recentTxt}>{txt}</Text>
+                            </Pressable>
+                            <TouchableOpacity
+                              style={styles.deleteRecentItemBtn}
+                              onPress={() => deleteRecentSearch(txt)}
+                            >
+                              <X size={16} color={Colors.text.secondary} />
+                            </TouchableOpacity>
+                          </View>
                         ))}
                       </View>
                     )}
@@ -836,6 +880,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.md,
   },
+  recentHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingRight: Spacing.xl,
+  },
+  clearAllBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  clearAllTxt: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.danger,
+  },
+  recentItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingRight: Spacing.xl,
+  },
   recentRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -844,6 +909,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   recentTxt: { fontSize: FontSize.base, color: Colors.text.primary },
+  deleteRecentItemBtn: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    backgroundColor: "transparent",
+  },
   pills: {
     flexDirection: "row",
     flexWrap: "wrap",
