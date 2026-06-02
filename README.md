@@ -8,7 +8,7 @@
 
 > Pelacak Film & Seri TV Sosial Premium Lintas Platform (iOS, Android, Web) yang Dibangun dengan Expo, React Native, dan Supabase.
 > 
-> 🌐 **Akses Versi Web:** [watchlistid.vercel.app](https://watchlistid.vercel.app/)
+> 🌐 **Akses Versi Web:** [watchlistid.vercel.app](https://watchlistid.vercel.app/) (Alternatif: [watchlistid.netlify.app](https://watchlistid.netlify.app/))
 
 ---
 
