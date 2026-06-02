@@ -47,13 +47,6 @@ export default function TabLayout() {
   const isTablet  = width >= 768 && width < 1100;
   const isLarge   = !isMobile;
   const collapsed = isTablet; // tablet = icon-only sidebar
-  const [loginPromptVisible, setLoginPromptVisible] = React.useState(false);
-
-  // Expose to global for ease of access from child components (temporary pattern for tab interception)
-  React.useEffect(() => {
-    (global as any).showLoginPrompt = () => setLoginPromptVisible(true);
-    return () => { (global as any).showLoginPrompt = undefined; };
-  }, []);
 
   return (
     <View style={styles.root}>
