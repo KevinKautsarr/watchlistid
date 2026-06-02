@@ -1,5 +1,10 @@
 {
   "expo": {
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "name": "MovieWatchlist",
     "slug": "MovieWatchlist",
     "version": "1.0.0",
