@@ -70,14 +70,18 @@ export default function MovieDetailScreen() {
 
   const loadEpisodes = useCallback(async (tvId: number, season: number) => {
     setEpisodesLoading(true);
+    setEpisodes([]); // Reset episodes list immediately to clear previous season list
     setExpandedEpisodeId(null);
     try {
       const res = await getTVSeasonDetails(tvId, season);
       if (res && res.episodes) {
         setEpisodes(res.episodes);
+      } else {
+        setEpisodes([]);
       }
     } catch (err) {
       console.error(err);
+      setEpisodes([]);
     } finally {
       setEpisodesLoading(false);
     }
@@ -92,10 +96,10 @@ export default function MovieDetailScreen() {
   // Load first season episodes when TV show data is ready
   useEffect(() => {
     if (type === 'tv' && status === 'success' && actualId) {
-      loadEpisodes(Number(actualId), selectedSeason);
+      setSelectedSeason(1);
+      loadEpisodes(Number(actualId), 1);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, status, actualId]);
+  }, [type, status, actualId, loadEpisodes]);
 
   // Load watched episodes list
   useEffect(() => {
@@ -320,10 +324,10 @@ export default function MovieDetailScreen() {
           {type === 'tv' && (movie as any).seasons && (movie as any).seasons.length > 0 && (
             <View style={styles.episodesSection}>
               <Text style={styles.sectionTitle} allowFontScaling={false}>
-                {t('seasons' as any) || 'Seasons'}
+                {t('seasons') || 'Seasons'}
                 {'  '}
                 <Text style={styles.sectionSubcount}>
-                  ({(movie as any).number_of_seasons || (movie as any).seasons.length})
+                  ({((movie as any).seasons as any[]).filter((s: any) => s.season_number > 0).length})
                 </Text>
               </Text>
 
@@ -333,34 +337,36 @@ export default function MovieDetailScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.seasonPills}
               >
-                {((movie as any).seasons as any[]).map((s: any) => {
-                  const isActive = selectedSeason === s.season_number;
-                  return (
-                    <TouchableOpacity
-                      key={s.id ?? s.season_number}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setSelectedSeason(s.season_number);
-                        loadEpisodes(Number(actualId), s.season_number);
-                      }}
-                      style={[
-                        styles.seasonPill,
-                        isActive && styles.seasonPillActive,
-                      ]}
-                      activeOpacity={0.75}
-                    >
-                      <Text
+                {((movie as any).seasons as any[])
+                  .filter((s: any) => s.season_number > 0)
+                  .map((s: any) => {
+                    const isActive = selectedSeason === s.season_number;
+                    return (
+                      <TouchableOpacity
+                        key={s.id ?? s.season_number}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setSelectedSeason(s.season_number);
+                          loadEpisodes(Number(actualId), s.season_number);
+                        }}
                         style={[
-                          styles.seasonPillText,
-                          isActive && styles.seasonPillTextActive,
+                          styles.seasonPill,
+                          isActive && styles.seasonPillActive,
                         ]}
-                        allowFontScaling={false}
+                        activeOpacity={0.75}
                       >
-                        {s.name || `Season ${s.season_number}`}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                        <Text
+                          style={[
+                            styles.seasonPillText,
+                            isActive && styles.seasonPillTextActive,
+                          ]}
+                          allowFontScaling={false}
+                        >
+                          {s.name || `Season ${s.season_number}`}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
               </ScrollView>
 
               {/* Season progress bar */}
@@ -368,8 +374,18 @@ export default function MovieDetailScreen() {
                 <View style={styles.progressContainer}>
                   <View style={styles.progressTextRow}>
                     <Text style={styles.progressText} allowFontScaling={false}>
-                      Progress: {watchedCount} dari {episodes.length} episode ({Math.round(progressPercent)}%)
+                      {t('episodeProgress')
+                        .replace('{watched}', String(watchedCount))
+                        .replace('{total}', String(episodes.length))} ({Math.round(progressPercent)}%)
                     </Text>
+                    {progressPercent === 100 && (
+                      <View style={styles.completedBadge}>
+                        <CheckCircle2 size={14} color={Colors.success} />
+                        <Text style={styles.completedBadgeText} allowFontScaling={false}>
+                          {t('seasonCompleted')}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                   <View style={styles.progressBarBg}>
                     <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
@@ -383,6 +399,15 @@ export default function MovieDetailScreen() {
                   <Shimmer height={60} borderRadius={Radius.md} />
                   <Shimmer height={60} borderRadius={Radius.md} />
                   <Shimmer height={60} borderRadius={Radius.md} />
+                </View>
+              ) : episodes.length === 0 ? (
+                <View style={styles.emptyEpisodes}>
+                  <Text style={styles.emptyEpisodesTitle} allowFontScaling={false}>
+                    {t('noEpisodesFound')}
+                  </Text>
+                  <Text style={styles.emptyEpisodesSub} allowFontScaling={false}>
+                    {t('noEpisodesFoundSub')}
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.episodeList}>
@@ -642,11 +667,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   progressText: {
     color: 'rgba(255,255,255,0.6)',
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
+    flex: 1,
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  completedBadgeText: {
+    color: Colors.success,
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
   },
   progressBarBg: {
     height: 6,
@@ -658,6 +699,22 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: Colors.primary,
     borderRadius: Radius.full,
+  },
+  emptyEpisodes: {
+    paddingVertical: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+  },
+  emptyEpisodesTitle: {
+    color: Colors.white,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  emptyEpisodesSub: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.xs,
+    textAlign: 'center',
   },
   checkBtn: {
     padding: 4,

@@ -206,6 +206,11 @@ const translations = {
     showingResults: "Showing {count} of {total} results",
     titlesCount: "{count} titles",
     titles: "titles",
+    seasons: "Seasons",
+    episodeProgress: "Progress: {watched} of {total} episodes",
+    seasonCompleted: "Season Completed!",
+    noEpisodesFound: "No episodes found",
+    noEpisodesFoundSub: "Episodes for this season are not available yet.",
 
     // Movie Details
     imdbRating: "IMDB RATING",
@@ -522,6 +527,11 @@ const translations = {
     showingResults: "Menampilkan {count} dari {total} hasil",
     titlesCount: "{count} judul",
     titles: "judul",
+    seasons: "Musim",
+    episodeProgress: "Progress: {watched} dari {total} episode",
+    seasonCompleted: "Musim Selesai!",
+    noEpisodesFound: "Episode tidak ditemukan",
+    noEpisodesFoundSub: "Episode untuk musim ini belum tersedia.",
 
     // Movie Details
     imdbRating: "RATING IMDB",
