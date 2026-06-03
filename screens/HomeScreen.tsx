@@ -110,6 +110,25 @@ export default function HomeScreen() {
 
   const renderHeader = () => (
     <>
+      {bp.isMobile && (
+        <View style={[s.header, { paddingTop: Math.max(insets.top, 20) }]}>
+          <Text style={s.logo} allowFontScaling={false}>WATCHLISTID</Text>
+          <View style={s.headerRight}>
+            <TouchableOpacity
+              onPress={() => router.push('/search-users')}
+              accessibilityRole="button"
+              accessibilityLabel="Cari teman"
+              style={[s.headerIcon, cursorPointer]}
+            >
+              <UserPlus size={20} color={Colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.avatar, cursorPointer]} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
+              <Avatar uri={avatarUrl} name={username} size={36} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {isLoading ? (
         <View style={[s.heroSkeleton, { width: contentWidth, height: HERO_HEIGHT }]} />
       ) : trending.length > 0 ? (
@@ -251,25 +270,6 @@ export default function HomeScreen() {
     <View style={s.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {bp.isMobile && (
-        <Animated.View style={[s.header, { backgroundColor: headerBg, paddingTop: Math.max(insets.top, 20) }]}>
-          <Text style={s.logo} allowFontScaling={false}>WATCHLISTID</Text>
-          <View style={s.headerRight}>
-            <TouchableOpacity
-              onPress={() => router.push('/search-users')}
-              accessibilityRole="button"
-              accessibilityLabel="Cari teman"
-              style={[s.headerIcon, cursorPointer]}
-            >
-              <UserPlus size={20} color={Colors.white} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[s.avatar, cursorPointer]} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
-              <Avatar uri={avatarUrl} name={username} size={36} />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      )}
-
       <Animated.FlatList
         data={sections}
         keyExtractor={item => item.id}
@@ -294,13 +294,9 @@ export default function HomeScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#141414' },
   header: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.xl, justifyContent: 'space-between', paddingBottom: 14,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowRadius: 10 },
-      android: { elevation: 4 },
-    }),
+    backgroundColor: '#141414',
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   headerIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ViewStyle, Platform, Alert } from 'react-native';
-import { Home, Compass, Bookmark, User, Film, LogOut } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ViewStyle, Platform, Alert, Modal, Pressable } from 'react-native';
+import { Home, Compass, Bookmark, User, Film, LogOut, X, AlertTriangle } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
@@ -21,14 +21,147 @@ interface SidebarProps {
   collapsed: boolean;
 }
 
+// ─── Custom Confirm Dialog (works on web + native) ───────────────────────────
+interface ConfirmDialogProps {
+  visible: boolean;
+  title: string;
+  description: string;
+  cancelLabel: string;
+  confirmLabel: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  visible, title, description, cancelLabel, confirmLabel, onCancel, onConfirm,
+}) => {
+  if (!visible) return null;
+
+  return (
+    <Modal transparent animationType="fade" visible={visible} onRequestClose={onCancel}>
+      <Pressable style={dialogStyles.overlay} onPress={onCancel}>
+        <Pressable style={dialogStyles.card} onPress={() => {}}>
+          {/* Icon */}
+          <View style={dialogStyles.iconWrap}>
+            <AlertTriangle size={28} color="#C71F37" strokeWidth={2} />
+          </View>
+
+          {/* Text */}
+          <Text style={dialogStyles.title} allowFontScaling={false}>{title}</Text>
+          <Text style={dialogStyles.desc} allowFontScaling={false}>{description}</Text>
+
+          {/* Buttons */}
+          <View style={dialogStyles.btnRow}>
+            <TouchableOpacity style={dialogStyles.btnCancel} onPress={onCancel} activeOpacity={0.75}>
+              <Text style={dialogStyles.btnCancelText} allowFontScaling={false}>{cancelLabel}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={dialogStyles.btnConfirm} onPress={onConfirm} activeOpacity={0.75}>
+              <Text style={dialogStyles.btnConfirmText} allowFontScaling={false}>{confirmLabel}</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
+const dialogStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#1A1A1E',
+    borderRadius: 20,
+    padding: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(199,31,55,0.2)',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.5, shadowRadius: 40 },
+      android: { elevation: 20 },
+      web: { boxShadow: '0 20px 60px rgba(0,0,0,0.6)' } as unknown as ViewStyle,
+    }),
+  },
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(199,31,55,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(199,31,55,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.3,
+  },
+  desc: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.55)',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  btnCancel: {
+    flex: 1,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  btnConfirm: {
+    flex: 1,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#C71F37',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: { shadowColor: '#C71F37', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+      android: { elevation: 6 },
+      web: { boxShadow: '0 4px 12px rgba(199,31,55,0.4)' } as unknown as ViewStyle,
+    }),
+  },
+  btnConfirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+});
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const router   = useRouter();
   const segments = useSegments();
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  // On root layout, segments[0] can be '(tabs)' and segments[1] is the tab name.
-  // If segments[0] is 'movie', 'person', or 'user', no tab is active.
   const activeTab = segments[0] === '(tabs)' ? (segments[1] || 'index') : '';
 
   const handlePress = (name: string) => {
@@ -40,6 +173,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   };
 
   const handleSignOut = () => {
+    if (Platform.OS === 'web') {
+      // Web: gunakan custom modal
+      setShowConfirm(true);
+      return;
+    }
+    // Native iOS/Android: gunakan Alert bawaan
     Alert.alert(
       t('signOutConfirmTitle'),
       t('signOutConfirmDesc'),
@@ -52,92 +191,104 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   };
 
   return (
-    <View style={[styles.sidebar, collapsed && styles.sidebarCollapsed]}>
-      <SafeAreaView edges={['top', 'bottom', 'left']} style={{ flex: 1 }}>
-        {/* Brand */}
-        <TouchableOpacity
-          style={styles.brand}
-          onPress={() => router.push('/(tabs)/' as any)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.brandIcon}>
-            <Film color="#FFFFFF" size={20} strokeWidth={2} />
-          </View>
-          {!collapsed && (
-            <View>
-              <Text style={styles.brandTitle} allowFontScaling={false}>WatchList</Text>
-              <Text style={styles.brandSub} allowFontScaling={false}>ID</Text>
+    <>
+      <View style={[styles.sidebar, collapsed && styles.sidebarCollapsed]}>
+        <SafeAreaView edges={['top', 'bottom', 'left']} style={{ flex: 1 }}>
+          {/* Brand */}
+          <TouchableOpacity
+            style={styles.brand}
+            onPress={() => router.push('/(tabs)/' as any)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.brandIcon}>
+              <Film color="#FFFFFF" size={20} strokeWidth={2} />
             </View>
-          )}
-        </TouchableOpacity>
+            {!collapsed && (
+              <View>
+                <Text style={styles.brandTitle} allowFontScaling={false}>WatchList</Text>
+                <Text style={styles.brandSub} allowFontScaling={false}>ID</Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-        {/* Divider */}
-        <View style={styles.divider} />
+          {/* Divider */}
+          <View style={styles.divider} />
 
-        {/* Nav */}
-        <ScrollView style={styles.nav} showsVerticalScrollIndicator={false}>
-          {!collapsed && (
-            <Text style={styles.navSection} allowFontScaling={false}>MENU</Text>
-          )}
-          {NAV_KEYS.map(({ name, key, Icon }) => {
-            const active = activeTab === name;
-            return (
+          {/* Nav */}
+          <ScrollView style={styles.nav} showsVerticalScrollIndicator={false}>
+            {!collapsed && (
+              <Text style={styles.navSection} allowFontScaling={false}>MENU</Text>
+            )}
+            {NAV_KEYS.map(({ name, key, Icon }) => {
+              const active = activeTab === name;
+              return (
+                <TouchableOpacity
+                  key={name}
+                  style={[styles.navItem, active && styles.navItemActive]}
+                  onPress={() => handlePress(name)}
+                  activeOpacity={0.75}
+                >
+                  <Icon
+                    size={20}
+                    color={active ? '#FFFFFF' : INACTIVE}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                  {!collapsed && (
+                    <Text
+                      style={[styles.navLabel, active && styles.navLabelActive]}
+                      allowFontScaling={false}
+                    >
+                      {t(key as any)}
+                    </Text>
+                  )}
+                  {active && !collapsed && <View style={styles.activePip} />}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Sign Out Button */}
+          {user && (
+            <View style={styles.footerLogout}>
               <TouchableOpacity
-                key={name}
-                style={[styles.navItem, active && styles.navItemActive]}
-                onPress={() => handlePress(name)}
+                style={[styles.logoutItem, collapsed && styles.logoutItemCollapsed]}
+                onPress={handleSignOut}
                 activeOpacity={0.75}
               >
-                <Icon
-                  size={20}
-                  color={active ? '#FFFFFF' : INACTIVE}
-                  strokeWidth={active ? 2.5 : 2}
-                />
+                <LogOut size={20} color="#C71F37" strokeWidth={2} />
                 {!collapsed && (
-                  <Text
-                    style={[styles.navLabel, active && styles.navLabelActive]}
-                    allowFontScaling={false}
-                  >
-                    {t(key as any)}
+                  <Text style={styles.logoutLabel} allowFontScaling={false}>
+                    {t('signOut')}
                   </Text>
                 )}
-                {active && !collapsed && <View style={styles.activePip} />}
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+            </View>
+          )}
 
-        {/* Sign Out Button — only if logged in */}
-        {user && (
-          <View style={styles.footerLogout}>
-            <TouchableOpacity
-              style={[styles.logoutItem, collapsed && styles.logoutItemCollapsed]}
-              onPress={handleSignOut}
-              activeOpacity={0.75}
-            >
-              <LogOut
-                size={20}
-                color="#C71F37"
-                strokeWidth={2}
-              />
-              {!collapsed && (
-                <Text style={styles.logoutLabel} allowFontScaling={false}>
-                  {t('signOut')}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+          {/* Footer version */}
+          {!collapsed && (
+            <View style={styles.sidebarFooter}>
+              <View style={styles.divider} />
+              <Text style={styles.footerText} allowFontScaling={false}>WatchList ID · v1.0</Text>
+            </View>
+          )}
+        </SafeAreaView>
+      </View>
 
-        {/* Bottom — version */}
-        {!collapsed && (
-          <View style={styles.sidebarFooter}>
-            <View style={styles.divider} />
-            <Text style={styles.footerText} allowFontScaling={false}>WatchList ID · v1.0</Text>
-          </View>
-        )}
-      </SafeAreaView>
-    </View>
+      {/* Custom confirm dialog — muncul di atas sidebar */}
+      <ConfirmDialog
+        visible={showConfirm}
+        title={t('signOutConfirmTitle')}
+        description={t('signOutConfirmDesc')}
+        cancelLabel={t('cancel')}
+        confirmLabel={t('signOut')}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={() => {
+          setShowConfirm(false);
+          signOut();
+        }}
+      />
+    </>
   );
 };
 

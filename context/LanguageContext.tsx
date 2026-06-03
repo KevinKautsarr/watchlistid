@@ -324,9 +324,9 @@ const translations = {
     favoritesDone: "Done",
 
     // Activity Heatmap
-    activityTitle: "Watching Activity",
+    activityTitle: "Activity",
     activityNoLogs: "No activity on this day",
-    activityFilmsWatched: "films watched",
+    activityFilmsWatched: "Activity",
     activityFew: "Few",
     activityMany: "Many",
     loginToSeeActivity: "Log in to see friends' activity",
@@ -655,9 +655,9 @@ const translations = {
     favoritesDone: "Selesai",
 
     // Activity Heatmap
-    activityTitle: "Aktivitas Nonton",
+    activityTitle: "Aktivitas",
     activityNoLogs: "Tidak ada aktivitas hari ini",
-    activityFilmsWatched: "film ditonton",
+    activityFilmsWatched: "Aktivitas",
     activityFew: "Sedikit",
     activityMany: "Banyak",
     loginToSeeActivity: "Masuk untuk melihat aktivitas teman",
