@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, 
-  Modal, Platform, Pressable, ScrollView 
+  Modal, Platform, Pressable, ScrollView, useWindowDimensions 
 } from 'react-native';
 import { 
   Globe, LogOut, Info, Settings, 
@@ -30,6 +30,8 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
   onPasswordPress, onDeletePress
 }) => {
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
 
   React.useEffect(() => {
     if (visible && Platform.OS === 'web') {
@@ -125,19 +127,21 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
                 <Text style={[s.menuLabel, { color: 'rgba(255,255,255,0.4)' }]}>Hapus Akun</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={s.menuItem}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onClose();
-                  onLogoutPress();
-                }}
-              >
-                <View style={[s.iconBox, { backgroundColor: Colors.primary + '18' }]}>
-                  <LogOut size={20} color={Colors.primary} strokeWidth={2.2} />
-                </View>
-                <Text style={[s.menuLabel, { color: Colors.primary, fontWeight: FontWeight.bold }]}>{t('signOut')}</Text>
-              </TouchableOpacity>
+              {isMobile && (
+                <TouchableOpacity 
+                  style={s.menuItem}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    onClose();
+                    onLogoutPress();
+                  }}
+                >
+                  <View style={[s.iconBox, { backgroundColor: Colors.primary + '18' }]}>
+                    <LogOut size={20} color={Colors.primary} strokeWidth={2.2} />
+                  </View>
+                  <Text style={[s.menuLabel, { color: Colors.primary, fontWeight: FontWeight.bold }]}>{t('signOut')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
             
             <View style={s.footer}>

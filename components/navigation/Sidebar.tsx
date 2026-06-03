@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ViewStyle, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ViewStyle, Platform, Alert } from 'react-native';
 import { Home, Compass, Bookmark, User, Film, LogOut } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
@@ -37,6 +37,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       return;
     }
     router.push(`/(tabs)/${name === 'index' ? '' : name}` as any);
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      t('signOutConfirmTitle'),
+      t('signOutConfirmDesc'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('signOut'), style: 'destructive', onPress: signOut }
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -100,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           <View style={styles.footerLogout}>
             <TouchableOpacity
               style={[styles.logoutItem, collapsed && styles.logoutItemCollapsed]}
-              onPress={signOut}
+              onPress={handleSignOut}
               activeOpacity={0.75}
             >
               <LogOut

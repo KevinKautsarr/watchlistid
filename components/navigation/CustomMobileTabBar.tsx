@@ -26,9 +26,10 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   
-  const containerMargin = 24;
+  const containerMargin = 0;
   const containerWidth = width - containerMargin * 2;
   const tabWidth = containerWidth / state.routes.length;
+  const totalHeight = PILL_HEIGHT + insets.bottom;
   
   const activeIndex = state.index;
   const animatedValue = useRef(new Animated.Value(activeIndex)).current;
@@ -60,14 +61,14 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
   });
 
   return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-      <View style={styles.shadowWrapper}>
+    <View style={[styles.container, { paddingBottom: 0 }]}>
+      <View style={[styles.shadowWrapper, { height: totalHeight }]}>
         
         {/* Background pill with SVG cutout */}
         <View style={styles.svgClipper}>
           <AnimatedSvg
             width={SVG_WIDTH}
-            height={PILL_HEIGHT}
+            height={totalHeight}
             style={{ transform: [{ translateX: svgTranslateX }] }}
           >
             {/* 
@@ -82,8 +83,8 @@ export default function CustomMobileTabBar({ state, descriptors, navigation }: B
                 C 972 0, 975 38, 1000 38 
                 C 1025 38, 1028 0, 1045 0 
                 L ${SVG_WIDTH} 0 
-                L ${SVG_WIDTH} ${PILL_HEIGHT} 
-                L 0 ${PILL_HEIGHT} 
+                L ${SVG_WIDTH} ${totalHeight} 
+                L 0 ${totalHeight} 
                 Z
               `}
               fill={BAR_BG}
@@ -164,11 +165,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
+    paddingHorizontal: 0,
     zIndex: 100,
   },
   shadowWrapper: {
-    height: PILL_HEIGHT,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 },
       android: { elevation: 10 },
@@ -178,7 +178,10 @@ const styles = StyleSheet.create({
   },
   svgClipper: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 35,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     overflow: 'hidden',
     backgroundColor: 'transparent',
   },
