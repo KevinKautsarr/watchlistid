@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Modal, ActivityIndicator, Platform, Pressable, LayoutChangeEvent,
+  Animated,
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -19,10 +20,10 @@ const CELL_MIN    = 8;
 const DAY_COL_W   = 30; // fixed width for day-of-week label column
 
 const LEVEL_COLORS = [
-  '#ffffff10', // 0 film  — abu gelap
-  '#6E40C9',  // 1–2     — ungu redup
-  '#C026D3',  // 3–4     — pink/magenta
-  '#F97316',  // 5+      — oranye panas
+  'rgba(199,31,55, 0.08)', // 0 film  — hampir transparan
+  'rgba(199,31,55, 0.35)', // 1–2     — merah muda redup
+  'rgba(199,31,55, 0.65)', // 3–4     — merah sedang
+  'rgba(199,31,55, 1.00)', // 5+      — merah penuh (brand primary)
 ];
 
 const getLevel = (n: number) => n === 0 ? 0 : n <= 2 ? 1 : n <= 4 ? 2 : 3;
@@ -130,6 +131,74 @@ function DayDetailModal({ visible, date, logs, loading, onClose, locale }: {
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+// ── Legend with Tooltip ──────────────────────────────────────────────────────
+const LEVEL_LABELS = ['0', '1–2', '3–4', '5+'];
+
+function LegendWithTooltip({ cellColors, t }: { cellColors: string[]; t: (k: any) => string }) {
+  const [visible, setVisible] = useState(false);
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(6)).current;
+  const timer     = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const show = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setVisible(true);
+    Animated.parallel([
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 180, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 180, useNativeDriver: true }),
+    ]).start();
+    timer.current = setTimeout(hide, 2500);
+  };
+
+  const hide = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim,  { toValue: 0, duration: 160, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 6, duration: 160, useNativeDriver: true }),
+    ]).start(() => setVisible(false));
+  };
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    visible ? hide() : show();
+  };
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  return (
+    <View style={s.legendWrapper}>
+      {/* Tooltip that slides up above the legend */}
+      {visible && (
+        <Animated.View style={[s.tooltip, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <View style={s.tooltipRow}>
+            {cellColors.map((c, i) => (
+              <View key={i} style={s.tooltipItem}>
+                <View style={[s.tooltipSwatch, { backgroundColor: c }]} />
+                <Text style={s.tooltipLabel}>{LEVEL_LABELS[i]}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={s.tooltipArrow} />
+        </Animated.View>
+      )}
+
+      {/* Tappable legend row */}
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.7}
+        style={s.legend}
+        accessibilityRole="button"
+        accessibilityLabel="Tap to see activity level ranges"
+      >
+        <Text style={s.legendTxt}>{t('activityFew')}</Text>
+        {cellColors.map((c, i) => (
+          <View key={i} style={[s.legendCell, { backgroundColor: c }]} />
+        ))}
+        <Text style={s.legendTxt}>{t('activityMany')}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -286,11 +355,7 @@ export default function ActivityHeatmap({ userId }: { userId: string }) {
       </View>
 
       {/* Legend */}
-      <View style={s.legend}>
-        <Text style={s.legendTxt}>{t('activityFew')}</Text>
-        {LEVEL_COLORS.map((c,i) => <View key={i} style={[s.legendCell, { backgroundColor: c, width: cellSize, height: cellSize }]} />)}
-        <Text style={s.legendTxt}>{t('activityMany')}</Text>
-      </View>
+      <LegendWithTooltip cellColors={LEVEL_COLORS} t={t} />
 
       <DayDetailModal
         visible={modalVisible} date={selectedDate} logs={dayLogs} locale={locale}
@@ -317,8 +382,42 @@ const s = StyleSheet.create({
   dayLabel:   { color: 'rgba(255,255,255,0.3)', fontSize: 9 },
 
   legend:     { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm, justifyContent: 'flex-end' },
-  legendCell: { borderRadius: 2 },
+  legendCell: { borderRadius: 2, width: 12, height: 12 },
   legendTxt:  { color: 'rgba(255,255,255,0.3)', fontSize: 10 },
+
+  // Legend tooltip
+  legendWrapper: { position: 'relative', alignItems: 'flex-end', marginTop: Spacing.sm },
+  tooltip: {
+    position: 'absolute',
+    bottom: 28,
+    right: 0,
+    backgroundColor: 'rgba(26,16,24,0.96)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(199,31,55,0.25)',
+    ...Platform.select({
+      web: { boxShadow: '0 4px 16px rgba(0,0,0,0.4)' } as any,
+      default: {},
+    }),
+  },
+  tooltipRow:   { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  tooltipItem:  { alignItems: 'center', gap: 4 },
+  tooltipSwatch:{ width: 12, height: 12, borderRadius: 2 },
+  tooltipLabel: { color: 'rgba(255,255,255,0.55)', fontSize: 9, fontWeight: '600' as const },
+  tooltipArrow: {
+    position: 'absolute',
+    bottom: -5,
+    right: 20,
+    width: 8,
+    height: 8,
+    backgroundColor: 'rgba(26,16,24,0.96)',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(199,31,55,0.25)',
+    transform: [{ rotate: '45deg' }],
+  },
 
   // Modal
   backdrop: {
