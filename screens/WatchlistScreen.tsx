@@ -277,48 +277,6 @@ const WatchlistScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ── Sort chips ── */}
-      <View style={styles.sortRow}>
-        <TouchableOpacity 
-          style={[styles.sortHeaderBtn, cursorPointer]} 
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setIsAscending(!isAscending);
-          }}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={`Sort direction: ${isAscending ? 'ascending' : 'descending'}`}
-          accessibilityHint="Toggles sort order"
-        >
-          <Text style={styles.sortByLbl}>{t('sort')}</Text>
-          {isAscending ? (
-            <ArrowUp size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
-          ) : (
-            <ArrowDown size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
-          )}
-        </TouchableOpacity>
-        
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-          {SORTS.map(s => {
-            const label = s === 'Added' ? t('sortAdded') : s === 'Rating' ? t('sortRating') : s === 'Release' ? t('sortRelease') : t('sortTitle');
-            return (
-              <TouchableOpacity
-                key={s}
-                activeOpacity={0.75}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
-                style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
-                accessibilityRole="button"
-                accessibilityLabel={`${t('sort')} ${label}`}
-                accessibilityState={{ selected: activeSort === s }}
-              >
-                <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} allowFontScaling={false}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
 
       {/* ── List ── */}
       <View style={{ flex: 1 }}>
@@ -329,6 +287,49 @@ const WatchlistScreen: React.FC = () => {
           estimatedItemSize={ITEM_HEIGHT}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.sortRow}>
+              <TouchableOpacity 
+                style={[styles.sortHeaderBtn, cursorPointer]} 
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsAscending(!isAscending);
+                }}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Sort direction: ${isAscending ? 'ascending' : 'descending'}`}
+                accessibilityHint="Toggles sort order"
+              >
+                <Text style={styles.sortByLbl}>{t('sort')}</Text>
+                {isAscending ? (
+                  <ArrowUp size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
+                ) : (
+                  <ArrowDown size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
+                )}
+              </TouchableOpacity>
+              
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {SORTS.map(s => {
+                  const label = s === 'Added' ? t('sortAdded') : s === 'Rating' ? t('sortRating') : s === 'Release' ? t('sortRelease') : t('sortTitle');
+                  return (
+                    <TouchableOpacity
+                      key={s}
+                      activeOpacity={0.75}
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
+                      style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t('sort')} ${label}`}
+                      accessibilityState={{ selected: activeSort === s }}
+                    >
+                      <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} allowFontScaling={false}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
           ListEmptyComponent={(
             <View style={styles.empty}>
               <EmptyStateIcon

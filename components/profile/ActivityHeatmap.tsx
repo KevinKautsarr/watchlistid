@@ -452,7 +452,7 @@ const s = StyleSheet.create({
 
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xl, gap: 8 },
   modalDate:   { color: Colors.white, fontSize: FontSize.md, fontWeight: FontWeight.black, flex: 1, letterSpacing: -0.2 },
-  closeBtn:    { padding: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 18, borderHorizontal: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  closeBtn:    { padding: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   emptyDay:    { paddingVertical: Spacing.xl, alignItems: 'center' },
   emptyDayText:{ color: 'rgba(255,255,255,0.4)', fontSize: FontSize.sm, fontStyle: 'italic' },
 
