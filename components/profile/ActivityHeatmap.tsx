@@ -12,6 +12,8 @@ import { Colors, Spacing, Radius, FontSize, FontWeight, TMDB_IMAGE_SIZES } from 
 import SafeImage from '@/components/common/SafeImage';
 import { cursorPointer } from '@/utils/webStyles';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { useLogs } from '@/context/LogContext';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const GAP         = 4;
@@ -205,6 +207,8 @@ function LegendWithTooltip({ cellColors, t }: { cellColors: string[]; t: (k: any
 // ── Main Component ───────────────────────────────────────────────────────────
 export default function ActivityHeatmap({ userId }: { userId: string }) {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const { userLogs } = useLogs();
   const locale = language === 'id' ? 'id-ID' : 'en-US';
   // Day-of-week labels based on language
   const DAY_LABELS_LOC = language === 'id'
@@ -238,7 +242,9 @@ export default function ActivityHeatmap({ userId }: { userId: string }) {
     finally { setLoading(false); }
   }, [userId, range]);
 
-  useEffect(() => { if (userId) fetchHeatmap(); }, [fetchHeatmap, userId]);
+  useEffect(() => {
+    if (userId) fetchHeatmap();
+  }, [fetchHeatmap, userId, userId === user?.id ? userLogs : null]);
 
   const fetchDayLogs = async (date: string) => {
     setDayLogsLoading(true); setDayLogs([]);
