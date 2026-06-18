@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { supabase, typedFrom } from '@/supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '@/utils/authErrors';
+import { APP_URL } from '@/config';
 import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeClearCorruptStorage, clearStaleSupabaseSession } from '@/utils/storage';
@@ -23,11 +24,12 @@ WebBrowser.maybeCompleteAuthSession();
 // IMPORTANT: We do NOT use __DEV__ here because Expo sets __DEV__ = true even
 // in Vercel production builds (expo export), causing localhost redirects in prod.
 // Instead, we use runtime hostname detection which is always accurate.
-const PROD_WEB_URL = 'https://watchlistid.vercel.app';
+const PROD_WEB_URL = APP_URL;
+const PROD_WEB_HOSTNAME = 'watchlistid.vercel.app'; // must match APP_URL hostname
 
 const isWebProduction = Platform.OS === 'web'
   && typeof window !== 'undefined'
-  && window.location?.hostname === 'watchlistid.vercel.app';
+  && window.location?.hostname === PROD_WEB_HOSTNAME;
 
 const REDIRECT_URL = Platform.OS === 'web'
   ? (isWebProduction

@@ -52,6 +52,7 @@ import { LanguageProvider } from '@/context/LanguageContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import OfflineGuard from '@/components/common/OfflineGuard';
+import ErrorScreen from './error';
 
 // Global Polish: Enable font scaling but recommend max multipliers for layout-critical text
 // Note: individual components will be updated to use maxFontSizeMultiplier where necessary
@@ -193,16 +194,11 @@ function RootLayoutNav() {
   }
 
   if (profileError) {
+    // Render the styled error screen directly. Previously this pointed at a
+    // non-existent "system-error" route, which produced a blank screen.
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="system-error" options={{ 
-            title: 'Sistem Bermasalah',
-            headerShown: true,
-            headerStyle: { backgroundColor: '#141414' },
-            headerTintColor: '#fff'
-          }} />
-        </Stack>
+        <ErrorScreen />
         <StatusBar style="light" />
       </ThemeProvider>
     );

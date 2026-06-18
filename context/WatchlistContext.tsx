@@ -4,6 +4,7 @@ import { supabase, typedFrom } from '../supabase';
 import { Movie, TVShow, MediaItem } from '@/types/tmdb';
 import { WatchlistMap, WatchlistItem, WATCHLIST_STATUS, StorageSchema } from '@/types/watchlist';
 import Toast from '@/components/common/Toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 // ── Supabase helpers ───────────────────────────────────────────────────────
 function toSupabaseRow(item: WatchlistItem, userId: string) {
@@ -63,6 +64,7 @@ function fromSupabaseRow(row: any): WatchlistItem {
 
 // ── Provider Logic Hook ────────────────────────────────────────────────────
 function useWatchlistProviderLogic() {
+  const { t } = useLanguage();
   const [watchlistMap,   setWatchlistMap]   = useState<WatchlistMap>({});
   const [userRatings,    setUserRatings]    = useState<Record<number, number>>({});
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
@@ -233,31 +235,21 @@ function useWatchlistProviderLogic() {
 
   const addToWatchlist = useCallback((item: MediaItem) => {
     if (!userId) return;
-    setWatchlistMap(prev => {
-      if (prev[item.id]) return prev;
+    if (watchlistMap[item.id]) return; // already present — no-op
 
-      let newItem: WatchlistItem;
-      if (item.media_type === 'movie') {
-        newItem = {
-          ...item,
-          mediaType: 'movie',
-          addedAt: new Date().toISOString(),
-          status: item.status || WATCHLIST_STATUS.PLAN_TO_WATCH,
-        } as WatchlistItem;
-      } else {
-        newItem = {
-          ...item,
-          mediaType: 'tv',
-          addedAt: new Date().toISOString(),
-          status: item.status || WATCHLIST_STATUS.PLAN_TO_WATCH,
-        } as WatchlistItem;
-      }
+    const meta = {
+      addedAt: new Date().toISOString(),
+      status: item.status || WATCHLIST_STATUS.PLAN_TO_WATCH,
+    };
+    const newItem: WatchlistItem = item.media_type === 'movie'
+      ? ({ ...item, mediaType: 'movie', ...meta } as WatchlistItem)
+      : ({ ...item, mediaType: 'tv', ...meta } as WatchlistItem);
 
-      typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => error && console.error(error));
-      showToast('Added to Watchlist', 'success');
-      return { ...prev, [item.id]: newItem };
-    });
-  }, [userId, showToast]);
+    // Keep the state updater pure; run side effects (network + toast) outside it.
+    setWatchlistMap(prev => (prev[item.id] ? prev : { ...prev, [item.id]: newItem }));
+    typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => error && console.error(error));
+    showToast(t('toastAddedToWatchlist'), 'success');
+  }, [userId, watchlistMap, showToast, t]);
 
   const removeFromWatchlist = useCallback((id: number) => {
     if (!userId) return;
@@ -267,27 +259,29 @@ function useWatchlistProviderLogic() {
       delete copy[id];
       return copy;
     });
-    showToast('Removed from Watchlist', 'info');
+    showToast(t('toastRemovedFromWatchlist'), 'info');
     typedFrom('watchlist').delete().eq('user_id', userId).eq('movie_id', id).then(({ error }) => error && console.error(error));
-  }, [userId, showToast]);
+  }, [userId, showToast, t]);
 
   const toggleWatched = useCallback((id: number) => {
     if (!userId) return;
+    const item = watchlistMap[id];
+    if (!item) return;
+
+    const newStatus = item.status === WATCHLIST_STATUS.COMPLETED ? WATCHLIST_STATUS.PLAN_TO_WATCH : WATCHLIST_STATUS.COMPLETED;
+
+    // Pure updater; network call runs outside it.
     setWatchlistMap(prev => {
-      const item = prev[id];
-      if (!item) return prev;
-      
-      const newStatus = item.status === WATCHLIST_STATUS.COMPLETED ? WATCHLIST_STATUS.PLAN_TO_WATCH : WATCHLIST_STATUS.COMPLETED;
-      const updated = { ...item, status: newStatus } as WatchlistItem;
-      
-      typedFrom('watchlist')
-        .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED })
-        .eq('user_id', userId)
-        .eq('movie_id', id)
-        .then(({ error }) => error && console.error(error));
-      return { ...prev, [id]: updated };
+      const cur = prev[id];
+      if (!cur) return prev;
+      return { ...prev, [id]: { ...cur, status: newStatus } as WatchlistItem };
     });
-  }, [userId]);
+    typedFrom('watchlist')
+      .update({ watched: newStatus === WATCHLIST_STATUS.COMPLETED })
+      .eq('user_id', userId)
+      .eq('movie_id', id)
+      .then(({ error }) => error && console.error(error));
+  }, [userId, watchlistMap]);
 
   const isInWatchlist = useCallback((id: number) => !!watchlistMap[id], [watchlistMap]);
 

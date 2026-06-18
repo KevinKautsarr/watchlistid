@@ -375,7 +375,7 @@ export default function ForgotPasswordScreen() {
 
                 <View style={s.footerBrand}>
                   <Text style={s.footerText} allowFontScaling={false}>
-                    🍿 WatchListID © 2026
+                    🍿 WatchlistID © 2026
                   </Text>
                 </View>
               </View>

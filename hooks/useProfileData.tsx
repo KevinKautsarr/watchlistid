@@ -660,6 +660,7 @@ export const useProfileData = (userId: string | undefined) => {
       watchlist,
       allLogs,
       profile.data?.username ?? 'user',
+      { title: t('exportFailedTitle'), message: t('exportFailedMsg') },
     );
   };
 

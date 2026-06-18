@@ -13,6 +13,7 @@ export async function exportWatchlistToCSV(
   watchlist: WatchlistItem[],
   logs: MovieLog[],
   username: string = 'user',
+  errorLabels?: { title: string; message: string },
 ): Promise<void> {
   try {
     // ── Watchlist CSV ─────────────────────────────────────────────────────
@@ -85,7 +86,10 @@ export async function exportWatchlistToCSV(
       }
     }
   } catch (err: any) {
-    Alert.alert('Export Gagal', err?.message ?? 'Terjadi kesalahan saat mengekspor data.');
+    Alert.alert(
+      errorLabels?.title ?? 'Export Failed',
+      err?.message ?? errorLabels?.message ?? 'An error occurred while exporting your data.',
+    );
   }
 }
 

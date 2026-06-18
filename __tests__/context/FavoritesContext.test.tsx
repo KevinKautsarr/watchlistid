@@ -8,6 +8,7 @@ import { Text } from 'react-native';
 
 import { FavoritesProvider, useFavorites } from '../../context/FavoritesContext';
 import { AuthProvider } from '../../context/AuthContext';
+import { LanguageProvider } from '../../context/LanguageContext';
 
 function FavoriteChecker({ movieId }: { movieId: number }) {
   const { isFavorite } = useFavorites();
@@ -17,9 +18,11 @@ function FavoriteChecker({ movieId }: { movieId: number }) {
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <FavoritesProvider>{children}</FavoritesProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <FavoritesProvider>{children}</FavoritesProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

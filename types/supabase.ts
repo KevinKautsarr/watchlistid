@@ -446,7 +446,7 @@ export type Database = {
           title: string
           poster_path: string | null
           position: number
-          created_at: string
+          added_at: string
         }
         Insert: {
           id?: string
@@ -456,7 +456,7 @@ export type Database = {
           title: string
           poster_path?: string | null
           position?: number
-          created_at?: string
+          added_at?: string
         }
         Update: {
           id?: string
@@ -466,7 +466,7 @@ export type Database = {
           title?: string
           poster_path?: string | null
           position?: number
-          created_at?: string
+          added_at?: string
         }
         Relationships: [
           {
@@ -495,6 +495,23 @@ export type Database = {
       get_profile_analytics: {
         Args: { p_user_id: string }
         Returns: Json
+      }
+      add_favorite: {
+        Args: {
+          p_movie_id: number
+          p_media_type: string
+          p_title: string
+          p_poster_path: string | null
+        }
+        Returns: undefined
+      }
+      move_favorite: {
+        Args: { p_movie_id: number; p_direction: string }
+        Returns: undefined
+      }
+      reorder_favorites: {
+        Args: { p_ordered_movie_ids: number[] }
+        Returns: undefined
       }
     }
     Enums: {

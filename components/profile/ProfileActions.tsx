@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Share } from 'react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { APP_URL } from '@/config';
 import { UserPlus, UserMinus, Edit3, Share2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -27,10 +28,12 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
 }) => {
   const handleShareProfile = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const name = username || 'User';
+    const url = `${APP_URL}/user/${userId || ''}`;
     await Share.share({
-      message: `Lihat profil ${username || 'User'} di WatchListID!`,
-      url: `https://watchlistid.vercel.app/profile?userId=${userId || ''}`,
-      title: `Profil ${username || 'User'} — WatchListID`,
+      message: t('shareProfileMessage').replace('{username}', name).replace('{url}', url),
+      url, // iOS attaches this as a rich link
+      title: t('shareProfileTitle').replace('{username}', name),
     });
   };
 

@@ -444,8 +444,8 @@ export default function RegisterScreen() {
       >
         {isDesktop
           ? language === "id"
-            ? "Daftar ke WatchListID"
-            : "Sign Up for WatchListID"
+            ? "Daftar ke WatchlistID"
+            : "Sign Up for WatchlistID"
           : t("signUp")}
       </Text>
 
@@ -772,7 +772,7 @@ export default function RegisterScreen() {
                 {/* Minimalist footer brand */}
                 <View style={s.footerBrand}>
                   <Text style={s.footerText} allowFontScaling={false}>
-                    🍿 WatchListID © 2026
+                    🍿 WatchlistID © 2026
                   </Text>
                 </View>
               </View>

@@ -58,7 +58,7 @@ export const DetailRatings: React.FC<DetailRatingsProps> = ({ movie, userRating,
         <View style={[styles.communityRatingCard, bp.isLarge && { marginHorizontal: 0, marginTop: 0 }]}>
           <View style={styles.communityHeader}>
             <View>
-              <Text style={styles.communityLabel}>WatchListID Community</Text>
+              <Text style={styles.communityLabel}>WatchlistID Community</Text>
               <Text style={styles.communitySub}>{communityRating.data.count} reviews from our users</Text>
             </View>
             <View style={styles.scoreBox}>

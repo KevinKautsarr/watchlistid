@@ -10,6 +10,7 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { ChevronLeft, Share2, Info, CheckCircle2 } from 'lucide-react-native';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
+import { APP_URL } from '@/config';
 import { cursorPointer } from '@/utils/webStyles';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { useAuth } from '@/context/AuthContext';
@@ -216,11 +217,11 @@ export default function MovieDetailScreen() {
           await addToWatchlist({ ...movie, media_type: type, status: 'completed' } as any);
         }
       } else {
-        Alert.alert('Gagal', 'Gagal menandai film sebagai sudah ditonton.');
+        Alert.alert(t('failedTitle'), t('markWatchedFailed'));
       }
     } catch (err: any) {
       console.error('[DetailScreen] mark watched failed:', err);
-      Alert.alert('Error', err.message || 'Terjadi kesalahan saat menyimpan log.');
+      Alert.alert(t('errorTitle'), err.message || t('genericError'));
     }
   };
 
@@ -249,8 +250,14 @@ export default function MovieDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       const mediaTitle = 'title' in movie ? movie.title : movie.name;
+      const ratingStr = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+      const url = `${APP_URL}/movie/${movie.id}`;
+      const text = t('shareMovieMessage')
+        .replace('{title}', mediaTitle)
+        .replace('{rating}', ratingStr);
       await Share.share({
-        message: `Check out "${mediaTitle}" on CineList! ⭐ ${movie.vote_average?.toFixed(1)}/10`,
+        message: `${text}\n${url}`,
+        url, // iOS attaches this as a rich link
         title: mediaTitle,
       });
     } catch (error) {

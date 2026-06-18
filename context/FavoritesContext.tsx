@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import Toast from '@/components/common/Toast';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 // ── Provider ───────────────────────────────────────────────────────────────
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' | 'error' }>({
@@ -96,7 +98,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!user) return false;
 
     if (favorites.length >= 20) {
-      showToast('Maksimal 20 film favorit', 'error');
+      showToast(t('toastMaxFavorites'), 'error');
       return false;
     }
 
@@ -122,14 +124,14 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         added_at: new Date().toISOString(),
       };
       setFavorites(prev => [...prev, newItem]);
-      showToast('Ditambahkan ke Favorit ❤️', 'success');
+      showToast(t('toastAddedToFavorites'), 'success');
       return true;
     } catch (err: any) {
       console.error('addFavorite error:', err);
-      showToast(err.message || 'Gagal menambahkan favorit', 'error');
+      showToast(err.message || t('toastAddFavoriteFailed'), 'error');
       return false;
     }
-  }, [user, favorites, showToast]);
+  }, [user, favorites, showToast, t]);
 
   const removeFavorite = useCallback(async (movieId: number): Promise<boolean> => {
     if (!user) return false;
@@ -140,7 +142,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Re-index positions
       return filtered.map((f, i) => ({ ...f, position: i + 1 }));
     });
-    showToast('Dihapus dari Favorit', 'info');
+    showToast(t('toastRemovedFromFavorites'), 'info');
 
     try {
       const { error } = await supabase
@@ -162,7 +164,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setFavorites((data as FavoriteItem[]) || []);
       return false;
     }
-  }, [user, showToast]);
+  }, [user, showToast, t]);
 
   const moveUp = useCallback(async (movieId: number) => {
     if (!user) return;

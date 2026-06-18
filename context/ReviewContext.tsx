@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { supabase, typedFrom } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { ReviewItem, CommentItem } from '@/types/review';
 import Toast from '@/components/common/Toast';
 
@@ -16,6 +17,7 @@ const ReviewContext = createContext<ReviewContextType | undefined>(undefined);
 
 export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
     visible: false,
     message: '',
@@ -65,7 +67,7 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       showToast(error.message, 'error');
       return false;
     }
-    showToast('Review added!', 'success');
+    showToast(t('toastReviewAdded'), 'success');
     return true;
   };
 
@@ -104,7 +106,7 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       showToast(error.message, 'error');
       return false;
     }
-    showToast('Komentar berhasil ditambahkan!', 'success');
+    showToast(t('toastCommentAdded'), 'success');
     return true;
   };
 

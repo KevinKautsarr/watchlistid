@@ -121,12 +121,12 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
         onClose();
       } else {
         // Fallback alert because Toast might be hidden behind Modal
-        Alert.alert('Error', 'Failed to save movie log. Please check your connection or profile.');
+        Alert.alert(t('errorTitle'), t('logSaveFailedConnection'));
       }
     } catch (err) {
       const error = err as Error;
       console.error("Log Save Error:", error);
-      Alert.alert('Error', error.message || 'An unexpected error occurred.');
+      Alert.alert(t('errorTitle'), error.message || t('genericError'));
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +182,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                   style={[s.dateBtn, watchedDate === today && s.dateBtnActive, cursorPointer]}
                   onPress={() => setWatchedDate(today)}
                 >
-                  <Text style={[s.dateBtnText, watchedDate === today && s.dateBtnTextActive]}>Today</Text>
+                  <Text style={[s.dateBtnText, watchedDate === today && s.dateBtnTextActive]}>{t('today')}</Text>
                 </TouchableOpacity>
                 <TextInput
                   style={s.dateInput}
@@ -208,7 +208,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                 />
               </View>
               <Text style={s.ratingHint} allowFontScaling={false}>
-                {rating > 0 ? `${rating / 2} / 5 stars` : t('ratingHintDefault')}
+                {rating > 0 ? t('starsOutOf5').replace('{n}', String(rating / 2)) : t('ratingHintDefault')}
               </Text>
             </View>
 
@@ -223,7 +223,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                   accessibilityLabel="Toggle markdown preview"
                 >
                   <Eye size={14} color={showPreview ? Colors.primary : Colors.text.secondary} />
-                  <Text style={[s.previewToggleTxt, showPreview && s.previewToggleTxtActive]}>Preview</Text>
+                  <Text style={[s.previewToggleTxt, showPreview && s.previewToggleTxtActive]}>{t('preview')}</Text>
                 </TouchableOpacity>
               </View>
               
@@ -232,7 +232,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                   {reviewText.trim() ? (
                     <Markdown style={markdownStyles}>{reviewText}</Markdown>
                   ) : (
-                    <Text style={s.previewPholder}>Type something to see preview...</Text>
+                    <Text style={s.previewPholder}>{t('previewPlaceholder')}</Text>
                   )}
                 </View>
               ) : (

@@ -8,6 +8,7 @@ import { Text, TouchableOpacity } from 'react-native';
 
 import { WatchlistProvider, useWatchlist } from '../../context/WatchlistContext';
 import { AuthProvider } from '../../context/AuthContext';
+import { LanguageProvider } from '../../context/LanguageContext';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -19,9 +20,11 @@ function EpisodeChecker({ tvId, season, episode }: { tvId: number; season: numbe
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <WatchlistProvider>{children}</WatchlistProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <WatchlistProvider>{children}</WatchlistProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

@@ -93,8 +93,6 @@ const translations = {
     yourNamePlaceholder: "Your name",
     nameLabel: "Name",
     bioLabel: "Bio",
-    shareMessage:
-      "🎬 Check out my movie journey on WATCHLISTID!\nI have watched {watched} movies and have {toWatch} on my watchlist.\nExplore my Watched list: https://watchlistid.com/u/{username}",
 
     // Social
     followers: "Followers",
@@ -128,6 +126,10 @@ const translations = {
     ratingHintDefault: "Choose a rating for this movie",
     reviewOptional: "Review (Optional)",
     reviewPlaceholder: "Write your review, thoughts, or feelings...",
+    today: "Today",
+    preview: "Preview",
+    previewPlaceholder: "Type something to see preview...",
+    starsOutOf5: "{n} / 5 stars",
 
     // Modals
     signOutConfirmTitle: "Sign Out?",
@@ -326,13 +328,39 @@ const translations = {
     // Activity Heatmap
     activityTitle: "Activity",
     activityNoLogs: "No activity on this day",
-    activityFilmsWatched: "Activity",
+    activityFilmsWatched: "films watched",
     activityFew: "Few",
     activityMany: "Many",
     loginToSeeActivity: "Log in to see friends' activity",
     failedToLoad: "Failed to load content",
     checkConnection: "Please check your internet connection",
     tryAgain: "Try Again",
+
+    // Toasts & Alerts (runtime feedback)
+    errorTitle: "Error",
+    failedTitle: "Failed",
+    successTitle: "Success",
+    genericError: "Something went wrong. Please try again.",
+    toastAddedToWatchlist: "Added to Watchlist",
+    toastRemovedFromWatchlist: "Removed from Watchlist",
+    toastLoginToLog: "You must be logged in to log a movie.",
+    toastLogSaved: "Movie log saved successfully!",
+    toastLogSaveFailed: "An error occurred while saving your log.",
+    toastLogDeleted: "Log deleted successfully.",
+    toastLogDeleteFailed: "Could not delete log.",
+    toastReviewAdded: "Review added!",
+    toastCommentAdded: "Comment added successfully!",
+    toastMaxFavorites: "Maximum of 20 favorite titles",
+    toastAddedToFavorites: "Added to Favorites ❤️",
+    toastRemovedFromFavorites: "Removed from Favorites",
+    toastAddFavoriteFailed: "Failed to add favorite",
+    markWatchedFailed: "Failed to mark as watched.",
+    logSaveFailedConnection: "Failed to save log. Please check your connection or profile.",
+    exportFailedTitle: "Export Failed",
+    exportFailedMsg: "An error occurred while exporting your data.",
+    shareMovieMessage: 'Check out "{title}" on WatchlistID! ⭐ {rating}/10',
+    shareProfileMessage: "Check out {username}'s profile on WatchlistID! {url}",
+    shareProfileTitle: "{username}'s Profile — WatchlistID",
   },
 
   id: {
@@ -421,8 +449,6 @@ const translations = {
     yourNamePlaceholder: "Nama Anda",
     nameLabel: "Nama",
     bioLabel: "Bio",
-    shareMessage:
-      "🎬 Lihat perjalanan film saya di WATCHLISTID!\nSaya sudah menonton {watched} film dan ada {toWatch} film di daftar tontonan saya.\nLihat daftar Ditonton saya: https://watchlistid.com/u/{username}",
 
     // Social
     followers: "Pengikut",
@@ -456,6 +482,10 @@ const translations = {
     ratingHintDefault: "Pilih nilai untuk film ini",
     reviewOptional: "Ulasan (Opsional)",
     reviewPlaceholder: "Tulis ulasan, pikiran, atau perasaanmu...",
+    today: "Hari ini",
+    preview: "Pratinjau",
+    previewPlaceholder: "Ketik sesuatu untuk melihat pratinjau...",
+    starsOutOf5: "{n} / 5 bintang",
 
     // Modals
     signOutConfirmTitle: "Keluar?",
@@ -657,13 +687,39 @@ const translations = {
     // Activity Heatmap
     activityTitle: "Aktivitas",
     activityNoLogs: "Tidak ada aktivitas hari ini",
-    activityFilmsWatched: "Aktivitas",
+    activityFilmsWatched: "film ditonton",
     activityFew: "Sedikit",
     activityMany: "Banyak",
     loginToSeeActivity: "Masuk untuk melihat aktivitas teman",
     failedToLoad: "Gagal memuat konten",
     checkConnection: "Periksa koneksi internet kamu",
     tryAgain: "Coba Lagi",
+
+    // Toasts & Alerts (runtime feedback)
+    errorTitle: "Kesalahan",
+    failedTitle: "Gagal",
+    successTitle: "Berhasil",
+    genericError: "Terjadi kesalahan. Silakan coba lagi.",
+    toastAddedToWatchlist: "Ditambahkan ke Watchlist",
+    toastRemovedFromWatchlist: "Dihapus dari Watchlist",
+    toastLoginToLog: "Kamu harus masuk untuk mencatat film.",
+    toastLogSaved: "Catatan film berhasil disimpan!",
+    toastLogSaveFailed: "Terjadi kesalahan saat menyimpan catatanmu.",
+    toastLogDeleted: "Catatan berhasil dihapus.",
+    toastLogDeleteFailed: "Tidak dapat menghapus catatan.",
+    toastReviewAdded: "Ulasan ditambahkan!",
+    toastCommentAdded: "Komentar berhasil ditambahkan!",
+    toastMaxFavorites: "Maksimal 20 judul favorit",
+    toastAddedToFavorites: "Ditambahkan ke Favorit ❤️",
+    toastRemovedFromFavorites: "Dihapus dari Favorit",
+    toastAddFavoriteFailed: "Gagal menambahkan favorit",
+    markWatchedFailed: "Gagal menandai sebagai sudah ditonton.",
+    logSaveFailedConnection: "Gagal menyimpan catatan. Periksa koneksi atau profilmu.",
+    exportFailedTitle: "Ekspor Gagal",
+    exportFailedMsg: "Terjadi kesalahan saat mengekspor data.",
+    shareMovieMessage: 'Lihat "{title}" di WatchlistID! ⭐ {rating}/10',
+    shareProfileMessage: "Lihat profil {username} di WatchlistID! {url}",
+    shareProfileTitle: "Profil {username} — WatchlistID",
   },
 };
 

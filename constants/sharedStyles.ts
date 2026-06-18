@@ -2,7 +2,7 @@ import { StyleSheet, Platform } from 'react-native';
 import { Colors, Radius, Spacing, Shadow } from './theme';
 
 /**
- * Shared styles for the WatchListID application.
+ * Shared styles for the WatchlistID application.
  * Use these to maintain consistency and reduce duplication.
  */
 export const sharedStyles = StyleSheet.create({

@@ -5,6 +5,7 @@ import Head from 'expo-router/head';
 import { ChevronLeft, Globe, Twitter, Shield, FileText, Heart, Film, Github, ExternalLink } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { APP_URL } from '@/config';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function AboutScreen() {
@@ -18,7 +19,7 @@ export default function AboutScreen() {
   const handleShareApp = async () => {
     try {
       await Share.share({
-        message: 'Join me on WatchlistID and start your cinematic journey today! 🎬 https://watchlistid.com',
+        message: `Join me on WatchlistID and start your cinematic journey today! 🎬 ${APP_URL}`,
         title: 'WatchlistID',
       });
     } catch (error) {
@@ -75,7 +76,7 @@ export default function AboutScreen() {
 
           {/* Main Links */}
           <View style={s.linkSection}>
-            <TouchableOpacity style={s.linkItem} onPress={() => handleOpenLink('https://watchlistid.com')}>
+            <TouchableOpacity style={s.linkItem} onPress={() => handleOpenLink(APP_URL)}>
               <View style={[s.linkIconBox, { backgroundColor: 'rgba(66,133,244,0.1)' }]}>
                 <Globe size={20} color="#4285F4" />
               </View>

@@ -189,8 +189,8 @@ export default function LoginScreen() {
       >
         {isDesktop
           ? language === "id"
-            ? "Masuk ke WatchListID"
-            : "Login to WatchListID"
+            ? "Masuk ke WatchlistID"
+            : "Login to WatchlistID"
           : language === "id"
           ? "Masuk ke Akun Anda"
           : "Sign In to Your Account"}
@@ -461,7 +461,7 @@ export default function LoginScreen() {
                 {/* Minimalist footer brand */}
                 <View style={s.footerBrand}>
                   <Text style={s.footerText} allowFontScaling={false}>
-                    🍿 WatchListID © 2026
+                    🍿 WatchlistID © 2026
                   </Text>
                 </View>
               </View>

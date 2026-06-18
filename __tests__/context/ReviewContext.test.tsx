@@ -9,6 +9,7 @@ import { Text } from 'react-native';
 // We'll test the logic via a simple consumer component
 import { ReviewProvider, useReviews } from '../../context/ReviewContext';
 import { AuthProvider } from '../../context/AuthContext';
+import { LanguageProvider } from '../../context/LanguageContext';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -25,9 +26,11 @@ function TestConsumer({ reviewId }: { reviewId: string }) {
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <ReviewProvider>{children}</ReviewProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <ReviewProvider>{children}</ReviewProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

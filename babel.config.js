@@ -9,8 +9,6 @@ module.exports = function(api) {
           '@': '.',
         }
       }],
-      // Tree shake lodash jika dipakai
-      'lodash',
       // Remove console.log di production
       ['transform-remove-console', { exclude: ['error', 'warn'] }]
     ],

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, typedFrom } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { MovieLog } from '@/types';
 import Toast from '@/components/common/Toast';
 
@@ -18,6 +19,7 @@ const LogContext = createContext<LogContextType | undefined>(undefined);
 
 export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [userLogs, setUserLogs] = useState<MovieLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [toast, setToast] = useState<{ visible: boolean; message: string; title?: string; type: 'success' | 'error' | 'info' }>({
@@ -67,7 +69,7 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addLog = async (logData: Omit<MovieLog, 'id' | 'created_at' | 'user_id' | 'user' | 'likes_count' | 'is_liked_by_me'>) => {
     if (!user) {
-      showToast('Error', 'You must be logged in to log a movie.', 'error');
+      showToast(t('errorTitle'), t('toastLoginToLog'), 'error');
       return false;
     }
 
@@ -89,15 +91,15 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
 
       if (error) {
-        showToast('Failed', error.message || 'An error occurred while saving your log.', 'error');
+        showToast(t('failedTitle'), error.message || t('toastLogSaveFailed'), 'error');
         return false;
       }
 
-      showToast('Success', 'Movie log saved successfully!', 'success');
+      showToast(t('successTitle'), t('toastLogSaved'), 'success');
       fetchMyLogs();
       return true;
     } catch (err: any) {
-      showToast('Error', err.message || 'Failed to process log data.', 'error');
+      showToast(t('errorTitle'), err.message || t('genericError'), 'error');
       return false;
     }
   };
@@ -126,11 +128,11 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { error } = await typedFrom('movie_logs').delete().eq('id', logId).eq('user_id', user.id);
 
     if (error) {
-      showToast('Failed', 'Could not delete log.', 'error');
+      showToast(t('failedTitle'), t('toastLogDeleteFailed'), 'error');
       return false;
     }
-    
-    showToast('Success', 'Log deleted successfully.', 'success');
+
+    showToast(t('successTitle'), t('toastLogDeleted'), 'success');
     setUserLogs(prev => prev.filter(l => l.id !== logId));
     return true;
   };
