@@ -176,10 +176,10 @@ export default function ResetPasswordScreen() {
         // ── SUCCESS STATE ──
         <View style={s.successContainer}>
           <CheckCircle size={56} color="#22C55E" strokeWidth={2} />
-          <Text style={s.successTitle} allowFontScaling={false}>
+          <Text style={s.successTitle} maxFontSizeMultiplier={1.3}>
             {t("successResetTitle")}
           </Text>
-          <Text style={s.successMessage} allowFontScaling={false}>
+          <Text style={s.successMessage} maxFontSizeMultiplier={1.3}>
             {t("successResetMsg")}
           </Text>
         </View>
@@ -187,10 +187,10 @@ export default function ResetPasswordScreen() {
         // ── EXPIRED / INVALID SESSION WARNING STATE ──
         <View style={s.successContainer}>
           <Text style={{ fontSize: 56, marginBottom: 12 }}>⚠️</Text>
-          <Text style={s.successTitle} allowFontScaling={false}>
+          <Text style={s.successTitle} maxFontSizeMultiplier={1.3}>
             {language === "id" ? "Sesi Berakhir" : "Session Expired"}
           </Text>
-          <Text style={[s.successMessage, { marginBottom: Spacing.xl }]} allowFontScaling={false}>
+          <Text style={[s.successMessage, { marginBottom: Spacing.xl }]} maxFontSizeMultiplier={1.3}>
             {t("recoverySessionExpiredErr")}
           </Text>
           <TouchableOpacity
@@ -198,7 +198,7 @@ export default function ResetPasswordScreen() {
             onPress={() => router.replace("/auth/forgot")}
             activeOpacity={0.85}
           >
-            <Text style={s.backToLoginText} allowFontScaling={false}>
+            <Text style={s.backToLoginText} maxFontSizeMultiplier={1.3}>
               {language === "id" ? "Minta Link Baru" : "Request New Link"}
             </Text>
           </TouchableOpacity>
@@ -210,7 +210,7 @@ export default function ResetPasswordScreen() {
             <View style={s.formHeader}>
               <View style={s.welcomeBadge}>
                 <Sparkles size={14} color={Colors.primary} strokeWidth={2.5} />
-                <Text style={s.welcomeBadgeText} allowFontScaling={false}>
+                <Text style={s.welcomeBadgeText} maxFontSizeMultiplier={1.3}>
                   {t("resetPassword")}
                 </Text>
               </View>
@@ -219,20 +219,20 @@ export default function ResetPasswordScreen() {
 
           <Text
             style={[s.formTitle, { textAlign: isDesktop ? "left" : "center" }]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {t("resetPasswordTitle")}
           </Text>
           <Text
             style={[s.formSub, { textAlign: isDesktop ? "left" : "center" }]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {t("resetPasswordSub")}
           </Text>
 
           {/* New Password input */}
           <View style={s.inputWrapper}>
-            <Text style={s.inputLabel} allowFontScaling={false}>
+            <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
               {t("newPassword")}
             </Text>
             <Animated.View
@@ -260,7 +260,7 @@ export default function ResetPasswordScreen() {
                 secureTextEntry={!showPass}
                 autoCapitalize="none"
                 autoCorrect={false}
-                allowFontScaling={false}
+                maxFontSizeMultiplier={1.3}
               />
               <TouchableOpacity
                 onPress={() => {
@@ -289,7 +289,7 @@ export default function ResetPasswordScreen() {
 
           {/* Confirm New Password input */}
           <View style={s.inputWrapper}>
-            <Text style={s.inputLabel} allowFontScaling={false}>
+            <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
               {t("confirmNewPassword")}
             </Text>
             <Animated.View
@@ -317,7 +317,7 @@ export default function ResetPasswordScreen() {
                 secureTextEntry={!showConfirmPass}
                 autoCapitalize="none"
                 autoCorrect={false}
-                allowFontScaling={false}
+                maxFontSizeMultiplier={1.3}
               />
               <TouchableOpacity
                 onPress={() => {
@@ -347,7 +347,7 @@ export default function ResetPasswordScreen() {
           {/* Error Message */}
           {error && (
             <View style={s.errorBox}>
-              <Text style={s.errorText} allowFontScaling={false}>
+              <Text style={s.errorText} maxFontSizeMultiplier={1.3}>
                 ⚠️ {error}
               </Text>
             </View>
@@ -380,7 +380,7 @@ export default function ResetPasswordScreen() {
                 {loading ? (
                   <ActivityIndicator color={Colors.white} />
                 ) : (
-                  <Text style={s.btnText} allowFontScaling={false}>
+                  <Text style={s.btnText} maxFontSizeMultiplier={1.3}>
                     {t("savePassword")}
                   </Text>
                 )}
@@ -440,11 +440,11 @@ export default function ResetPasswordScreen() {
                       contentFit="contain"
                     />
 
-                    <Text style={s.brandLogo} allowFontScaling={false}>
+                    <Text style={s.brandLogo} maxFontSizeMultiplier={1.3}>
                       WatchList<Text style={{ color: Colors.primary }}>ID</Text>
                     </Text>
 
-                    <Text style={s.heroTitle} allowFontScaling={false}>
+                    <Text style={s.heroTitle} maxFontSizeMultiplier={1.3}>
                       {language === "id" ? (
                         <>
                           Rancang daftar tontonan impian Anda dan jelajahi rekomendasi{" "}
@@ -468,7 +468,7 @@ export default function ResetPasswordScreen() {
                   {FormContent}
 
                   <View style={s.footerBrand}>
-                    <Text style={s.footerText} allowFontScaling={false}>
+                    <Text style={s.footerText} maxFontSizeMultiplier={1.3}>
                       🍿 WatchlistID © 2026
                     </Text>
                   </View>
@@ -491,7 +491,7 @@ export default function ResetPasswordScreen() {
                     style={s.mobileLogo}
                     contentFit="contain"
                   />
-                  <Text style={s.logo} allowFontScaling={false}>
+                  <Text style={s.logo} maxFontSizeMultiplier={1.3}>
                     WatchList<Text style={s.logoAccent}>ID</Text>
                   </Text>
                 </Animated.View>

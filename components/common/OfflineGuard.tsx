@@ -103,7 +103,7 @@ export default function OfflineGuard() {
         ) : (
           <WifiOff size={18} color={Colors.white} strokeWidth={2.5} />
         )}
-        <Text style={styles.text} allowFontScaling={false}>
+        <Text style={styles.text} maxFontSizeMultiplier={1.3}>
           {showReconnected
             ? 'Koneksi internet pulih'
             : 'Mode offline'}

@@ -69,7 +69,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
             <View style={s.iconWrap}>
               <Key size={22} color={Colors.primary} strokeWidth={2} />
             </View>
-            <Text style={s.title} allowFontScaling={false}>{t('changePassword')}</Text>
+            <Text style={s.title} maxFontSizeMultiplier={1.3}>{t('changePassword')}</Text>
             <TouchableOpacity onPress={handleClose} style={s.closeBtn} activeOpacity={0.7}>
               <X size={20} color={Colors.text.secondary} />
             </TouchableOpacity>
@@ -78,12 +78,12 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
           {success ? (
             <View style={s.successWrap}>
               <Text style={s.successEmoji}>✅</Text>
-              <Text style={s.successText} allowFontScaling={false}>{t('passwordChangedSuccess')}</Text>
+              <Text style={s.successText} maxFontSizeMultiplier={1.3}>{t('passwordChangedSuccess')}</Text>
             </View>
           ) : (
             <>
               {/* New Password */}
-              <Text style={s.label} allowFontScaling={false}>{t('newPassword')}</Text>
+              <Text style={s.label} maxFontSizeMultiplier={1.3}>{t('newPassword')}</Text>
               <View style={s.inputWrap}>
                 <TextInput
                   style={s.input}
@@ -93,7 +93,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
                   placeholderTextColor={Colors.text.secondary}
                   secureTextEntry={!showNew}
                   autoCapitalize="none"
-                  allowFontScaling={false}
+                  maxFontSizeMultiplier={1.3}
                 />
                 <TouchableOpacity onPress={() => setShowNew(v => !v)} style={s.eyeBtn}>
                   {showNew ? <EyeOff size={18} color={Colors.text.secondary} /> : <Eye size={18} color={Colors.text.secondary} />}
@@ -101,7 +101,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
               </View>
 
               {/* Confirm Password */}
-              <Text style={s.label} allowFontScaling={false}>{t('confirmPassword')}</Text>
+              <Text style={s.label} maxFontSizeMultiplier={1.3}>{t('confirmPassword')}</Text>
               <View style={s.inputWrap}>
                 <TextInput
                   style={s.input}
@@ -111,7 +111,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
                   placeholderTextColor={Colors.text.secondary}
                   secureTextEntry={!showConfirm}
                   autoCapitalize="none"
-                  allowFontScaling={false}
+                  maxFontSizeMultiplier={1.3}
                 />
                 <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={s.eyeBtn}>
                   {showConfirm ? <EyeOff size={18} color={Colors.text.secondary} /> : <Eye size={18} color={Colors.text.secondary} />}
@@ -120,13 +120,13 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
 
               {error && (
                 <View style={s.errorBox}>
-                  <Text style={s.errorText} allowFontScaling={false}>{error}</Text>
+                  <Text style={s.errorText} maxFontSizeMultiplier={1.3}>{error}</Text>
                 </View>
               )}
 
               <View style={s.actions}>
                 <TouchableOpacity style={s.cancelBtn} onPress={handleClose} activeOpacity={0.75}>
-                  <Text style={s.cancelText} allowFontScaling={false}>{t('cancel')}</Text>
+                  <Text style={s.cancelText} maxFontSizeMultiplier={1.3}>{t('cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.submitBtn, loading && { opacity: 0.6 }]}
@@ -136,7 +136,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onCl
                 >
                   {loading
                     ? <ActivityIndicator color={Colors.white} size="small" />
-                    : <Text style={s.submitText} allowFontScaling={false}>{t('save')}</Text>
+                    : <Text style={s.submitText} maxFontSizeMultiplier={1.3}>{t('save')}</Text>
                   }
                 </TouchableOpacity>
               </View>

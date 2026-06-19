@@ -83,16 +83,16 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           style={s.avatar}
         />
         <View style={s.headerText}>
-          <Text style={s.username} allowFontScaling={false}>
+          <Text style={s.username} maxFontSizeMultiplier={1.3}>
             {review.user?.username || 'Anonymous'}
           </Text>
-          <Text style={s.date} allowFontScaling={false}>
+          <Text style={s.date} maxFontSizeMultiplier={1.3}>
             {formatDate(review.created_at)}
           </Text>
         </View>
         <View style={s.ratingBadge}>
           <Star size={12} color={Colors.ratingGold} fill={Colors.ratingGold} />
-          <Text style={s.ratingText} allowFontScaling={false}>{review.rating}/10</Text>
+          <Text style={s.ratingText} maxFontSizeMultiplier={1.3}>{review.rating}/10</Text>
         </View>
       </View>
 
@@ -107,9 +107,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
               setShowSpoiler(true);
             }}
           >
-            <AlertTriangle size={24} color={Colors.accentBlue} style={s.spoilerIcon} />
-            <Text style={s.spoilerTitle} allowFontScaling={false}>Contains Spoilers</Text>
-            <Text style={s.spoilerAction} allowFontScaling={false}>Tap to reveal review</Text>
+            <AlertTriangle size={24} color={Colors.accent} style={s.spoilerIcon} />
+            <Text style={s.spoilerTitle} maxFontSizeMultiplier={1.3}>Contains Spoilers</Text>
+            <Text style={s.spoilerAction} maxFontSizeMultiplier={1.3}>Tap to reveal review</Text>
           </TouchableOpacity>
         ) : (
           <View style={s.markdownContainer}>
@@ -155,14 +155,14 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       {/* Comment Tray */}
       {showComments && (
         <View style={s.commentsSection}>
-          <Text style={s.commentsTitle} allowFontScaling={false}>Replies</Text>
+          <Text style={s.commentsTitle} maxFontSizeMultiplier={1.3}>Replies</Text>
           
           {commentsLoading ? (
-            <Text style={s.loadingText} allowFontScaling={false}>Loading comments...</Text>
+            <Text style={s.loadingText} maxFontSizeMultiplier={1.3}>Loading comments...</Text>
           ) : (
             <View style={s.commentsList}>
               {comments.length === 0 ? (
-                <Text style={s.noCommentsText} allowFontScaling={false}>No comments yet. Be the first to reply!</Text>
+                <Text style={s.noCommentsText} maxFontSizeMultiplier={1.3}>No comments yet. Be the first to reply!</Text>
               ) : (
                 comments.map(c => (
                   <View key={c.id} style={s.commentCard}>
@@ -174,10 +174,10 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     />
                     <View style={s.commentContentWrapper}>
                       <View style={s.commentHeaderRow}>
-                        <Text style={s.commentUsername} allowFontScaling={false}>{c.user?.username || 'Anonymous'}</Text>
-                        <Text style={s.commentDate} allowFontScaling={false}>{formatDate(c.created_at)}</Text>
+                        <Text style={s.commentUsername} maxFontSizeMultiplier={1.3}>{c.user?.username || 'Anonymous'}</Text>
+                        <Text style={s.commentDate} maxFontSizeMultiplier={1.3}>{formatDate(c.created_at)}</Text>
                       </View>
-                      <Text style={s.commentContent} allowFontScaling={false}>{c.content}</Text>
+                      <Text style={s.commentContent} maxFontSizeMultiplier={1.3}>{c.content}</Text>
                     </View>
                   </View>
                 ))
@@ -194,14 +194,14 @@ export default function ReviewCard({ review }: ReviewCardProps) {
               value={commentInput}
               onChangeText={setCommentInput}
               multiline
-              allowFontScaling={false}
+              maxFontSizeMultiplier={1.3}
             />
             <TouchableOpacity 
               style={[s.sendBtn, (!commentInput.trim() || submitting) && s.sendBtnDisabled]}
               onPress={handleSendComment}
               disabled={!commentInput.trim() || submitting}
             >
-              <Text style={s.sendBtnText} allowFontScaling={false}>{submitting ? '...' : 'Send'}</Text>
+              <Text style={s.sendBtnText} maxFontSizeMultiplier={1.3}>{submitting ? '...' : 'Send'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -262,14 +262,14 @@ const s = StyleSheet.create({
     marginVertical: Spacing.sm,
   },
   spoilerPlaceholder: {
-    backgroundColor: `${Colors.accentBlue}0D`, // 0.05 alpha
+    backgroundColor: `${Colors.accent}0D`, // 0.05 alpha
     borderRadius: Radius.lg,
     padding: Spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: Colors.accentBlue,
+    borderColor: Colors.accent,
   },
   spoilerTitle: {
     color: Colors.white,
@@ -278,7 +278,7 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   spoilerAction: {
-    color: Colors.accentBlue,
+    color: Colors.accent,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -316,7 +316,7 @@ const s = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
   likedBtn: {
-    backgroundColor: Colors.accentBlue,
+    backgroundColor: Colors.accent,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: Radius.full,
@@ -437,12 +437,12 @@ const markdownStyles = {
     fontStyle: 'italic',
   },
   link: {
-    color: Colors.accentBlue,
+    color: Colors.accent,
     textDecorationLine: 'underline',
   },
   blockquote: {
     backgroundColor: Colors.secondary,
-    borderLeftColor: Colors.accentBlue,
+    borderLeftColor: Colors.accent,
     borderLeftWidth: 4,
     paddingHorizontal: Spacing.md,
     paddingVertical: 4,

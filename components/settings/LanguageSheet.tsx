@@ -58,7 +58,7 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
             <View style={s.iconBg}>
               <Languages size={22} color={Colors.primary} strokeWidth={2.5} />
             </View>
-            <Text style={s.title} allowFontScaling={false}>{t('language')}</Text>
+            <Text style={s.title} maxFontSizeMultiplier={1.3}>{t('language')}</Text>
           </View>
 
           <View style={s.options}>
@@ -76,10 +76,10 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
                   </View>
                   
                   <View style={s.labelContainer}>
-                    <Text style={[s.label, active && s.labelActive]} allowFontScaling={false}>
+                    <Text style={[s.label, active && s.labelActive]} maxFontSizeMultiplier={1.3}>
                       {item.label}
                     </Text>
-                    <Text style={s.subLabel} allowFontScaling={false}>
+                    <Text style={s.subLabel} maxFontSizeMultiplier={1.3}>
                       {item.sub}
                     </Text>
                   </View>
@@ -99,7 +99,7 @@ const LanguageSheet: React.FC<LanguageSheetProps> = ({ visible, onClose }) => {
             onPress={onClose}
             activeOpacity={0.8}
           >
-            <Text style={s.closeBtnText} allowFontScaling={false}>{t('close')}</Text>
+            <Text style={s.closeBtnText} maxFontSizeMultiplier={1.3}>{t('close')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -143,7 +143,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(229,9,20,0.15)',
+    backgroundColor: 'rgba(199,31,55,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -167,8 +167,8 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.05)',
   },
   optionActive: {
-    backgroundColor: 'rgba(229,9,20,0.08)',
-    borderColor: 'rgba(229,9,20,0.3)',
+    backgroundColor: 'rgba(199,31,55,0.08)',
+    borderColor: 'rgba(199,31,55,0.3)',
   },
   flagContainer: {
     width: 44,
@@ -202,7 +202,7 @@ const s = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(229,9,20,0.15)',
+    backgroundColor: 'rgba(199,31,55,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },

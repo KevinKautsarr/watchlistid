@@ -29,7 +29,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
           activeOpacity={0.8}
         >
           <Play size={IconSize.md} color={Colors.white} fill={Colors.white} strokeWidth={0} />
-          <Text style={styles.btnPlayText} allowFontScaling={false}>{t('playTrailer')}</Text>
+          <Text style={styles.btnPlayText} maxFontSizeMultiplier={1.3}>{t('playTrailer')}</Text>
         </TouchableOpacity>
       )}
 
@@ -41,7 +41,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
             activeOpacity={0.8}
           >
             <Plus size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
-            <Text style={styles.btnText} allowFontScaling={false}>
+            <Text style={styles.btnText} maxFontSizeMultiplier={1.3}>
               {t('addToWatchlist')}
             </Text>
           </TouchableOpacity>
@@ -55,7 +55,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
               activeOpacity={0.8}
             >
               <BookmarkCheck size={IconSize.sm} color="rgba(255,255,255,0.4)" strokeWidth={2} />
-              <Text style={styles.btnDisabledText} allowFontScaling={false}>
+              <Text style={styles.btnDisabledText} maxFontSizeMultiplier={1.3}>
                 Watchlist
               </Text>
             </TouchableOpacity>
@@ -66,7 +66,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
               activeOpacity={0.8}
             >
               <Check size={IconSize.md} color={Colors.white} strokeWidth={2.5} />
-              <Text style={styles.btnText} allowFontScaling={false}>
+              <Text style={styles.btnText} maxFontSizeMultiplier={1.3}>
                 {t('markWatched')}
               </Text>
             </TouchableOpacity>
@@ -80,7 +80,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
               disabled={true}
             >
               <Check size={IconSize.sm} color="rgba(255,255,255,0.4)" strokeWidth={2.5} />
-              <Text style={styles.btnDisabledText} allowFontScaling={false}>
+              <Text style={styles.btnDisabledText} maxFontSizeMultiplier={1.3}>
                 {t('diary')}
               </Text>
             </TouchableOpacity>
@@ -91,7 +91,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
               activeOpacity={0.8}
             >
               <MessageSquare size={IconSize.sm} color={Colors.white} strokeWidth={2.5} />
-              <Text style={styles.btnText} allowFontScaling={false}>
+              <Text style={styles.btnText} maxFontSizeMultiplier={1.3}>
                 {t('writeReview')}
               </Text>
             </TouchableOpacity>
@@ -102,7 +102,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
           <>
             <View style={[styles.badgeGold, { flex: 1 }]}>
               <Star size={14} color={Colors.ratingGold} fill={Colors.ratingGold} />
-              <Text style={styles.badgeGoldText} allowFontScaling={false}>
+              <Text style={styles.badgeGoldText} maxFontSizeMultiplier={1.3}>
                 {t('reviewed')}
               </Text>
             </View>
@@ -113,7 +113,7 @@ export const DetailActions: React.FC<DetailActionsProps> = ({
               activeOpacity={0.8}
             >
               <Edit3 size={IconSize.sm} color={Colors.white} strokeWidth={2} />
-              <Text style={styles.btnText} allowFontScaling={false}>
+              <Text style={styles.btnText} maxFontSizeMultiplier={1.3}>
                 {t('editReview')}
               </Text>
             </TouchableOpacity>

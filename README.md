@@ -74,7 +74,7 @@ Pastikan perangkat Anda sudah terinstal:
    ```env
    EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   EXPO_PUBLIC_TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
+   EXPO_PUBLIC_CLOUDFLARE_SITE_KEY=your-cloudflare-turnstile-site-key
    ```
    > **Catatan:** Kunci TMDB **tidak** disimpan di klien. Aplikasi memanggil TMDB
    > melalui Supabase Edge Function (`tmdb-proxy`); set kuncinya sebagai secret
@@ -100,7 +100,7 @@ Pastikan perangkat Anda sudah terinstal:
 |---------------------|-----------|-------|
 | `EXPO_PUBLIC_SUPABASE_URL` | URL Endpoint dari proyek Supabase Anda. | Ya |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Kunci anonim Supabase untuk interaksi database sisi klien. | Ya |
-| `EXPO_PUBLIC_TURNSTILE_SITE_KEY` | Kunci situs Cloudflare Turnstile untuk validasi Captcha. | Ya |
+| `EXPO_PUBLIC_CLOUDFLARE_SITE_KEY` | Kunci situs Cloudflare Turnstile untuk validasi Captcha. | Ya |
 | `TMDB_API_KEY` *(secret Edge Function, bukan `EXPO_PUBLIC`)* | Kunci API TMDB — disimpan di sisi server pada Supabase Edge Function `tmdb-proxy`. | Ya |
 
 ---

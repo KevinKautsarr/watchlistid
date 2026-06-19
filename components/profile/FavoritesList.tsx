@@ -93,7 +93,7 @@ function FavPoster({
 
         {/* #N badge */}
         <View style={styles.rankBadge}>
-          <Text style={styles.rankText} allowFontScaling={false}>#{item.position}</Text>
+          <Text style={styles.rankText} maxFontSizeMultiplier={1.3}>#{item.position}</Text>
         </View>
 
         {/* Remove button (edit mode, owner) */}
@@ -139,7 +139,7 @@ function FavPoster({
       )}
 
       {/* Title */}
-      <Text style={styles.title} numberOfLines={2} allowFontScaling={false}>
+      <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -186,7 +186,7 @@ export default function FavoritesList({ userId, isOwner, data }: FavoritesListPr
     if (!isOwner) return null;
     return (
       <View style={styles.emptyWrap}>
-        <Text style={styles.emptyText} allowFontScaling={false}>
+        <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
           {t('favoritesEmpty')}
         </Text>
       </View>
@@ -198,7 +198,7 @@ export default function FavoritesList({ userId, isOwner, data }: FavoritesListPr
     <View style={styles.section}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle} allowFontScaling={false}>
+        <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>
           {t('favoritesSection')}
           {'  '}
           <Text style={styles.sectionCount}>({items.length})</Text>
@@ -209,7 +209,7 @@ export default function FavoritesList({ userId, isOwner, data }: FavoritesListPr
             style={[styles.editBtn, cursorPointer]}
             onPress={() => setEditMode(e => !e)}
           >
-            <Text style={styles.editBtnText} allowFontScaling={false}>
+            <Text style={styles.editBtnText} maxFontSizeMultiplier={1.3}>
               {editMode ? t('favoritesDone') : t('favoritesEdit')}
             </Text>
           </TouchableOpacity>

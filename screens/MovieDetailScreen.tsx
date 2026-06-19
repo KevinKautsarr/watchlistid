@@ -117,10 +117,10 @@ export default function MovieDetailScreen() {
     return (
       <View style={styles.errorWrapper}>
         <Info size={48} color={Colors.primary} strokeWidth={1.5} />
-        <Text style={styles.errorTitle} allowFontScaling={false}>
+        <Text style={styles.errorTitle} maxFontSizeMultiplier={1.3}>
           {t('contentNotFound')}
         </Text>
-        <Text style={styles.errorSub} allowFontScaling={false}>
+        <Text style={styles.errorSub} maxFontSizeMultiplier={1.3}>
           {error || t('contentNotFoundDesc')}
         </Text>
         <TouchableOpacity 
@@ -330,7 +330,7 @@ export default function MovieDetailScreen() {
           {/* ── TV Show Season & Episode Selector ─────────────── */}
           {type === 'tv' && (movie as any).seasons && (movie as any).seasons.length > 0 && (
             <View style={styles.episodesSection}>
-              <Text style={styles.sectionTitle} allowFontScaling={false}>
+              <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>
                 {t('seasons') || 'Seasons'}
                 {'  '}
                 <Text style={styles.sectionSubcount}>
@@ -367,7 +367,7 @@ export default function MovieDetailScreen() {
                             styles.seasonPillText,
                             isActive && styles.seasonPillTextActive,
                           ]}
-                          allowFontScaling={false}
+                          maxFontSizeMultiplier={1.3}
                         >
                           {s.name || `Season ${s.season_number}`}
                         </Text>
@@ -380,7 +380,7 @@ export default function MovieDetailScreen() {
               {episodes.length > 0 && !episodesLoading && (
                 <View style={styles.progressContainer}>
                   <View style={styles.progressTextRow}>
-                    <Text style={styles.progressText} allowFontScaling={false}>
+                    <Text style={styles.progressText} maxFontSizeMultiplier={1.3}>
                       {t('episodeProgress')
                         .replace('{watched}', String(watchedCount))
                         .replace('{total}', String(episodes.length))} ({Math.round(progressPercent)}%)
@@ -388,7 +388,7 @@ export default function MovieDetailScreen() {
                     {progressPercent === 100 && (
                       <View style={styles.completedBadge}>
                         <CheckCircle2 size={14} color={Colors.success} />
-                        <Text style={styles.completedBadgeText} allowFontScaling={false}>
+                        <Text style={styles.completedBadgeText} maxFontSizeMultiplier={1.3}>
                           {t('seasonCompleted')}
                         </Text>
                       </View>
@@ -409,10 +409,10 @@ export default function MovieDetailScreen() {
                 </View>
               ) : episodes.length === 0 ? (
                 <View style={styles.emptyEpisodes}>
-                  <Text style={styles.emptyEpisodesTitle} allowFontScaling={false}>
+                  <Text style={styles.emptyEpisodesTitle} maxFontSizeMultiplier={1.3}>
                     {t('noEpisodesFound')}
                   </Text>
-                  <Text style={styles.emptyEpisodesSub} allowFontScaling={false}>
+                  <Text style={styles.emptyEpisodesSub} maxFontSizeMultiplier={1.3}>
                     {t('noEpisodesFoundSub')}
                   </Text>
                 </View>
@@ -457,18 +457,18 @@ export default function MovieDetailScreen() {
                           >
                             <View style={styles.episodeHeader}>
                               <View style={{ flex: 1 }}>
-                                <Text style={styles.episodeNum} allowFontScaling={false}>
+                                <Text style={styles.episodeNum} maxFontSizeMultiplier={1.3}>
                                   EP {ep.episode_number}
                                 </Text>
                                 <Text
                                   style={[styles.episodeTitle, isWatched && styles.episodeTitleWatched]}
                                   numberOfLines={isExpanded ? undefined : 1}
-                                  allowFontScaling={false}
+                                  maxFontSizeMultiplier={1.3}
                                 >
                                   {ep.name}
                                 </Text>
                               </View>
-                              <Text style={styles.episodeDate} allowFontScaling={false}>
+                              <Text style={styles.episodeDate} maxFontSizeMultiplier={1.3}>
                                 {ep.air_date ? ep.air_date.substring(0, 4) : '—'}
                               </Text>
                             </View>
@@ -476,7 +476,7 @@ export default function MovieDetailScreen() {
                         </View>
 
                         {isExpanded && ep.overview ? (
-                          <Text style={styles.episodeOverview} allowFontScaling={false}>
+                          <Text style={styles.episodeOverview} maxFontSizeMultiplier={1.3}>
                             {ep.overview}
                           </Text>
                         ) : null}
@@ -490,7 +490,7 @@ export default function MovieDetailScreen() {
 
           {credits.length > 0 && (
             <View style={styles.castSection}>
-              <Text style={styles.sectionTitle} allowFontScaling={false}>{t('topCast')}</Text>
+              <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('topCast')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
                 {credits.map((actor) => (
                   <CastCard 
@@ -507,7 +507,7 @@ export default function MovieDetailScreen() {
           )}
 
           <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle} allowFontScaling={false}>{t('details')}</Text>
+            <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('details')}</Text>
             <MovieDetailTable movie={movie} />
           </View>
 
@@ -517,7 +517,7 @@ export default function MovieDetailScreen() {
         <View style={[bp.isLarge && styles.largeContentFull]}>
           {similar.length > 0 && (
             <View style={styles.similarSection}>
-              <Text style={styles.sectionTitle} allowFontScaling={false}>{t('moreLikeThis')}</Text>
+              <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('moreLikeThis')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
                 {similar.map((item) => (
                   <PosterCard 

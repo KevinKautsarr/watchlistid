@@ -29,21 +29,21 @@ export const Colors = {
     primary:   '#F5F0F1',  // Warm white
     secondary: '#A89098',  // Muted rose-gray
     inverse:   '#0A0A0B',
-    accent:    '#E01E37',  // Scarlet Rush
+    accent:    '#C71F37',  // Brand red
   },
 
   // === ACCENT ===
   ratingGold:  '#F5C518',  // Rating gold (unchanged)
-  accentRed:   '#E01E37',  // Scarlet Rush — highlights
-  accentBlue:  '#E01E37',  // Remapped to red for social CTAs (Pill tab etc.)
+  accentRed:   '#C71F37',  // (legacy alias of the brand red)
+  accent:      '#C71F37',  // Brand red — action CTAs (Save/Share, active pill)
   secondary:   '#1E1218',  // surfaceElevated used as secondary bg
   success:     '#22C55E',
   warning:     '#F59E0B',
-  danger:      '#E01E37',  // Scarlet Rush
+  danger:      '#C71F37',  // brand red (errors/destructive states)
 
   // === TAB BAR ===
   tabBarBackground: '#0F080A',
-  tabBarActive:     '#E01E37',
+  tabBarActive:     '#C71F37',
   tabBarInactive:   '#6B5058',
 
   // === OVERLAY ===

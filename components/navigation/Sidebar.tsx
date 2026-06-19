@@ -47,16 +47,16 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </View>
 
           {/* Text */}
-          <Text style={dialogStyles.title} allowFontScaling={false}>{title}</Text>
-          <Text style={dialogStyles.desc} allowFontScaling={false}>{description}</Text>
+          <Text style={dialogStyles.title} maxFontSizeMultiplier={1.3}>{title}</Text>
+          <Text style={dialogStyles.desc} maxFontSizeMultiplier={1.3}>{description}</Text>
 
           {/* Buttons */}
           <View style={dialogStyles.btnRow}>
             <TouchableOpacity style={dialogStyles.btnCancel} onPress={onCancel} activeOpacity={0.75}>
-              <Text style={dialogStyles.btnCancelText} allowFontScaling={false}>{cancelLabel}</Text>
+              <Text style={dialogStyles.btnCancelText} maxFontSizeMultiplier={1.3}>{cancelLabel}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={dialogStyles.btnConfirm} onPress={onConfirm} activeOpacity={0.75}>
-              <Text style={dialogStyles.btnConfirmText} allowFontScaling={false}>{confirmLabel}</Text>
+              <Text style={dialogStyles.btnConfirmText} maxFontSizeMultiplier={1.3}>{confirmLabel}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -205,8 +205,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
             </View>
             {!collapsed && (
               <View>
-                <Text style={styles.brandTitle} allowFontScaling={false}>WatchList</Text>
-                <Text style={styles.brandSub} allowFontScaling={false}>ID</Text>
+                <Text style={styles.brandTitle} maxFontSizeMultiplier={1.3}>WatchList</Text>
+                <Text style={styles.brandSub} maxFontSizeMultiplier={1.3}>ID</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -217,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           {/* Nav */}
           <ScrollView style={styles.nav} showsVerticalScrollIndicator={false}>
             {!collapsed && (
-              <Text style={styles.navSection} allowFontScaling={false}>MENU</Text>
+              <Text style={styles.navSection} maxFontSizeMultiplier={1.3}>MENU</Text>
             )}
             {NAV_KEYS.map(({ name, key, Icon }) => {
               const active = activeTab === name;
@@ -236,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                   {!collapsed && (
                     <Text
                       style={[styles.navLabel, active && styles.navLabelActive]}
-                      allowFontScaling={false}
+                      maxFontSizeMultiplier={1.3}
                     >
                       {t(key as any)}
                     </Text>
@@ -257,7 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
               >
                 <LogOut size={20} color="#C71F37" strokeWidth={2} />
                 {!collapsed && (
-                  <Text style={styles.logoutLabel} allowFontScaling={false}>
+                  <Text style={styles.logoutLabel} maxFontSizeMultiplier={1.3}>
                     {t('signOut')}
                   </Text>
                 )}
@@ -269,7 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           {!collapsed && (
             <View style={styles.sidebarFooter}>
               <View style={styles.divider} />
-              <Text style={styles.footerText} allowFontScaling={false}>WatchList ID · v1.0</Text>
+              <Text style={styles.footerText} maxFontSizeMultiplier={1.3}>WatchList ID · v1.0</Text>
             </View>
           )}
         </SafeAreaView>

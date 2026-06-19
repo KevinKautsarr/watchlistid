@@ -15,13 +15,13 @@ interface DetailHeroProps {
 export const DetailHero: React.FC<DetailHeroProps> = ({ movie, userRating, bp, ageRating }) => {
   const renderTitleBlock = () => (
     <View style={[styles.titleBlock, bp.isLarge && { marginTop: 24, paddingHorizontal: 0 }]}>
-      <Text style={[styles.movieTitle, bp.isLarge && { fontSize: 36, lineHeight: 40 }]} allowFontScaling={false}>{movie.title || movie.name}</Text>
+      <Text style={[styles.movieTitle, bp.isLarge && { fontSize: 36, lineHeight: 40 }]} maxFontSizeMultiplier={1.3}>{movie.title || movie.name}</Text>
       <View style={styles.metaRow}>
-        <Text style={styles.metaText} allowFontScaling={false}>{movie.release_date?.substring(0,4) || movie.first_air_date?.substring(0,4)}</Text>
-        <View style={styles.agePill}><Text style={styles.agePillText} allowFontScaling={false}>{ageRating}</Text></View>
-        <Text style={styles.metaText} allowFontScaling={false}>{movie.runtime || movie.episode_run_time?.[0] ? `${Math.floor((movie.runtime || movie.episode_run_time?.[0])/60)}h ${(movie.runtime || movie.episode_run_time?.[0])%60}m` : 'N/A'}</Text>
+        <Text style={styles.metaText} maxFontSizeMultiplier={1.3}>{movie.release_date?.substring(0,4) || movie.first_air_date?.substring(0,4)}</Text>
+        <View style={styles.agePill}><Text style={styles.agePillText} maxFontSizeMultiplier={1.3}>{ageRating}</Text></View>
+        <Text style={styles.metaText} maxFontSizeMultiplier={1.3}>{movie.runtime || movie.episode_run_time?.[0] ? `${Math.floor((movie.runtime || movie.episode_run_time?.[0])/60)}h ${(movie.runtime || movie.episode_run_time?.[0])%60}m` : 'N/A'}</Text>
       </View>
-      {movie.tagline ? <Text style={styles.tagline} allowFontScaling={false}>{movie.tagline}</Text> : null}
+      {movie.tagline ? <Text style={styles.tagline} maxFontSizeMultiplier={1.3}>{movie.tagline}</Text> : null}
     </View>
   );
 

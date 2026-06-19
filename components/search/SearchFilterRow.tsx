@@ -30,7 +30,7 @@ export const SearchFilterRow: React.FC<SearchFilterRowProps> = ({ filters, activ
             }}
             style={[styles.chip, activeFilter === c.id && styles.chipActive, cursorPointer]}
           >
-            <Text style={[styles.chipTxt, activeFilter === c.id && styles.chipTxtActive]} allowFontScaling={false}>
+            <Text style={[styles.chipTxt, activeFilter === c.id && styles.chipTxtActive]} maxFontSizeMultiplier={1.3}>
               {t(c.labelKey as any)}
             </Text>
           </TouchableOpacity>

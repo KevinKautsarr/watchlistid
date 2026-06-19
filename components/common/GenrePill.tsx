@@ -29,7 +29,7 @@ const GenrePill: React.FC<GenrePillProps> = ({
         styles.text,
         active && styles.activeText,
         size === 'sm' && styles.smallText
-      ]} allowFontScaling={false}>
+      ]} maxFontSizeMultiplier={1.3}>
         {label}
       </Text>
     </TouchableOpacity>

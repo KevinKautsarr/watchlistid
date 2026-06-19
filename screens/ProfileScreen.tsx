@@ -263,7 +263,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
               }
               size={96}
             />
-            <Text style={styles.emptyText} allowFontScaling={false}>
+            <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
               {isOwner ? (
                 activeTab === 'Diary' ? t('emptyWatchedTitle') : activeTab === 'Reviews' ? t('emptyReviewsTitle') : t('noWatchlistYet')
               ) : (

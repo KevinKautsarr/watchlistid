@@ -85,7 +85,7 @@ export default function AboutScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={s.linkItem} onPress={handleShareApp}>
-              <View style={[s.linkIconBox, { backgroundColor: 'rgba(229,9,20,0.1)' }]}>
+              <View style={[s.linkIconBox, { backgroundColor: 'rgba(199,31,55,0.1)' }]}>
                 <Heart size={20} color={Colors.primary} />
               </View>
               <Text style={s.linkLabel}>Share WatchlistID</Text>

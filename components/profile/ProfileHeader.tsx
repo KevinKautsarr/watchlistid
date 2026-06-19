@@ -29,7 +29,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         {/* Primary bold display name */}
         <Text
           style={[styles.displayName, Platform.select({ web: { textWrap: 'balance' } as any })]}
-          allowFontScaling={false}
+          maxFontSizeMultiplier={1.3}
           selectable={true}
         >
           {displayName}
@@ -37,13 +37,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         {/* @username handle — only shown when username is set */}
         {!!username && (
-          <Text style={styles.usernameHandle} allowFontScaling={false} selectable={true}>
+          <Text style={styles.usernameHandle} maxFontSizeMultiplier={1.3} selectable={true}>
             @{username}
           </Text>
         )}
 
         {!!bio && (
-          <Text style={styles.bioText} allowFontScaling={false} selectable={true}>{bio}</Text>
+          <Text style={styles.bioText} maxFontSizeMultiplier={1.3} selectable={true}>{bio}</Text>
         )}
       </View>
     </View>

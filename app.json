@@ -12,11 +12,11 @@
     "icon": "./assets/images/icon.png",
     "scheme": "moviewatchlist",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#141414",
+    "backgroundColor": "#0A0A0B",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.watchlistid.app",
-      "backgroundColor": "#141414",
+      "backgroundColor": "#0A0A0B",
       "infoPlist": {
         "NSCameraUsageDescription": "WatchlistID needs camera access to let you update your profile photo.",
         "NSPhotoLibraryUsageDescription": "WatchlistID needs photo library access to let you choose a profile photo.",
@@ -24,9 +24,9 @@
       }
     },
     "android": {
-      "backgroundColor": "#141414",
+      "backgroundColor": "#0A0A0B",
       "adaptiveIcon": {
-        "backgroundColor": "#141414",
+        "backgroundColor": "#0A0A0B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -42,8 +42,8 @@
       "shortName": "WatchlistID",
       "description": "WatchlistID is your personal movie and TV show tracker. Discover trending films, build your watchlist, rate what you've watched, and follow friends.",
       "lang": "en",
-      "themeColor": "#141414",
-      "backgroundColor": "#141414"
+      "themeColor": "#0A0A0B",
+      "backgroundColor": "#0A0A0B"
     },
     "plugins": [
       [
@@ -60,9 +60,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#141414",
+          "backgroundColor": "#0A0A0B",
           "dark": {
-            "backgroundColor": "#141414"
+            "backgroundColor": "#0A0A0B"
           }
         }
       ],

@@ -84,21 +84,21 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
         />
         {showRank && rank != null && (
           <View style={styles.rankBadge}>
-            <Text style={styles.rankText} allowFontScaling={false}>{rank}</Text>
+            <Text style={styles.rankText} maxFontSizeMultiplier={1.3}>{rank}</Text>
           </View>
         )}
         {renderStatusBadge()}
       </View>
       <View style={styles.infoRow}>
         <Star size={12} color="#F5C518" fill="#F5C518" strokeWidth={0} />
-        <Text style={[styles.ratingText, textColorStyle]} allowFontScaling={false}>
+        <Text style={[styles.ratingText, textColorStyle]} maxFontSizeMultiplier={1.3}>
           {movie.vote_average?.toFixed(1)}
         </Text>
       </View>
-      <Text style={[styles.title, textColorStyle]} numberOfLines={2} allowFontScaling={false}>
+      <Text style={[styles.title, textColorStyle]} numberOfLines={2} maxFontSizeMultiplier={1.3}>
         {('title' in movie) ? movie.title : movie.name}
       </Text>
-      <Text style={[styles.year, textColorOpacityStyle]} allowFontScaling={false}>
+      <Text style={[styles.year, textColorOpacityStyle]} maxFontSizeMultiplier={1.3}>
         {('release_date' in movie) ? movie.release_date?.split('-')[0] : movie.first_air_date?.split('-')[0]}
       </Text>
     </TouchableOpacity>

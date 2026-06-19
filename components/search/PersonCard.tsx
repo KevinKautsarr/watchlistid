@@ -28,10 +28,10 @@ export const PersonCard: React.FC<PersonCardProps> = ({ person, onPress, t }) =>
         </View>
       )}
       <View style={{flex: 1}}>
-        <Text style={styles.personName} numberOfLines={1} allowFontScaling={false}>
+        <Text style={styles.personName} numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {person.name}
         </Text>
-        <Text style={styles.personDept} numberOfLines={1} allowFontScaling={false}>
+        <Text style={styles.personDept} numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {person.known_for_department === 'Acting' ? t('actor') : (person.known_for_department ?? t('actor'))}
           {person.known_for?.[0] ? ` · ${person.known_for[0]?.title ?? person.known_for[0]?.name ?? ""}` : ""}
         </Text>

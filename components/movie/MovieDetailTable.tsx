@@ -24,9 +24,9 @@ const DetailCard = ({
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Icon size={14} color={Colors.primary} strokeWidth={2.5} />
-        <Text style={styles.label} allowFontScaling={false}>{label}</Text>
+        <Text style={styles.label} maxFontSizeMultiplier={1.3}>{label}</Text>
       </View>
-      <Text style={styles.value} allowFontScaling={false} numberOfLines={2}>{value}</Text>
+      <Text style={styles.value} maxFontSizeMultiplier={1.3} numberOfLines={2}>{value}</Text>
     </View>
   );
 };

@@ -399,7 +399,7 @@ export default function SearchScreen() {
   const renderFooter = () => (
     <View style={styles.footerContainer}>
       {!isLoading && totalResults > 0 && (
-        <Text style={styles.resultCount} allowFontScaling={false}>
+        <Text style={styles.resultCount} maxFontSizeMultiplier={1.3}>
           {t("showingResults")
             .replace(
               "{count}",
@@ -490,7 +490,7 @@ export default function SearchScreen() {
               onFocus={onFocus}
               onBlur={onBlur}
               returnKeyType="search"
-              allowFontScaling={false}
+              maxFontSizeMultiplier={1.3}
               autoCorrect={false}
               autoCapitalize="none"
             />

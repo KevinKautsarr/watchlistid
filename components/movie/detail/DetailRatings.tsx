@@ -19,19 +19,19 @@ export const DetailRatings: React.FC<DetailRatingsProps> = ({ movie, userRating,
     <View style={[bp.isLarge && { flexDirection: 'column', width: 300, paddingHorizontal: 0 }, !bp.isLarge && { width: '100%' }]}>
       <View style={[styles.ratingBlock, bp.isLarge && { paddingHorizontal: 0, borderBottomWidth: 0 }]}>
         <View style={styles.ratingCol}>
-          <Text style={styles.ratingLabel} allowFontScaling={false}>{t('imdbRating')}</Text>
+          <Text style={styles.ratingLabel} maxFontSizeMultiplier={1.3}>{t('imdbRating')}</Text>
           <View style={styles.scoreRow}>
             <Star size={28} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
-            <Text style={styles.scoreVal} allowFontScaling={false}>{movie.vote_average?.toFixed(1)}</Text>
-            <Text style={styles.scoreMax} allowFontScaling={false}>/10</Text>
+            <Text style={styles.scoreVal} maxFontSizeMultiplier={1.3}>{movie.vote_average?.toFixed(1)}</Text>
+            <Text style={styles.scoreMax} maxFontSizeMultiplier={1.3}>/10</Text>
           </View>
-          <Text style={styles.voteCount} allowFontScaling={false}>{movie.vote_count?.toLocaleString()} {t('votes')}</Text>
+          <Text style={styles.voteCount} maxFontSizeMultiplier={1.3}>{movie.vote_count?.toLocaleString()} {t('votes')}</Text>
         </View>
         <View style={styles.vDivider} />
         <View style={styles.ratingCol}>
-          <Text style={styles.ratingLabel} allowFontScaling={false}>{t('popularity')}</Text>
+          <Text style={styles.ratingLabel} maxFontSizeMultiplier={1.3}>{t('popularity')}</Text>
           <TrendingUp size={IconSize.md} color={Colors.primary} strokeWidth={2} />
-          <Text style={styles.popScore} allowFontScaling={false}>{movie.popularity?.toFixed(0)}</Text>
+          <Text style={styles.popScore} maxFontSizeMultiplier={1.3}>{movie.popularity?.toFixed(0)}</Text>
         </View>
         <View style={styles.vDivider} />
         <TouchableOpacity 
@@ -39,16 +39,16 @@ export const DetailRatings: React.FC<DetailRatingsProps> = ({ movie, userRating,
           activeOpacity={0.7}
           onPress={onRatePress}
         >
-          <Text style={styles.ratingLabel} allowFontScaling={false}>{t('yourRatingLabel')}</Text>
+          <Text style={styles.ratingLabel} maxFontSizeMultiplier={1.3}>{t('yourRatingLabel')}</Text>
           {userRating ? (
             <>
               <Star size={IconSize.md} color={Colors.primary} fill={Colors.primary} strokeWidth={0} />
-              <Text style={styles.userRateScore} allowFontScaling={false}>{userRating}/10</Text>
+              <Text style={styles.userRateScore} maxFontSizeMultiplier={1.3}>{userRating}/10</Text>
             </>
           ) : (
             <>
               <Star size={IconSize.md} color={Colors.surface} strokeWidth={1.5} />
-              <Text style={styles.rateTextAction} allowFontScaling={false}>{t('log')}</Text>
+              <Text style={styles.rateTextAction} maxFontSizeMultiplier={1.3}>{t('log')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -93,18 +93,18 @@ const styles = StyleSheet.create({
   userRateScore: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.bold, marginTop: 4 },
   rateTextAction: { fontSize: FontSize.md, color: Colors.primary, fontWeight: FontWeight.bold, marginTop: 4 },
   communityRatingCard: {
-    backgroundColor: `${Colors.accentBlue}14`,
+    backgroundColor: `${Colors.accent}14`,
     marginHorizontal: 24,
     marginTop: 20,
     borderRadius: Radius.xl,
     padding: 24,
     borderWidth: 1,
-    borderColor: `${Colors.accentBlue}33`,
+    borderColor: `${Colors.accent}33`,
   },
   communityHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   communityLabel: { color: Colors.white, fontSize: FontSize.md, fontWeight: FontWeight.black, letterSpacing: -0.3 },
   communitySub: { color: Colors.text.secondary, fontSize: FontSize.xs, marginTop: 2 },
-  scoreBox: { backgroundColor: Colors.accentBlue, width: 44, height: 44, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
+  scoreBox: { backgroundColor: Colors.accent, width: 44, height: 44, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
   scoreText: { color: Colors.white, fontSize: 18, fontWeight: FontWeight.black },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   progressTrack: { flex: 1, height: 6, backgroundColor: Colors.overlay.light5, borderRadius: Radius.full, overflow: 'hidden' },

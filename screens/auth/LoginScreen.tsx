@@ -176,7 +176,7 @@ export default function LoginScreen() {
         <View style={s.formHeader}>
           <View style={s.welcomeBadge}>
             <Sparkles size={14} color={Colors.primary} strokeWidth={2.5} />
-            <Text style={s.welcomeBadgeText} allowFontScaling={false}>
+            <Text style={s.welcomeBadgeText} maxFontSizeMultiplier={1.3}>
               {t("welcomeBack")}
             </Text>
           </View>
@@ -185,7 +185,7 @@ export default function LoginScreen() {
 
       <Text
         style={[s.formTitle, { textAlign: isDesktop ? "left" : "center" }]}
-        allowFontScaling={false}
+        maxFontSizeMultiplier={1.3}
       >
         {isDesktop
           ? language === "id"
@@ -198,7 +198,7 @@ export default function LoginScreen() {
 
       {/* Email input with animated border */}
       <View style={s.inputWrapper}>
-        <Text style={s.inputLabel} allowFontScaling={false}>
+        <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
           {language === "id" ? "Email atau Username" : "Email or Username"}
         </Text>
         <Animated.View
@@ -219,7 +219,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           />
         </Animated.View>
       </View>
@@ -227,7 +227,7 @@ export default function LoginScreen() {
       {/* Password input with animated border */}
       <View style={s.inputWrapper}>
         <View style={s.labelRow}>
-          <Text style={s.inputLabel} allowFontScaling={false}>
+          <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
             {t("password")}
           </Text>
           <TouchableOpacity
@@ -235,7 +235,7 @@ export default function LoginScreen() {
             activeOpacity={0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={s.forgotTextInline} allowFontScaling={false}>
+            <Text style={s.forgotTextInline} maxFontSizeMultiplier={1.3}>
               {language === "id" ? "Lupa?" : "Forgot?"}
             </Text>
           </TouchableOpacity>
@@ -256,7 +256,7 @@ export default function LoginScreen() {
             placeholder="••••••••"
             placeholderTextColor="rgba(255, 255, 255, 0.3)"
             secureTextEntry={!showPass}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           />
           <TouchableOpacity
             onPress={() => {
@@ -282,7 +282,7 @@ export default function LoginScreen() {
       {/* Error Message */}
       {error && (
         <View style={s.errorBox}>
-          <Text style={s.errorText} allowFontScaling={false}>
+          <Text style={s.errorText} maxFontSizeMultiplier={1.3}>
             ⚠️ {error}
           </Text>
         </View>
@@ -317,7 +317,7 @@ export default function LoginScreen() {
             ) : (
               <>
                 <LogIn size={18} color={Colors.white} strokeWidth={2.5} />
-                <Text style={s.btnText} allowFontScaling={false}>
+                <Text style={s.btnText} maxFontSizeMultiplier={1.3}>
                   {language === "id" ? "Masuk Sekarang" : "Sign In Now"}
                 </Text>
               </>
@@ -329,7 +329,7 @@ export default function LoginScreen() {
       {/* Divider */}
       <View style={s.divider}>
         <View style={s.dividerLine} />
-        <Text style={s.dividerText} allowFontScaling={false}>
+        <Text style={s.dividerText} maxFontSizeMultiplier={1.3}>
           {t("or")}
         </Text>
         <View style={s.dividerLine} />
@@ -349,14 +349,14 @@ export default function LoginScreen() {
             <EmptyStateIcon name="google" size={20} />
           )}
         </View>
-        <Text style={s.googleBtnText} allowFontScaling={false}>
+        <Text style={s.googleBtnText} maxFontSizeMultiplier={1.3}>
           {language === "id" ? "Lanjutkan dengan Google" : "Continue with Google"}
         </Text>
       </TouchableOpacity>
 
       {/* Create Account Link */}
       <View style={s.signupRow}>
-        <Text style={s.signupText} allowFontScaling={false}>
+        <Text style={s.signupText} maxFontSizeMultiplier={1.3}>
           {t("noAccount")}{" "}
         </Text>
         <TouchableOpacity
@@ -366,7 +366,7 @@ export default function LoginScreen() {
           }}
           activeOpacity={0.7}
         >
-          <Text style={s.signupLink} allowFontScaling={false}>
+          <Text style={s.signupLink} maxFontSizeMultiplier={1.3}>
             {t("signUpNow")}
           </Text>
         </TouchableOpacity>
@@ -381,7 +381,7 @@ export default function LoginScreen() {
         }}
         activeOpacity={0.7}
       >
-        <Text style={s.skipText} allowFontScaling={false}>
+        <Text style={s.skipText} maxFontSizeMultiplier={1.3}>
           {t("skipAndExplore")}
         </Text>
       </TouchableOpacity>
@@ -430,12 +430,12 @@ export default function LoginScreen() {
                   />
 
                   {/* Brand name */}
-                  <Text style={s.brandLogo} allowFontScaling={false}>
+                  <Text style={s.brandLogo} maxFontSizeMultiplier={1.3}>
                     WatchList<Text style={{ color: Colors.primary }}>ID</Text>
                   </Text>
 
                   {/* Hero tagline */}
-                  <Text style={s.heroTitle} allowFontScaling={false}>
+                  <Text style={s.heroTitle} maxFontSizeMultiplier={1.3}>
                     {language === "id" ? (
                       <>
                         Rancang daftar tontonan impian Anda dan jelajahi rekomendasi{" "}
@@ -460,7 +460,7 @@ export default function LoginScreen() {
 
                 {/* Minimalist footer brand */}
                 <View style={s.footerBrand}>
-                  <Text style={s.footerText} allowFontScaling={false}>
+                  <Text style={s.footerText} maxFontSizeMultiplier={1.3}>
                     🍿 WatchlistID © 2026
                   </Text>
                 </View>
@@ -484,10 +484,10 @@ export default function LoginScreen() {
                   style={s.mobileLogo}
                   contentFit="contain"
                 />
-                <Text style={s.logo} allowFontScaling={false}>
+                <Text style={s.logo} maxFontSizeMultiplier={1.3}>
                   WatchList<Text style={s.logoAccent}>ID</Text>
                 </Text>
-                <Text style={s.logoSub} allowFontScaling={false}>
+                <Text style={s.logoSub} maxFontSizeMultiplier={1.3}>
                   {t("authTagline")}
                 </Text>
               </Animated.View>

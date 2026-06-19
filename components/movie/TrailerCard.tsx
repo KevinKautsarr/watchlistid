@@ -82,13 +82,13 @@ const TrailerCard: React.FC<TrailerCardProps> = ({ video, onPress, featured }) =
         {/* Video type badge */}
         <View style={styles.typeBadge}>
           <TypeIcon type={video.type} />
-          <Text style={styles.typeText} allowFontScaling={false}>{video.type}</Text>
+          <Text style={styles.typeText} maxFontSizeMultiplier={1.3}>{video.type}</Text>
         </View>
       </View>
 
       {/* Title shown only on non-featured cards */}
       {!featured && (
-        <Text style={styles.title} numberOfLines={2} allowFontScaling={false}>
+        <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>
           {video.name}
         </Text>
       )}

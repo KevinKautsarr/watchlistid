@@ -87,7 +87,7 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
           onFocus={onFocus}
           onBlur={onBlur}
           returnKeyType="search"
-          allowFontScaling={false}
+          maxFontSizeMultiplier={1.3}
           autoCorrect={false}
           autoCapitalize="none"
         />
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pillActive: {
-    backgroundColor: Colors.accentBlue,
+    backgroundColor: Colors.accent,
   },
   pillText: {
     fontSize: FontSize.sm,

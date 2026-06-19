@@ -5,7 +5,14 @@
       "Bash(npx expo *)",
       "Bash(echo \"=== exit: $? ===\")",
       "Bash(echo \"--- error count: $\\(npx expo lint 2>&1)",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); console.log\\('vercel.json: valid JSON ✓'\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); console.log\\('vercel.json: valid JSON ✓'\\)\")",
+      "Bash(xargs -r sed -i 's/Colors\\\\.accentBlue/Colors.accent/g')",
+      "Bash(xargs -r sed -i 's/#E50914/#C71F37/g')",
+      "Bash(xargs -r sed -i 's/rgba\\(229,9,20/rgba\\(199,31,55/g')",
+      "Bash(xargs -r sed -i 's/#141414/#0A0A0B/g')",
+      "Bash(sed -i 's/#141414/#0A0A0B/g' app.json)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('app.json','utf8'\\)\\); console.log\\('valid ✓'\\)\")",
+      "Bash(xargs -r sed -i 's/allowFontScaling={false}/maxFontSizeMultiplier={1.3}/g')"
     ]
   }
 }

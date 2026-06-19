@@ -83,11 +83,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           >
             <View style={styles.tabIconWrapper}>
               <Icon size={18} color={isActive ? Colors.white : 'rgba(255,255,255,0.4)'} strokeWidth={isActive ? 2.5 : 2} />
-              <Text style={[styles.tabLabelText, isActive && styles.tabLabelTextActive]} allowFontScaling={false}>
+              <Text style={[styles.tabLabelText, isActive && styles.tabLabelTextActive]} maxFontSizeMultiplier={1.3}>
                 {label}
               </Text>
               <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]} allowFontScaling={false}>
+                <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]} maxFontSizeMultiplier={1.3}>
                   {count}
                 </Text>
               </View>
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   tabLabelText: { fontSize: 13, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.4)' },
   tabLabelTextActive: { color: Colors.white },
   tabBadge: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 6, minWidth: 20, paddingVertical: 2, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  tabBadgeActive: { backgroundColor: 'rgba(229,9,20,0.2)' },
+  tabBadgeActive: { backgroundColor: 'rgba(199,31,55,0.2)' },
   tabBadgeText: { fontSize: 10, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.6)' },
   tabBadgeTextActive: { color: Colors.primary },
 });

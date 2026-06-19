@@ -57,6 +57,6 @@ export default function AppEntry() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141414', // Samakan dengan warna background SplashScreen agar transisi seamless
+    backgroundColor: '#0A0A0B', // Samakan dengan warna background SplashScreen agar transisi seamless
   },
 });

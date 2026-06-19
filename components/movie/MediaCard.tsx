@@ -112,7 +112,7 @@ export const MediaCard = React.memo(function MediaCard({
           {!!vote_average && vote_average > 0 && (
             <View style={styles.ratingBadge}>
               <Star size={IconSize.xs * 0.8} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
-              <Text style={styles.ratingText} allowFontScaling={false}>
+              <Text style={styles.ratingText} maxFontSizeMultiplier={1.3}>
                 {vote_average.toFixed(1)}
               </Text>
             </View>
@@ -122,7 +122,7 @@ export const MediaCard = React.memo(function MediaCard({
           <Text
             style={[styles.title, { fontSize: width >= 170 ? FontSize.sm : FontSize.xs }]}
             numberOfLines={2}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {title || name}
           </Text>

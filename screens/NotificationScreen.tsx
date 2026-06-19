@@ -133,11 +133,11 @@ const NotificationScreen: React.FC = () => {
         </View>
 
         <View style={s.itemCenter}>
-          <Text style={s.itemMessage} numberOfLines={3} allowFontScaling={false}>
+          <Text style={s.itemMessage} numberOfLines={3} maxFontSizeMultiplier={1.3}>
             <Text style={s.itemTitle}>{item.title} </Text>
             {item.message}
           </Text>
-          <Text style={s.itemDate} allowFontScaling={false}>
+          <Text style={s.itemDate} maxFontSizeMultiplier={1.3}>
             {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
@@ -159,7 +159,7 @@ const NotificationScreen: React.FC = () => {
           <ChevronLeft size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />
         </TouchableOpacity>
         
-        <Text style={s.headerTitle} allowFontScaling={false}>{t('notifications')}</Text>
+        <Text style={s.headerTitle} maxFontSizeMultiplier={1.3}>{t('notifications')}</Text>
         
         <TouchableOpacity style={[s.headerBtn, cursorPointer]} onPress={handleMarkAllRead} accessibilityRole="button" accessibilityLabel="Clear all notifications">
           <Trash2 size={IconSize.md} color={Colors.primary} strokeWidth={2} />
@@ -182,8 +182,8 @@ const NotificationScreen: React.FC = () => {
         ListEmptyComponent={(
           <View style={s.empty}>
             <EmptyStateIcon name="notifications" size={96} style={{ marginBottom: Spacing.xl }} />
-            <Text style={s.emptyTitle} allowFontScaling={false}>{t('allCaughtUp')}</Text>
-            <Text style={s.emptySub} allowFontScaling={false}>
+            <Text style={s.emptyTitle} maxFontSizeMultiplier={1.3}>{t('allCaughtUp')}</Text>
+            <Text style={s.emptySub} maxFontSizeMultiplier={1.3}>
               {t('noNotifications')}
             </Text>
           </View>

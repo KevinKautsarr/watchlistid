@@ -93,7 +93,7 @@ const s = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(229,9,20,0.1)',
+    backgroundColor: 'rgba(199,31,55,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xl,

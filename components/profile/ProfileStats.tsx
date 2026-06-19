@@ -31,13 +31,13 @@ const ProfileStats: React.FC<ProfileStatsProps> = ({
       {/* Row 1: Social Stats */}
       <View style={styles.socialRow}>
         <Pressable style={({ pressed }) => [styles.statItem, pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] }]} onPress={onFollowersPress}>
-          <Text style={styles.statCount} allowFontScaling={false} selectable={true}>{followers}</Text>
-          <Text style={styles.statLabel} allowFontScaling={false}>{t('followers') || 'Pengikut'}</Text>
+          <Text style={styles.statCount} maxFontSizeMultiplier={1.3} selectable={true}>{followers}</Text>
+          <Text style={styles.statLabel} maxFontSizeMultiplier={1.3}>{t('followers') || 'Pengikut'}</Text>
         </Pressable>
  
         <Pressable style={({ pressed }) => [styles.statItem, pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] }]} onPress={onFollowingPress}>
-          <Text style={styles.statCount} allowFontScaling={false} selectable={true}>{following}</Text>
-          <Text style={styles.statLabel} allowFontScaling={false}>{t('following') || 'Mengikuti'}</Text>
+          <Text style={styles.statCount} maxFontSizeMultiplier={1.3} selectable={true}>{following}</Text>
+          <Text style={styles.statLabel} maxFontSizeMultiplier={1.3}>{t('following') || 'Mengikuti'}</Text>
         </Pressable>
       </View>
  
@@ -45,34 +45,34 @@ const ProfileStats: React.FC<ProfileStatsProps> = ({
       <View style={styles.movieStatsCard}>
         <View style={styles.movieStatCol}>
           <MessageSquare size={16} color="rgba(255,255,255,0.4)" style={styles.movieStatIcon} />
-          <Text style={styles.movieStatValue} allowFontScaling={false}>{reviewsCount}</Text>
-          <Text style={styles.movieStatLabel} allowFontScaling={false}>{t('reviews')}</Text>
+          <Text style={styles.movieStatValue} maxFontSizeMultiplier={1.3}>{reviewsCount}</Text>
+          <Text style={styles.movieStatLabel} maxFontSizeMultiplier={1.3}>{t('reviews')}</Text>
         </View>
 
         <View style={styles.divider} />
 
         <View style={styles.movieStatCol}>
           <Film size={16} color="rgba(255,255,255,0.4)" style={styles.movieStatIcon} />
-          <Text style={styles.movieStatValue} allowFontScaling={false}>{watchedCount}</Text>
-          <Text style={styles.movieStatLabel} allowFontScaling={false}>{t('watched')}</Text>
+          <Text style={styles.movieStatValue} maxFontSizeMultiplier={1.3}>{watchedCount}</Text>
+          <Text style={styles.movieStatLabel} maxFontSizeMultiplier={1.3}>{t('watched')}</Text>
         </View>
 
         <View style={styles.divider} />
 
         <View style={styles.movieStatCol}>
           <Bookmark size={16} color="rgba(255,255,255,0.4)" style={styles.movieStatIcon} />
-          <Text style={styles.movieStatValue} allowFontScaling={false}>{watchlistCount}</Text>
-          <Text style={styles.movieStatLabel} allowFontScaling={false}>{t('tabWatchlist')}</Text>
+          <Text style={styles.movieStatValue} maxFontSizeMultiplier={1.3}>{watchlistCount}</Text>
+          <Text style={styles.movieStatLabel} maxFontSizeMultiplier={1.3}>{t('tabWatchlist')}</Text>
         </View>
         
         <View style={styles.divider} />
         
         <View style={styles.movieStatCol}>
           <Star size={16} color={Colors.ratingGold} fill={Colors.ratingGold} style={styles.movieStatIcon} />
-          <Text style={styles.movieStatValue} allowFontScaling={false}>
+          <Text style={styles.movieStatValue} maxFontSizeMultiplier={1.3}>
             {avgRating > 0 ? (avgRating / 2).toFixed(1) : '-'}
           </Text>
-          <Text style={styles.movieStatLabel} allowFontScaling={false}>{t('rating')}</Text>
+          <Text style={styles.movieStatLabel} maxFontSizeMultiplier={1.3}>{t('rating')}</Text>
         </View>
       </View>
     </View>

@@ -65,7 +65,7 @@ const SplashScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Ambient Glow: Gradasi dibuat seolah memancar dari tengah */}
       <LinearGradient 
-        colors={['#1A0405', '#141414', '#141414']} 
+        colors={['#1A0405', '#0A0A0B', '#0A0A0B']} 
         locations={[0, 0.4, 1]}
         style={StyleSheet.absoluteFill} 
       />
@@ -82,13 +82,13 @@ const SplashScreen: React.FC = () => {
         </Animated.View>
         
         <Animated.View style={{ opacity: textOpacity }}>
-          <Text style={styles.appName} allowFontScaling={false}>
+          <Text style={styles.appName} maxFontSizeMultiplier={1.3}>
             WATCHLIST<Text style={styles.appAccent}>ID</Text>
           </Text>
         </Animated.View>
         
         <Animated.View style={{ opacity: taglineOpacity }}>
-          <Text style={styles.tagline} allowFontScaling={false}>
+          <Text style={styles.tagline} maxFontSizeMultiplier={1.3}>
             Your Personal Movie Universe
           </Text>
         </Animated.View>
@@ -104,7 +104,7 @@ const SplashScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141414', // Warna dasar solid
+    backgroundColor: '#0A0A0B', // Warna dasar solid
     justifyContent: 'center',
     alignItems: 'center',
   },

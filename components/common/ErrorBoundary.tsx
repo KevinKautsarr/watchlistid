@@ -77,16 +77,16 @@ export class ErrorBoundary extends React.Component<Props, State> {
       const chunk = this.state.isChunkError;
       return (
         <View style={styles.container}>
-          <Text style={styles.emoji} allowFontScaling={false}>🎬</Text>
-          <Text style={styles.title} allowFontScaling={false}>Ups, Ada Kesalahan</Text>
-          <Text style={styles.subtitle} allowFontScaling={false}>
+          <Text style={styles.emoji} maxFontSizeMultiplier={1.3}>🎬</Text>
+          <Text style={styles.title} maxFontSizeMultiplier={1.3}>Ups, Ada Kesalahan</Text>
+          <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
             {chunk
               ? 'Versi aplikasi telah diperbarui. Muat ulang halaman untuk melanjutkan.'
               : 'Aplikasi mengalami kendala saat memuat halaman ini.'}
           </Text>
           {!chunk && (
             <View style={styles.debugBox}>
-              <Text style={styles.debugText} allowFontScaling={false}>
+              <Text style={styles.debugText} maxFontSizeMultiplier={1.3}>
                 {this.state.error?.toString()}
               </Text>
             </View>
@@ -95,7 +95,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             style={styles.retryBtn}
             onPress={chunk ? this.handleReload : this.handleRetry}
           >
-            <Text style={styles.retry} allowFontScaling={false}>
+            <Text style={styles.retry} maxFontSizeMultiplier={1.3}>
               {chunk ? 'Muat Ulang' : 'Coba Lagi'}
             </Text>
           </TouchableOpacity>

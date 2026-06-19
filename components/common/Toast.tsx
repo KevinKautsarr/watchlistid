@@ -69,7 +69,7 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
         <View style={styles.iconBox}>
           <Icon size={20} color={iconColor} strokeWidth={2.5} />
         </View>
-        <Text style={styles.text} allowFontScaling={false}>{message}</Text>
+        <Text style={styles.text} maxFontSizeMultiplier={1.3}>{message}</Text>
       </Animated.View>
     </View>
   );

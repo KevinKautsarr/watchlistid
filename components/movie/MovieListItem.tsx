@@ -75,18 +75,18 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
         />
         {rank != null && (
           <View style={styles.rankBadge}>
-            <Text style={styles.rankBadgeText} allowFontScaling={false}>#{rank}</Text>
+            <Text style={styles.rankBadgeText} maxFontSizeMultiplier={1.3}>#{rank}</Text>
           </View>
         )}
       </TouchableOpacity>
       <View style={styles.contentCol}>
-        <Text style={styles.title} numberOfLines={1} allowFontScaling={false}>{title}</Text>
+        <Text style={styles.title} numberOfLines={1} maxFontSizeMultiplier={1.3}>{title}</Text>
         <View style={styles.metaRow}>
-          <Text style={styles.metaText} allowFontScaling={false}>{date?.substring(0,4)}</Text>
+          <Text style={styles.metaText} maxFontSizeMultiplier={1.3}>{date?.substring(0,4)}</Text>
           {runtime ? (
             <>
-              <Text style={styles.metaDot} allowFontScaling={false}>·</Text>
-              <Text style={styles.metaText} allowFontScaling={false}>
+              <Text style={styles.metaDot} maxFontSizeMultiplier={1.3}>·</Text>
+              <Text style={styles.metaText} maxFontSizeMultiplier={1.3}>
                 {`${Math.floor(runtime/60)}h ${runtime%60}m`}
               </Text>
             </>
@@ -98,23 +98,23 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
             {status === 'plan_to_watch' && (
               <View style={[styles.statusBadge, styles.planBadge]}>
                 <View style={[styles.badgeDot, styles.planDot]} />
-                <Text style={styles.planBadgeText} allowFontScaling={false}>{t('statusPlanToWatch')}</Text>
+                <Text style={styles.planBadgeText} maxFontSizeMultiplier={1.3}>{t('statusPlanToWatch')}</Text>
               </View>
             )}
             {status === 'watched' && (
               <View style={[styles.statusBadge, styles.watchedBadge]}>
                 <View style={[styles.badgeDot, styles.watchedDot]} />
-                <Text style={styles.watchedBadgeText} allowFontScaling={false}>{t('statusWatched')}</Text>
+                <Text style={styles.watchedBadgeText} maxFontSizeMultiplier={1.3}>{t('statusWatched')}</Text>
               </View>
             )}
             {status === 'reviewed' && (
               <View style={[styles.statusBadge, styles.reviewedBadge]}>
-                <Text style={styles.reviewedBadgeText} allowFontScaling={false}>{t('statusReviewed')}</Text>
+                <Text style={styles.reviewedBadgeText} maxFontSizeMultiplier={1.3}>{t('statusReviewed')}</Text>
               </View>
             )}
           </View>
         )}
-        <Text style={styles.overview} numberOfLines={2} allowFontScaling={false}>
+        <Text style={styles.overview} numberOfLines={2} maxFontSizeMultiplier={1.3}>
           {movie.overview}
         </Text>
       </View>

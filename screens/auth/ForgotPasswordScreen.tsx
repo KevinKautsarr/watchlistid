@@ -151,10 +151,10 @@ export default function ForgotPasswordScreen() {
         // ── SUCCESS STATE ──
         <View style={s.sentWrap}>
           <Text style={s.sentEmoji}>📬</Text>
-          <Text style={s.sentTitle} allowFontScaling={false}>
+          <Text style={s.sentTitle} maxFontSizeMultiplier={1.3}>
             {t("emailSent")}
           </Text>
-          <Text style={s.sentSub} allowFontScaling={false}>
+          <Text style={s.sentSub} maxFontSizeMultiplier={1.3}>
             {t("checkInboxForReset").replace("{email}", email)}
           </Text>
           <TouchableOpacity
@@ -162,7 +162,7 @@ export default function ForgotPasswordScreen() {
             onPress={() => router.replace("/auth/login")}
             activeOpacity={0.85}
           >
-            <Text style={s.backToLoginText} allowFontScaling={false}>
+            <Text style={s.backToLoginText} maxFontSizeMultiplier={1.3}>
               {t("backToLogin")}
             </Text>
           </TouchableOpacity>
@@ -174,7 +174,7 @@ export default function ForgotPasswordScreen() {
             <View style={s.formHeader}>
               <View style={s.welcomeBadge}>
                 <Sparkles size={14} color={Colors.primary} strokeWidth={2.5} />
-                <Text style={s.welcomeBadgeText} allowFontScaling={false}>
+                <Text style={s.welcomeBadgeText} maxFontSizeMultiplier={1.3}>
                   {language === "id" ? "Pemulihan Akun" : "Account Recovery"}
                 </Text>
               </View>
@@ -183,20 +183,20 @@ export default function ForgotPasswordScreen() {
 
           <Text
             style={[s.formTitle, { textAlign: isDesktop ? "left" : "center" }]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {t("forgotPasswordTitle")}
           </Text>
           <Text
             style={[s.formSub, { textAlign: isDesktop ? "left" : "center" }]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {t("forgotPasswordDesc")}
           </Text>
 
           {/* Email input with animated border */}
           <View style={s.inputWrapper}>
-            <Text style={s.inputLabel} allowFontScaling={false}>
+            <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
               {t("email")}
             </Text>
             <Animated.View
@@ -223,7 +223,7 @@ export default function ForgotPasswordScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                allowFontScaling={false}
+                maxFontSizeMultiplier={1.3}
               />
             </Animated.View>
           </View>
@@ -231,7 +231,7 @@ export default function ForgotPasswordScreen() {
           {/* Error Message */}
           {error && (
             <View style={s.errorBox}>
-              <Text style={s.errorText} allowFontScaling={false}>
+              <Text style={s.errorText} maxFontSizeMultiplier={1.3}>
                 ⚠️ {error}
               </Text>
             </View>
@@ -266,7 +266,7 @@ export default function ForgotPasswordScreen() {
                 ) : (
                   <>
                     <Send size={18} color={Colors.white} strokeWidth={2.5} />
-                    <Text style={s.btnText} allowFontScaling={false}>
+                    <Text style={s.btnText} maxFontSizeMultiplier={1.3}>
                       {language === "id" ? "Kirim Tautan" : "Send Reset Link"}
                     </Text>
                   </>
@@ -282,7 +282,7 @@ export default function ForgotPasswordScreen() {
             activeOpacity={0.7}
           >
             <ArrowLeft size={16} color={Colors.primary} strokeWidth={2.5} />
-            <Text style={s.backLinkText} allowFontScaling={false}>
+            <Text style={s.backLinkText} maxFontSizeMultiplier={1.3}>
               {t("backToLogin")}
             </Text>
           </TouchableOpacity>
@@ -345,11 +345,11 @@ export default function ForgotPasswordScreen() {
                     contentFit="contain"
                   />
 
-                  <Text style={s.brandLogo} allowFontScaling={false}>
+                  <Text style={s.brandLogo} maxFontSizeMultiplier={1.3}>
                     WatchList<Text style={{ color: Colors.primary }}>ID</Text>
                   </Text>
 
-                  <Text style={s.heroTitle} allowFontScaling={false}>
+                  <Text style={s.heroTitle} maxFontSizeMultiplier={1.3}>
                     {language === "id" ? (
                       <>
                         Rancang daftar tontonan impian Anda dan jelajahi rekomendasi{" "}
@@ -374,7 +374,7 @@ export default function ForgotPasswordScreen() {
                 {FormContent}
 
                 <View style={s.footerBrand}>
-                  <Text style={s.footerText} allowFontScaling={false}>
+                  <Text style={s.footerText} maxFontSizeMultiplier={1.3}>
                     🍿 WatchlistID © 2026
                   </Text>
                 </View>
@@ -397,7 +397,7 @@ export default function ForgotPasswordScreen() {
                   style={s.mobileLogo}
                   contentFit="contain"
                 />
-                <Text style={s.logo} allowFontScaling={false}>
+                <Text style={s.logo} maxFontSizeMultiplier={1.3}>
                   WatchList<Text style={s.logoAccent}>ID</Text>
                 </Text>
               </Animated.View>

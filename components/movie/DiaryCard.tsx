@@ -30,14 +30,14 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.date} allowFontScaling={false}>
+          <Text style={styles.date} maxFontSizeMultiplier={1.3}>
             {formatHumanDate(log.watched_at, language)}
           </Text>
         </View>
         
         <View style={styles.headerCenter}>
           {rank != null && (
-            <Text style={styles.rankText} allowFontScaling={false}>#{rank}</Text>
+            <Text style={styles.rankText} maxFontSizeMultiplier={1.3}>#{rank}</Text>
           )}
         </View>
 
@@ -82,7 +82,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
         </TouchableOpacity>
 
         <View style={styles.info}>
-          <Text style={styles.title} allowFontScaling={false}>{log.movie_title}</Text>
+          <Text style={styles.title} maxFontSizeMultiplier={1.3}>{log.movie_title}</Text>
           
           <View style={styles.ratingsWrapper}>
             {log.rating ? (
@@ -103,7 +103,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
           </View>
 
           {log.overview ? (
-            <Text style={styles.overview} numberOfLines={2} allowFontScaling={false}>
+            <Text style={styles.overview} numberOfLines={2} maxFontSizeMultiplier={1.3}>
               {log.overview}
             </Text>
           ) : null}
@@ -118,13 +118,13 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
                   accessibilityLabel={t('clickToReveal')}
                 >
                   <EyeOff size={IconSize.sm} color={Colors.primary} style={styles.spoilerIcon} />
-                  <Text style={styles.spoilerText} allowFontScaling={false}>
+                  <Text style={styles.spoilerText} maxFontSizeMultiplier={1.3}>
                     {t('clickToReveal')}
                   </Text>
                 </TouchableOpacity>
               ) : (
                 <View>
-                  <Text style={styles.review} numberOfLines={isRevealed ? undefined : 3} allowFontScaling={false}>
+                  <Text style={styles.review} numberOfLines={isRevealed ? undefined : 3} maxFontSizeMultiplier={1.3}>
                     {log.review_text}
                   </Text>
                   {log.is_spoiler && (
@@ -145,7 +145,7 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
               accessibilityLabel="Tulis ulasan"
             >
               <MessageSquare size={12} color={Colors.primary} strokeWidth={2.5} />
-              <Text style={styles.writeReviewBtnText} allowFontScaling={false}>
+              <Text style={styles.writeReviewBtnText} maxFontSizeMultiplier={1.3}>
                 Tulis Ulasan
               </Text>
             </TouchableOpacity>

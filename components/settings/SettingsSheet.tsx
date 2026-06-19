@@ -44,7 +44,7 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
       id: 'lang', 
       label: t('language'), 
       icon: Globe, 
-      color: Colors.accentBlue,
+      color: Colors.accent,
       onPress: () => { onClose(); onLanguagePress(); }
     },
     { 
@@ -65,7 +65,7 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
       id: 'about', 
       label: t('about'), 
       icon: Info, 
-      color: Colors.accentBlue,
+      color: Colors.accent,
       onPress: () => { onClose(); onAboutPress?.(); } 
     },
     { 
@@ -90,7 +90,7 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
         <View style={s.sheet}>
           <View style={s.handle} />
           
-          <Text style={s.title} allowFontScaling={false}>{t('settings')}</Text>
+          <Text style={s.title} maxFontSizeMultiplier={1.3}>{t('settings')}</Text>
 
           <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
             <View style={s.section}>

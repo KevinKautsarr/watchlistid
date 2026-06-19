@@ -43,13 +43,13 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
         <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={onEditPress} accessibilityRole="button" accessibilityLabel="Edit profile">
           <View style={styles.btnContent}>
             <Edit3 size={16} color={Colors.white} />
-            <Text style={styles.secondaryBtnText} allowFontScaling={false}>{t('editProfile')}</Text>
+            <Text style={styles.secondaryBtnText} maxFontSizeMultiplier={1.3}>{t('editProfile')}</Text>
           </View>
         </Pressable>
         <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
           <View style={styles.btnContent}>
-            <Share2 size={16} color={Colors.accentBlue} />
-            <Text style={styles.shareText} allowFontScaling={false}>{t('share')}</Text>
+            <Share2 size={16} color={Colors.accent} />
+            <Text style={styles.shareText} maxFontSizeMultiplier={1.3}>{t('share')}</Text>
           </View>
         </Pressable>
       </View>
@@ -72,12 +72,12 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
             {isFollowing ? (
               <>
                 <UserMinus size={18} color={Colors.white} />
-                <Text style={styles.primaryBtnText} allowFontScaling={false}>{t('unfollow')}</Text>
+                <Text style={styles.primaryBtnText} maxFontSizeMultiplier={1.3}>{t('unfollow')}</Text>
               </>
             ) : (
               <>
                 <UserPlus size={18} color={Colors.white} />
-                <Text style={styles.primaryBtnText} allowFontScaling={false}>{t('follow')}</Text>
+                <Text style={styles.primaryBtnText} maxFontSizeMultiplier={1.3}>{t('follow')}</Text>
               </>
             )}
           </View>
@@ -85,8 +85,8 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
       </Pressable>
       <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
         <View style={styles.btnContent}>
-          <Share2 size={16} color={Colors.accentBlue} />
-          <Text style={styles.shareText} allowFontScaling={false}>{t('share')}</Text>
+          <Share2 size={16} color={Colors.accent} />
+          <Text style={styles.shareText} maxFontSizeMultiplier={1.3}>{t('share')}</Text>
         </View>
       </Pressable>
     </View>
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   secondaryBtn: { flex: 1, height: 42, backgroundColor: Colors.overlay.light, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
   secondaryBtnText: { color: Colors.white, fontSize: FontSize.base, fontWeight: FontWeight.bold },
   shareButton: { flex: 1, height: 42, backgroundColor: 'rgba(63, 114, 175, 0.15)', borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(63, 114, 175, 0.3)' },
-  shareText: { color: Colors.accentBlue, fontSize: FontSize.base, fontWeight: FontWeight.bold },
+  shareText: { color: Colors.accent, fontSize: FontSize.base, fontWeight: FontWeight.bold },
   followingBtn: { backgroundColor: 'rgba(255,255,255,0.1)' },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

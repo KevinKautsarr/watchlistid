@@ -47,7 +47,7 @@ export const GenreRow: React.FC<GenreRowProps> = ({ genres, onPress, pad, t, isD
               colors={[Colors.overlay.light10, Colors.overlay.dark70]} 
               style={StyleSheet.absoluteFill} 
             />
-            <Text style={styles.genreName} allowFontScaling={false}>{t(g.nameKey)}</Text>
+            <Text style={styles.genreName} maxFontSizeMultiplier={1.3}>{t(g.nameKey)}</Text>
           </TouchableOpacity>
         );
       })}

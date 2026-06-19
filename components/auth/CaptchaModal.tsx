@@ -36,12 +36,13 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
     onVerify(token);
   };
 
-  // iOS fallback: if Cloudflare Turnstile doesn't complete within timeout,
-  // auto-proceed so the user isn't permanently blocked on iOS WebKit.
+  // iOS-only fallback: Turnstile sometimes fails to render inside iOS WKWebView.
+  // Restrict the auto-bypass to iOS so web/Android never send a fake token
+  // (which would either fail Supabase verification or silently weaken the gate).
   useEffect(() => {
-    if (!visible || captchaVerified) return;
+    if (!visible || captchaVerified || Platform.OS !== 'ios') return;
     const timeout = setTimeout(() => {
-      console.warn('[CAPTCHA] Turnstile timeout — bypassing for iOS compatibility');
+      console.warn('[CAPTCHA] Turnstile timeout — bypassing for iOS WKWebView compatibility');
       onVerify('ios-bypass-token');
     }, IOS_CAPTCHA_TIMEOUT_MS);
     return () => clearTimeout(timeout);

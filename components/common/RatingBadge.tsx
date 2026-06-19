@@ -23,7 +23,7 @@ const RatingBadge: React.FC<RatingBadgeProps> = ({
         styles.rating,
         size === 'sm' && styles.textSmall,
         size === 'lg' && styles.textLarge
-      ]} allowFontScaling={false}>
+      ]} maxFontSizeMultiplier={1.3}>
         {rating?.toFixed(1)}
       </Text>
     </View>

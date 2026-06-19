@@ -90,36 +90,36 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
         </View>
 
         <View style={styles.contentWrap}>
-          <Text style={styles.nameText} allowFontScaling={false}>{person.name}</Text>
-          <Text style={styles.departmentText} allowFontScaling={false}>{person.known_for_department}</Text>
+          <Text style={styles.nameText} maxFontSizeMultiplier={1.3}>{person.name}</Text>
+          <Text style={styles.departmentText} maxFontSizeMultiplier={1.3}>{person.known_for_department}</Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Calendar size={18} color={Colors.primary} strokeWidth={2} style={styles.statIcon} />
-              <Text style={styles.statValue} allowFontScaling={false}>{person.birthday ? person.birthday.substring(0,4) : 'N/A'}</Text>
-              <Text style={styles.statLabel} allowFontScaling={false}>{t('born')}</Text>
+              <Text style={styles.statValue} maxFontSizeMultiplier={1.3}>{person.birthday ? person.birthday.substring(0,4) : 'N/A'}</Text>
+              <Text style={styles.statLabel} maxFontSizeMultiplier={1.3}>{t('born')}</Text>
             </View>
             <View style={styles.statCard}>
               <Globe size={18} color={Colors.primary} strokeWidth={2} style={styles.statIcon} />
-              <Text style={styles.statValue} numberOfLines={1} allowFontScaling={false}>{person.place_of_birth?.split(',').pop()?.trim() ?? 'N/A'}</Text>
-              <Text style={styles.statLabel} allowFontScaling={false}>{t('birthplace')}</Text>
+              <Text style={styles.statValue} numberOfLines={1} maxFontSizeMultiplier={1.3}>{person.place_of_birth?.split(',').pop()?.trim() ?? 'N/A'}</Text>
+              <Text style={styles.statLabel} maxFontSizeMultiplier={1.3}>{t('birthplace')}</Text>
             </View>
             <View style={styles.statCard}>
               <TrendingUp size={18} color={Colors.primary} strokeWidth={2} style={styles.statIcon} />
-              <Text style={styles.statValue} allowFontScaling={false}>{person.popularity?.toFixed(0)}</Text>
-              <Text style={styles.statLabel} allowFontScaling={false}>{t('popularity')}</Text>
+              <Text style={styles.statValue} maxFontSizeMultiplier={1.3}>{person.popularity?.toFixed(0)}</Text>
+              <Text style={styles.statLabel} maxFontSizeMultiplier={1.3}>{t('popularity')}</Text>
             </View>
           </View>
 
           {person.biography ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle} allowFontScaling={false}>{t('biography')}</Text>
-              <Text style={styles.bioText} numberOfLines={expandedBio ? undefined : 3} allowFontScaling={false}>
+              <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('biography')}</Text>
+              <Text style={styles.bioText} numberOfLines={expandedBio ? undefined : 3} maxFontSizeMultiplier={1.3}>
                 {person.biography}
               </Text>
               {person.biography.length > 150 && (
                 <TouchableOpacity onPress={() => setExpandedBio(!expandedBio)}>
-                  <Text style={styles.readMore} allowFontScaling={false}>{expandedBio ? t('less') : t('readMore')}</Text>
+                  <Text style={styles.readMore} maxFontSizeMultiplier={1.3}>{expandedBio ? t('less') : t('readMore')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -127,7 +127,7 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
 
           {knownFor.length > 0 && (
             <View style={styles.sectionNoPadding}>
-              <Text style={styles.sectionTitleHorizontal} allowFontScaling={false}>{t('knownFor')}</Text>
+              <Text style={styles.sectionTitleHorizontal} maxFontSizeMultiplier={1.3}>{t('knownFor')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScroll}>
                 {knownFor.map(item => (
                   <PosterCard 
@@ -148,7 +148,7 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
 
           {filmography.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitleWithMargin} allowFontScaling={false}>{t('filmography')}</Text>
+              <Text style={styles.sectionTitleWithMargin} maxFontSizeMultiplier={1.3}>{t('filmography')}</Text>
               {filmography.map((item, index) => {
                 const title = item.title || ('name' in item ? (item as { name?: string }).name : 'Title');
                 const character = 'character' in item ? (item as { character?: string }).character : null;
@@ -164,10 +164,10 @@ const PersonDetailScreen: React.FC = (): React.JSX.Element => {
                       });
                     }}
                   >
-                    <Text style={styles.filmYear} allowFontScaling={false}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
+                    <Text style={styles.filmYear} maxFontSizeMultiplier={1.3}>{item.release_date ? item.release_date.substring(0,4) : '—'}</Text>
                     <View style={styles.filmMeta}>
-                      <Text style={styles.filmTitle} allowFontScaling={false}>{title}</Text>
-                      {character ? <Text style={styles.filmRole} allowFontScaling={false}>{character}</Text> : null}
+                      <Text style={styles.filmTitle} maxFontSizeMultiplier={1.3}>{title}</Text>
+                      {character ? <Text style={styles.filmRole} maxFontSizeMultiplier={1.3}>{character}</Text> : null}
                     </View>
                   </TouchableOpacity>
                 );

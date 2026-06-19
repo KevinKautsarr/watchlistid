@@ -74,7 +74,7 @@ const s = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: 'rgba(229,9,20,0.1)',
+    backgroundColor: 'rgba(199,31,55,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xl,

@@ -26,7 +26,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     }
   }, [visible]);
 
-  const accentColor = variant === 'danger' ? Colors.primary : variant === 'warning' ? Colors.ratingGold : variant === 'download' ? Colors.success : variant === 'logout' ? Colors.primary : Colors.accentBlue;
+  const accentColor = variant === 'danger' ? Colors.primary : variant === 'warning' ? Colors.ratingGold : variant === 'download' ? Colors.success : variant === 'logout' ? Colors.primary : Colors.accent;
   const IconComponent = variant === 'logout' ? LogOut : variant === 'download' ? Download : variant === 'info' ? Info : variant === 'danger' ? Trash2 : AlertTriangle;
 
   return (
@@ -37,12 +37,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <IconComponent size={30} color={accentColor} strokeWidth={2.2} />
           </View>
 
-          <Text style={s.title} allowFontScaling={false}>{title}</Text>
-          <Text style={s.message} allowFontScaling={false}>{message}</Text>
+          <Text style={s.title} maxFontSizeMultiplier={1.3}>{title}</Text>
+          <Text style={s.message} maxFontSizeMultiplier={1.3}>{message}</Text>
 
           <View style={s.actions}>
             <TouchableOpacity style={s.cancelBtn} onPress={onCancel} activeOpacity={0.75}>
-              <Text style={s.cancelText} allowFontScaling={false}>{cancelLabel}</Text>
+              <Text style={s.cancelText} maxFontSizeMultiplier={1.3}>{cancelLabel}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -53,7 +53,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               onPress={onConfirm}
               activeOpacity={0.85}
             >
-              <Text style={s.confirmText} allowFontScaling={false}>{confirmLabel}</Text>
+              <Text style={s.confirmText} maxFontSizeMultiplier={1.3}>{confirmLabel}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

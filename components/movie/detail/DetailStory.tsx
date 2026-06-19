@@ -18,13 +18,13 @@ export const DetailStory: React.FC<DetailStoryProps> = ({ overview, keywords, t 
 
   return (
     <View style={styles.storySection}>
-      <Text style={styles.sectionTitle} allowFontScaling={false}>{t('storyline')}</Text>
+      <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('storyline')}</Text>
       
       {(!expandedStory && overview?.length > 100) ? (
         <Text 
           style={styles.overviewText} 
           numberOfLines={3}
-          allowFontScaling={false}
+          maxFontSizeMultiplier={1.3}
         >
           {overview}
         </Text>
@@ -34,7 +34,7 @@ export const DetailStory: React.FC<DetailStoryProps> = ({ overview, keywords, t 
             <Text 
               key={idx} 
               style={[styles.overviewText, idx < paragraphs.length - 1 && { marginBottom: 10 }]} 
-              allowFontScaling={false}
+              maxFontSizeMultiplier={1.3}
             >
               {p}
             </Text>
@@ -44,7 +44,7 @@ export const DetailStory: React.FC<DetailStoryProps> = ({ overview, keywords, t 
 
       {overview?.length > 100 && (
         <TouchableOpacity onPress={() => setExpandedStory(!expandedStory)} style={cursorPointer}>
-          <Text style={styles.readMore} allowFontScaling={false}>{expandedStory ? t('less') : t('readMore')}</Text>
+          <Text style={styles.readMore} maxFontSizeMultiplier={1.3}>{expandedStory ? t('less') : t('readMore')}</Text>
         </TouchableOpacity>
       )}
 
@@ -52,7 +52,7 @@ export const DetailStory: React.FC<DetailStoryProps> = ({ overview, keywords, t 
         <View style={styles.keywordsRow}>
           {keywords.map((k: { id: number; name: string }) => (
             <View key={k.id} style={styles.keywordPill}>
-              <Text style={styles.keywordText} allowFontScaling={false}>{k.name}</Text>
+              <Text style={styles.keywordText} maxFontSizeMultiplier={1.3}>{k.name}</Text>
             </View>
           ))}
         </View>

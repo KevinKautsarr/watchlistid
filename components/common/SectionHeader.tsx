@@ -36,7 +36,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             Icon ? styles.titleWithIcon : styles.titlePlain,
             textColor ? { color: textColor } : {}
           ]}
-          allowFontScaling={false}
+          maxFontSizeMultiplier={1.3}
         >
           {title}
         </Text>
@@ -51,7 +51,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             onAction?.();
           }}
         >
-          <Text style={[styles.action, textColor ? { color: textColor } : {}]} allowFontScaling={false}>
+          <Text style={[styles.action, textColor ? { color: textColor } : {}]} maxFontSizeMultiplier={1.3}>
             {actionLabel}
           </Text>
           <ChevronRight size={14} color={textColor || Colors.primary} strokeWidth={2.5} />

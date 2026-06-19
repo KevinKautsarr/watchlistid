@@ -39,7 +39,7 @@ export default function ErrorScreen() {
 const s = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141414',
+    backgroundColor: '#0A0A0B',
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.xxl,
@@ -48,7 +48,7 @@ const s = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(229,9,20,0.1)',
+    backgroundColor: 'rgba(199,31,55,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xl,

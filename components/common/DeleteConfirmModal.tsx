@@ -28,8 +28,8 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             <Trash2 size={32} color={Colors.primary} strokeWidth={2.5} />
           </View>
           
-          <Text style={styles.title} allowFontScaling={false}>{title}</Text>
-          <Text style={styles.message} allowFontScaling={false}>{message}</Text>
+          <Text style={styles.title} maxFontSizeMultiplier={1.3}>{title}</Text>
+          <Text style={styles.message} maxFontSizeMultiplier={1.3}>{message}</Text>
 
           <View style={styles.actions}>
             <TouchableOpacity 
@@ -37,7 +37,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
               onPress={onClose}
               activeOpacity={0.7}
             >
-              <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+              <Text style={styles.cancelBtnText} maxFontSizeMultiplier={1.3}>Cancel</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -48,7 +48,7 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.deleteBtnText} allowFontScaling={false}>Delete</Text>
+              <Text style={styles.deleteBtnText} maxFontSizeMultiplier={1.3}>Delete</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -355,17 +355,17 @@ export default function RegisterScreen() {
         />
         <View style={s.successWrap}>
           <Text style={s.successEmoji}>🎉</Text>
-          <Text style={s.successTitle} allowFontScaling={false}>
+          <Text style={s.successTitle} maxFontSizeMultiplier={1.3}>
             {t("accountCreated")}
           </Text>
-          <Text style={s.successSub} allowFontScaling={false}>
+          <Text style={s.successSub} maxFontSizeMultiplier={1.3}>
             {t("checkEmailVerification")}
           </Text>
           <TouchableOpacity
             style={s.btn}
             onPress={() => router.replace("/auth/login")}
           >
-            <Text style={s.btnText} allowFontScaling={false}>
+            <Text style={s.btnText} maxFontSizeMultiplier={1.3}>
               {t("backToLogin")}
             </Text>
           </TouchableOpacity>
@@ -383,7 +383,7 @@ export default function RegisterScreen() {
           <ActivityIndicator size={12} color={Colors.text.secondary} />
           <Text
             style={[s.hintText, { color: Colors.text.secondary }]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {language === "id" ? "Memeriksa ketersediaan..." : "Checking availability..."}
           </Text>
@@ -396,7 +396,7 @@ export default function RegisterScreen() {
           <CheckCircle2 size={13} color="#22c55e" strokeWidth={2.5} />
           <Text
             style={[s.hintText, { color: "#22c55e" }]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           >
             {usernameHint}
           </Text>
@@ -408,7 +408,7 @@ export default function RegisterScreen() {
         <XCircle size={13} color="#ef4444" strokeWidth={2.5} />
         <Text
           style={[s.hintText, { color: "#ef4444" }]}
-          allowFontScaling={false}
+          maxFontSizeMultiplier={1.3}
         >
           {usernameHint}
         </Text>
@@ -431,7 +431,7 @@ export default function RegisterScreen() {
         <View style={s.formHeader}>
           <View style={s.welcomeBadge}>
             <Sparkles size={14} color={Colors.primary} strokeWidth={2.5} />
-            <Text style={s.welcomeBadgeText} allowFontScaling={false}>
+            <Text style={s.welcomeBadgeText} maxFontSizeMultiplier={1.3}>
               {t("joinCommunity")}
             </Text>
           </View>
@@ -440,7 +440,7 @@ export default function RegisterScreen() {
 
       <Text
         style={[s.formTitle, { textAlign: isDesktop ? "left" : "center" }]}
-        allowFontScaling={false}
+        maxFontSizeMultiplier={1.3}
       >
         {isDesktop
           ? language === "id"
@@ -451,7 +451,7 @@ export default function RegisterScreen() {
 
       {/* Username Field */}
       <View style={s.inputWrapper}>
-        <Text style={s.inputLabel} allowFontScaling={false}>
+        <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
           {t("username")}
         </Text>
         <Animated.View
@@ -471,7 +471,7 @@ export default function RegisterScreen() {
             placeholderTextColor="rgba(255, 255, 255, 0.3)"
             autoCapitalize="none"
             autoCorrect={false}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
             maxLength={30}
           />
         </Animated.View>
@@ -480,7 +480,7 @@ export default function RegisterScreen() {
 
       {/* Email Field */}
       <View style={s.inputWrapper}>
-        <Text style={s.inputLabel} allowFontScaling={false}>
+        <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
           {t("email")}
         </Text>
         <Animated.View
@@ -501,14 +501,14 @@ export default function RegisterScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           />
         </Animated.View>
       </View>
 
       {/* Password Field */}
       <View style={s.inputWrapper}>
-        <Text style={s.inputLabel} allowFontScaling={false}>
+        <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
           {t("password")}
         </Text>
         <Animated.View
@@ -527,7 +527,7 @@ export default function RegisterScreen() {
             placeholder={language === "id" ? "Min. 6 karakter" : "Min. 6 characters"}
             placeholderTextColor="rgba(255, 255, 255, 0.3)"
             secureTextEntry={!showPass}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           />
           <TouchableOpacity
             onPress={() => {
@@ -552,7 +552,7 @@ export default function RegisterScreen() {
 
       {/* Confirm Password Field */}
       <View style={s.inputWrapper}>
-        <Text style={s.inputLabel} allowFontScaling={false}>
+        <Text style={s.inputLabel} maxFontSizeMultiplier={1.3}>
           {t("confirmPassword")}
         </Text>
         <Animated.View
@@ -571,7 +571,7 @@ export default function RegisterScreen() {
             placeholder={language === "id" ? "Ulangi kata sandi" : "Repeat password"}
             placeholderTextColor="rgba(255, 255, 255, 0.3)"
             secureTextEntry={!showPass}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.3}
           />
         </Animated.View>
       </View>
@@ -579,7 +579,7 @@ export default function RegisterScreen() {
       {/* Error Message */}
       {error && (
         <View style={s.errorBox}>
-          <Text style={s.errorText} allowFontScaling={false}>
+          <Text style={s.errorText} maxFontSizeMultiplier={1.3}>
             ⚠️ {error}
           </Text>
         </View>
@@ -614,7 +614,7 @@ export default function RegisterScreen() {
             ) : (
               <>
                 <UserPlus size={18} color={Colors.white} strokeWidth={2.5} />
-                <Text style={s.btnText} allowFontScaling={false}>
+                <Text style={s.btnText} maxFontSizeMultiplier={1.3}>
                   {t("signUp")}
                 </Text>
               </>
@@ -626,7 +626,7 @@ export default function RegisterScreen() {
       {/* Divider */}
       <View style={s.divider}>
         <View style={s.dividerLine} />
-        <Text style={s.dividerText} allowFontScaling={false}>
+        <Text style={s.dividerText} maxFontSizeMultiplier={1.3}>
           {t("or")}
         </Text>
         <View style={s.dividerLine} />
@@ -646,7 +646,7 @@ export default function RegisterScreen() {
             <EmptyStateIcon name="google" size={20} />
           )}
         </View>
-        <Text style={s.googleBtnText} allowFontScaling={false}>
+        <Text style={s.googleBtnText} maxFontSizeMultiplier={1.3}>
           {language === "id"
             ? "Daftar dengan Google"
             : "Sign Up with Google"}
@@ -655,7 +655,7 @@ export default function RegisterScreen() {
 
       {/* Back to Login Link */}
       <View style={s.signupRow}>
-        <Text style={s.signupText} allowFontScaling={false}>
+        <Text style={s.signupText} maxFontSizeMultiplier={1.3}>
           {t("alreadyHaveAccount")}{" "}
         </Text>
         <TouchableOpacity
@@ -665,7 +665,7 @@ export default function RegisterScreen() {
           }}
           activeOpacity={0.7}
         >
-          <Text style={s.signupLink} allowFontScaling={false}>
+          <Text style={s.signupLink} maxFontSizeMultiplier={1.3}>
             {t("signInHere")}
           </Text>
         </TouchableOpacity>
@@ -719,12 +719,12 @@ export default function RegisterScreen() {
                   />
 
                   {/* Brand name */}
-                  <Text style={s.brandLogo} allowFontScaling={false}>
+                  <Text style={s.brandLogo} maxFontSizeMultiplier={1.3}>
                     WatchList<Text style={{ color: Colors.primary }}>ID</Text>
                   </Text>
 
                   {/* Hero tagline */}
-                  <Text style={s.heroTitle} allowFontScaling={false}>
+                  <Text style={s.heroTitle} maxFontSizeMultiplier={1.3}>
                     {language === "id" ? (
                       <>
                         Rancang daftar tontonan impian Anda dan jelajahi rekomendasi{" "}
@@ -771,7 +771,7 @@ export default function RegisterScreen() {
 
                 {/* Minimalist footer brand */}
                 <View style={s.footerBrand}>
-                  <Text style={s.footerText} allowFontScaling={false}>
+                  <Text style={s.footerText} maxFontSizeMultiplier={1.3}>
                     🍿 WatchlistID © 2026
                   </Text>
                 </View>
@@ -795,10 +795,10 @@ export default function RegisterScreen() {
                   style={s.mobileLogo}
                   contentFit="contain"
                 />
-                <Text style={s.logo} allowFontScaling={false}>
+                <Text style={s.logo} maxFontSizeMultiplier={1.3}>
                   WatchList<Text style={s.logoAccent}>ID</Text>
                 </Text>
-                <Text style={s.logoSub} allowFontScaling={false}>
+                <Text style={s.logoSub} maxFontSizeMultiplier={1.3}>
                   {t("joinCommunity")}
                 </Text>
               </Animated.View>

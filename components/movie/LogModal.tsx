@@ -144,7 +144,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
             <TouchableOpacity style={[s.closeBtn, cursorPointer]} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close modal">
               <X size={IconSize.lg} color={Colors.white} />
             </TouchableOpacity>
-            <Text style={s.title} allowFontScaling={false}>
+            <Text style={s.title} maxFontSizeMultiplier={1.3}>
               {movie.media_type === 'tv' ? t('logShow') : t('logMovie')}
             </Text>
             <TouchableOpacity 
@@ -157,17 +157,17 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
               {isLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={s.saveText} allowFontScaling={false}>{t('save')}</Text>
+                <Text style={s.saveText} maxFontSizeMultiplier={1.3}>{t('save')}</Text>
               )}
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
             <Star size={IconSize.lg} color={Colors.primary} fill={Colors.primary} />
-            <Text style={s.movieTitle} allowFontScaling={false}>
+            <Text style={s.movieTitle} maxFontSizeMultiplier={1.3}>
               {'title' in movie ? movie.title : 'name' in movie ? movie.name : ''}
             </Text>
-            <Text style={s.movieYear} allowFontScaling={false}>
+            <Text style={s.movieYear} maxFontSizeMultiplier={1.3}>
               {('release_date' in movie ? movie.release_date : 'first_air_date' in movie ? movie.first_air_date : '')?.split('-')[0]}
             </Text>
 
@@ -175,7 +175,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
             <View style={s.section}>
               <View style={s.labelRow}>
                 <Calendar size={IconSize.sm} color={Colors.text.secondary} />
-                <Text style={s.label} allowFontScaling={false}>{t('watchedOn')}</Text>
+                <Text style={s.label} maxFontSizeMultiplier={1.3}>{t('watchedOn')}</Text>
               </View>
               <View style={s.dateOptions}>
                 <TouchableOpacity 
@@ -195,7 +195,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
             </View>
 
             <View style={s.section}>
-              <Text style={s.label} allowFontScaling={false}>{t('yourRating')} <Text style={s.required}>*</Text></Text>
+              <Text style={s.label} maxFontSizeMultiplier={1.3}>{t('yourRating')} <Text style={s.required}>*</Text></Text>
               <View style={s.starsContainer}>
                 <StarRating 
                   rating={rating / 2} 
@@ -207,7 +207,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                   }}
                 />
               </View>
-              <Text style={s.ratingHint} allowFontScaling={false}>
+              <Text style={s.ratingHint} maxFontSizeMultiplier={1.3}>
                 {rating > 0 ? t('starsOutOf5').replace('{n}', String(rating / 2)) : t('ratingHintDefault')}
               </Text>
             </View>
@@ -215,7 +215,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
             {/* Review Input */}
             <View style={s.section}>
               <View style={s.labelRow}>
-                <Text style={s.label} allowFontScaling={false}>{t('reviewOptional')}</Text>
+                <Text style={s.label} maxFontSizeMultiplier={1.3}>{t('reviewOptional')}</Text>
                 <TouchableOpacity 
                   style={[s.previewToggle, cursorPointer]} 
                   onPress={() => setShowPreview(!showPreview)}
@@ -244,7 +244,7 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                   textAlignVertical="top"
                   value={reviewText}
                   onChangeText={setReviewText}
-                  allowFontScaling={false}
+                  maxFontSizeMultiplier={1.3}
                 />
               )}
             </View>
@@ -263,11 +263,11 @@ export default function LogModal({ visible, onClose, movie, existingLog }: LogMo
                   {isSpoiler && <Check size={IconSize.xs} color={Colors.dark} strokeWidth={3} />}
                 </View>
                 <AlertTriangle size={IconSize.sm} color={isSpoiler ? Colors.primary : Colors.text.secondary} />
-                <Text style={[s.spoilerText, isSpoiler && s.spoilerTextActive]} allowFontScaling={false}>
+                <Text style={[s.spoilerText, isSpoiler && s.spoilerTextActive]} maxFontSizeMultiplier={1.3}>
                   {t('containsSpoiler')}
                 </Text>
               </TouchableOpacity>
-              <Text style={s.spoilerDesc} allowFontScaling={false}>
+              <Text style={s.spoilerDesc} maxFontSizeMultiplier={1.3}>
                 {t('spoilerDesc')}
               </Text>
             </View>
@@ -305,7 +305,7 @@ const s = StyleSheet.create({
   title: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.white },
   closeBtn: { padding: 4 },
   saveBtn: { 
-    backgroundColor: Colors.accentBlue, 
+    backgroundColor: Colors.accent, 
     paddingHorizontal: 20, 
     paddingVertical: 10, 
     borderRadius: Radius.full 
@@ -365,8 +365,8 @@ const s = StyleSheet.create({
   spoilerBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.overlay.light20, alignItems: 'center', justifyContent: 'center' },
   spoilerText: { flex: 1, color: Colors.text.secondary, fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  spoilerTextActive: { color: Colors.accentBlue },
-  checkboxActive: { backgroundColor: Colors.accentBlue, borderColor: Colors.accentBlue },
+  spoilerTextActive: { color: Colors.accent },
+  checkboxActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
   spoilerDesc: { fontSize: FontSize.xs, color: Colors.overlay.light40, lineHeight: 16, marginLeft: 32 },
 
   previewToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },

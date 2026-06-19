@@ -13,8 +13,8 @@ export const SearchEmptyState: React.FC<SearchEmptyStateProps> = ({ title, subti
   return (
     <View style={styles.empty}>
       <EmptyStateIcon name="search" size={96} style={{ marginBottom: Spacing.xl }} />
-      <Text style={styles.emptyTitle} allowFontScaling={false}>{title}</Text>
-      {subtitle && <Text style={styles.emptySub} allowFontScaling={false}>{subtitle}</Text>}
+      <Text style={styles.emptyTitle} maxFontSizeMultiplier={1.3}>{title}</Text>
+      {subtitle && <Text style={styles.emptySub} maxFontSizeMultiplier={1.3}>{subtitle}</Text>}
     </View>
   );
 };

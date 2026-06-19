@@ -115,15 +115,15 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
       {/* Overlay content */}
       <View style={s.heroContent}>
-        <Text style={s.heroTitle} numberOfLines={2} allowFontScaling={false}>
+        <Text style={s.heroTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>
           {cur ? ('title' in cur ? cur.title : 'name' in cur ? cur.name : '') : ''}
         </Text>
         <View style={s.heroMeta}>
           <View style={s.ratingPill}>
             <Star size={IconSize.xs} color={Colors.ratingGold} fill={Colors.ratingGold} strokeWidth={0} />
-            <Text style={s.ratingScore} allowFontScaling={false}>{cur?.vote_average?.toFixed(1)}</Text>
+            <Text style={s.ratingScore} maxFontSizeMultiplier={1.3}>{cur?.vote_average?.toFixed(1)}</Text>
           </View>
-          <Text style={s.heroYear} allowFontScaling={false}>
+          <Text style={s.heroYear} maxFontSizeMultiplier={1.3}>
             {cur ? ('release_date' in cur ? cur.release_date : 'first_air_date' in cur ? cur.first_air_date : '')?.split('-')[0] : ''}
           </Text>
         </View>
@@ -134,7 +134,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             onPress={() => onPressItem(cur.id, cur.media_type)}
           >
             <Play size={IconSize.sm} color={Colors.dark} fill={Colors.dark} strokeWidth={0} />
-            <Text style={s.playBtnText} allowFontScaling={false}>{t('watchNow')}</Text>
+            <Text style={s.playBtnText} maxFontSizeMultiplier={1.3}>{t('watchNow')}</Text>
           </TouchableOpacity>
           {onToggleWL && (
             <TouchableOpacity 
@@ -143,7 +143,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
               onPress={() => onToggleWL(cur)}
             >
               {inWL ? <Bookmark size={IconSize.sm} color={Colors.white} fill={Colors.white} strokeWidth={0} /> : <Plus size={IconSize.lg} color={Colors.white} strokeWidth={2.5} />}
-              <Text style={s.wlBtnText} allowFontScaling={false}>{t('myList')}</Text>
+              <Text style={s.wlBtnText} maxFontSizeMultiplier={1.3}>{t('myList')}</Text>
             </TouchableOpacity>
           )}
         </View>

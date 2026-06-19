@@ -219,7 +219,7 @@ const WatchlistScreen: React.FC = () => {
       {/* ── Header ── */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerSub} allowFontScaling={false}>
+          <Text style={styles.headerSub} maxFontSizeMultiplier={1.3}>
             {activeTab === 'Watchlist' 
               ? `${planToWatchList.length} ${t('planToWatch')}` 
               : activeTab === 'Watched' 
@@ -321,7 +321,7 @@ const WatchlistScreen: React.FC = () => {
                       accessibilityLabel={`${t('sort')} ${label}`}
                       accessibilityState={{ selected: activeSort === s }}
                     >
-                      <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} allowFontScaling={false}>
+                      <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} maxFontSizeMultiplier={1.3}>
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -343,14 +343,14 @@ const WatchlistScreen: React.FC = () => {
                 size={120}
                 style={{ marginBottom: Spacing.xl }}
               />
-              <Text style={styles.emptyTitle} allowFontScaling={false}>
+              <Text style={styles.emptyTitle} maxFontSizeMultiplier={1.3}>
                 {activeTab === 'Watchlist'
                   ? t('watchlistEmptyTitle')
                   : activeTab === 'Watched'
                     ? t('emptyWatchedTitle')
                     : t('emptyReviewsTitle')}
               </Text>
-              <Text style={styles.emptySub} allowFontScaling={false}>
+              <Text style={styles.emptySub} maxFontSizeMultiplier={1.3}>
                 {activeTab === 'Watchlist'
                   ? t('watchlistEmptySub')
                   : activeTab === 'Watched'

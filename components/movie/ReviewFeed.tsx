@@ -36,7 +36,7 @@ export default function ReviewFeed({ movieId }: ReviewFeedProps) {
   if (state.isLoading && state.data.length === 0) {
     return (
       <View style={s.center}>
-        <ActivityIndicator size="small" color={Colors.accentBlue} />
+        <ActivityIndicator size="small" color={Colors.accent} />
       </View>
     );
   }
@@ -123,7 +123,7 @@ const s = StyleSheet.create({
     borderRadius: Radius.full,
   },
   badgeText: {
-    color: Colors.accentBlue,
+    color: Colors.accent,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
   },

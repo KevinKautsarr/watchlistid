@@ -229,7 +229,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
                 <EmptyStateIcon name="reviews" size={96} />
-                <Text style={styles.emptyText} allowFontScaling={false}>
+                <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
                   {isOwner ? t('emptyReviewsTitle') : t('noReviewsYetOthers')}
                 </Text>
               </View>
@@ -260,7 +260,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
                 <EmptyStateIcon name="diary" size={96} />
-                <Text style={styles.emptyText} allowFontScaling={false}>
+                <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
                   {isOwner ? t('emptyWatchedTitle') : t('noLogsYetOthers')}
                 </Text>
               </View>
@@ -295,7 +295,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
                 <EmptyStateIcon name="watchlist" size={96} />
-                <Text style={styles.emptyText} allowFontScaling={false}>
+                <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
                   {isOwner ? t('noWatchlistYet') : t('noWatchlistYetOthers')}
                 </Text>
               </View>

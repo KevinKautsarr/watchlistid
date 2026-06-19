@@ -55,7 +55,7 @@ export default function HomeScreen() {
 
   if (homeState.status === 'error') {
     return (
-      <View style={{ flex: 1, backgroundColor: '#141414', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+      <View style={{ flex: 1, backgroundColor: '#0A0A0B', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
         <Text style={{ color: Colors.white, fontSize: FontSize.lg, fontWeight: FontWeight.bold }}>
           {t('failedToLoad')}
         </Text>
@@ -136,8 +136,8 @@ export default function HomeScreen() {
       <View style={[s.body, { paddingHorizontal: PAD }]}>
         {bp.isLarge && (
           <View style={s.browseHeader}>
-            <Text style={s.browseTitle} allowFontScaling={false}>{t('browse')}</Text>
-            <Text style={s.browseSub} allowFontScaling={false}>{t('browseSub')}</Text>
+            <Text style={s.browseTitle} maxFontSizeMultiplier={1.3}>{t('browse')}</Text>
+            <Text style={s.browseSub} maxFontSizeMultiplier={1.3}>{t('browseSub')}</Text>
           </View>
         )}
 
@@ -283,11 +283,11 @@ export default function HomeScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#141414' },
+  root: { flex: 1, backgroundColor: '#0A0A0B' },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.xl, justifyContent: 'space-between', paddingBottom: 14,
-    backgroundColor: '#141414',
+    backgroundColor: '#0A0A0B',
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   headerIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
@@ -300,7 +300,7 @@ const s = StyleSheet.create({
   browseSub: { fontSize: FontSize.base, color: Colors.text.secondary, marginTop: Spacing.xs },
   tabSwitcher: { flexDirection: 'row', gap: 20, marginTop: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: Colors.overlay.light10 },
   tabItem: { paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabItemActive: { borderBottomColor: Colors.accentBlue },
+  tabItemActive: { borderBottomColor: Colors.accent },
   tabItemText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.text.secondary },
   tabItemTextActive: { color: Colors.white },
   feedContainer: { paddingTop: 10 },

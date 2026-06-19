@@ -34,10 +34,10 @@ const CastCard: React.FC<CastCardProps> = ({
           accessibilityLabel={`${cast.name} profile photo`}
         />
       </View>
-      <Text style={styles.name} numberOfLines={1} allowFontScaling={false}>
+      <Text style={styles.name} numberOfLines={1} maxFontSizeMultiplier={1.3}>
         {cast.name}
       </Text>
-      <Text style={styles.character} numberOfLines={1} allowFontScaling={false}>
+      <Text style={styles.character} numberOfLines={1} maxFontSizeMultiplier={1.3}>
         {cast.character}
       </Text>
     </TouchableOpacity>

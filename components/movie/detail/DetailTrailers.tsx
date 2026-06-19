@@ -18,8 +18,8 @@ export const DetailTrailers: React.FC<DetailTrailersProps> = ({ videos, featured
     <View style={styles.trailerSection}>
       <View style={styles.sectionHeader}>
         <View>
-          <Text style={styles.sectionTitle} allowFontScaling={false}>{t('videos')}</Text>
-          <Text style={styles.sectionSubtitle} allowFontScaling={false}>{t('videosCount').replace('{count}', videos.length.toString())}</Text>
+          <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('videos')}</Text>
+          <Text style={styles.sectionSubtitle} maxFontSizeMultiplier={1.3}>{t('videosCount').replace('{count}', videos.length.toString())}</Text>
         </View>
       </View>
 
