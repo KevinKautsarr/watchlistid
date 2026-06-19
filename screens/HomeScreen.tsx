@@ -1,5 +1,5 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Animated, RefreshControl } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, FlatList, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -40,7 +40,6 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, recentlyViewed } = useWatchlist();
-  const scrollY = useRef(new Animated.Value(0)).current;
   const bp = useBreakpoint();
   const { t } = useLanguage();
   const [visibleSections, setVisibleSections] = useState(1);
@@ -88,12 +87,6 @@ export default function HomeScreen() {
     const all = [...trending, ...popular, ...topRated, ...trendingTV, ...topRatedTV];
     return recentlyViewed.map(id => all.find(m => m.id === id)).filter((m): m is MediaItem => m != null).slice(0, 10);
   }, [recentlyViewed, trending, popular, topRated, trendingTV, topRatedTV]);
-
-  const headerBg = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [Colors.overlay.dark50, 'rgba(20,20,20,0.97)'],
-    extrapolate: 'clamp',
-  });
 
   const username = profile?.data?.username || user?.user_metadata?.username || user?.email || 'User';
   const avatarUrl = profile?.data?.avatar_url || user?.user_metadata?.avatar_url;
@@ -270,7 +263,7 @@ export default function HomeScreen() {
     <View style={s.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <Animated.FlatList
+      <FlatList
         data={sections}
         keyExtractor={item => item.id}
         renderItem={renderSection}
@@ -278,8 +271,6 @@ export default function HomeScreen() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.danger} colors={[Colors.danger]} />}
         contentContainerStyle={[s.listContent, { maxWidth: contentWidth }]}
         initialNumToRender={3}

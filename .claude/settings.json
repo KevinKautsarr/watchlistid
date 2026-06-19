@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:watchlistid.vercel.app)"
+      "WebFetch(domain:watchlistid.vercel.app)",
+      "Bash(npx expo *)",
+      "Bash(echo \"=== exit: $? ===\")",
+      "Bash(echo \"--- error count: $\\(npx expo lint 2>&1)"
     ]
   }
 }

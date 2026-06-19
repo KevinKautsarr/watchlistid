@@ -111,7 +111,7 @@ const ActivityFeedItem = React.memo(({ item, t }: { item: MovieLog; t: (k: any) 
             <View style={s.reviewRow}>
               <MessageSquare size={10} color={Colors.text.secondary} />
               <Text style={s.reviewText} numberOfLines={2}>
-                "{item.review_text}"
+                {`"${item.review_text}"`}
               </Text>
             </View>
           )}

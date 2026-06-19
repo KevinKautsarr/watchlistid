@@ -1,7 +1,7 @@
-# 🎬 WatchListID
+# 🎬 WatchlistID
 
-[![React Native](https://img.shields.io/badge/React_Native-v0.74.x-61dafb?style=flat-square&logo=react)](https://reactnative.dev/)
-[![Expo SDK 51](https://img.shields.io/badge/Expo_SDK-51-000000?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React_Native-v0.81.x-61dafb?style=flat-square&logo=react)](https://reactnative.dev/)
+[![Expo SDK 54](https://img.shields.io/badge/Expo_SDK-54-000000?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_Mode-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
@@ -14,9 +14,9 @@
 
 ## 📖 Ringkasan (Overview)
 
-**WatchListID** adalah platform sosial cinematic database modern yang dirancang untuk membantu pecinta film melacak, mengulas, dan mendiskusikan film serta acara televisi favorit mereka. Dibangun di atas **Expo SDK 51** dan **React Native**, aplikasi ini menghadirkan antarmuka pengguna hibrida yang sangat responsif, lancar, dan berestetika premium (*dark mode glassmorphism*) baik di perangkat seluler maupun web.
+**WatchlistID** adalah platform sosial cinematic database modern yang dirancang untuk membantu pecinta film melacak, mengulas, dan mendiskusikan film serta acara televisi favorit mereka. Dibangun di atas **Expo SDK 54** dan **React Native**, aplikasi ini menghadirkan antarmuka pengguna hibrida yang sangat responsif, lancar, dan berestetika premium (*dark mode glassmorphism*) baik di perangkat seluler maupun web.
 
-Didukung oleh backend **Supabase** dengan keamanan tingkat tinggi (Row Level Security) dan integrasi **TMDB API**, WatchListID tidak hanya berfungsi sebagai perpustakaan pribadi untuk mengelola daftar tontonan (*Watchlist* dan *Diary*), tetapi juga sebagai jejaring sosial dinamis yang menghubungkan pengguna melalui aktivitas interaksi sosial, ulasan, pengikut (*followers*), dan umpan aktivitas komunitas (*Activity Feed*).
+Didukung oleh backend **Supabase** dengan keamanan tingkat tinggi (Row Level Security) dan integrasi **TMDB API**, WatchlistID tidak hanya berfungsi sebagai perpustakaan pribadi untuk mengelola daftar tontonan (*Watchlist* dan *Diary*), tetapi juga sebagai jejaring sosial dinamis yang menghubungkan pengguna melalui aktivitas interaksi sosial, ulasan, pengikut (*followers*), dan umpan aktivitas komunitas (*Activity Feed*).
 
 ---
 
@@ -37,7 +37,7 @@ Didukung oleh backend **Supabase** dengan keamanan tingkat tinggi (Row Level Sec
 
 Aplikasi ini menggunakan teknologi modern terbaik untuk memastikan performa tinggi dan keamanan maksimal:
 
-- **Framework Utama**: [React Native](https://reactnative.dev/) & [Expo SDK 51](https://expo.dev/)
+- **Framework Utama**: [React Native](https://reactnative.dev/) `0.81` & [Expo SDK 54](https://expo.dev/)
 - **Routing**: [Expo Router](https://docs.expo.dev/router/introduction/) (File-based navigation)
 - **Database & Backend**: [Supabase](https://supabase.com/) (PostgreSQL dengan RLS, Triggers, Realtime Channels, Storage Bucket untuk foto profil)
 - **Penyedia API**: [The Movie Database (TMDB)](https://www.themoviedb.org/)
@@ -52,7 +52,7 @@ Aplikasi ini menggunakan teknologi modern terbaik untuk memastikan performa ting
 ### Prasyarat (Prerequisites)
 
 Pastikan perangkat Anda sudah terinstal:
-- **Node.js** (versi `18.x` atau lebih tinggi)
+- **Node.js** (versi `20.x` atau lebih tinggi)
 - **npm** atau **yarn**
 - Aplikasi **Expo Go** pada ponsel Anda (tersedia di Google Play Store & iOS App Store) untuk pratinjau native.
 
@@ -74,13 +74,15 @@ Pastikan perangkat Anda sudah terinstal:
    ```env
    EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   EXPO_PUBLIC_TMDB_API_KEY=your-tmdb-api-key
    EXPO_PUBLIC_TURNSTILE_SITE_KEY=your-cloudflare-turnstile-site-key
    ```
+   > **Catatan:** Kunci TMDB **tidak** disimpan di klien. Aplikasi memanggil TMDB
+   > melalui Supabase Edge Function (`tmdb-proxy`); set kuncinya sebagai secret
+   > fungsi: `supabase secrets set TMDB_API_KEY=your-tmdb-api-key`.
 
 4. **Jalankan Server Pengembangan**:
    ```bash
-   npm run dev
+   npm start
    # atau
    npx expo start
    ```
@@ -98,8 +100,8 @@ Pastikan perangkat Anda sudah terinstal:
 |---------------------|-----------|-------|
 | `EXPO_PUBLIC_SUPABASE_URL` | URL Endpoint dari proyek Supabase Anda. | Ya |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Kunci anonim Supabase untuk interaksi database sisi klien. | Ya |
-| `EXPO_PUBLIC_TMDB_API_KEY` | Kunci API The Movie Database untuk pencarian dan detail film. | Ya |
 | `EXPO_PUBLIC_TURNSTILE_SITE_KEY` | Kunci situs Cloudflare Turnstile untuk validasi Captcha. | Ya |
+| `TMDB_API_KEY` *(secret Edge Function, bukan `EXPO_PUBLIC`)* | Kunci API TMDB — disimpan di sisi server pada Supabase Edge Function `tmdb-proxy`. | Ya |
 
 ---
 

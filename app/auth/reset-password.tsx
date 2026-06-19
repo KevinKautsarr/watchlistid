@@ -452,7 +452,7 @@ export default function ResetPasswordScreen() {
                         </>
                       ) : (
                         <>
-                          Build your dream watchlist and explore the world's{" "}
+                          Build your dream watchlist and explore the world&apos;s{" "}
                           <Text style={s.gradientText}>best cinema</Text> recommendations.
                         </>
                       )}

@@ -1,0 +1,11 @@
+# Supabase CLI configuration.
+# Enables a reproducible schema via `supabase db reset` / `supabase db push`.
+project_id = "watchlistid"
+
+[db]
+# Postgres major version used by Supabase hosted projects.
+major_version = 15
+
+[db.migrations]
+# Apply files in supabase/migrations in lexicographic (timestamp) order.
+schema_paths = []
