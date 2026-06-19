@@ -212,6 +212,9 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `review-${index}`}
             contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingHorizontal: 16, paddingTop: 16 }}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={6}
+            maxToRenderPerBatch={8}
+            windowSize={9}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
@@ -243,6 +246,9 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `diary-${index}`}
             contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingHorizontal: 16, paddingTop: 16 }}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={6}
+            maxToRenderPerBatch={8}
+            windowSize={9}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
@@ -274,6 +280,9 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `watchlist-${index}`}
             contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingTop: 16 }}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={6}
+            maxToRenderPerBatch={8}
+            windowSize={9}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}

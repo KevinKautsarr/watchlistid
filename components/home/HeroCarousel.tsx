@@ -24,15 +24,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 }) => {
   const { t } = useLanguage();
   const [idx, setIdx] = useState(0);
-  const [isReady, setIsReady] = useState(false);
   const ref = useRef<ScrollView>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const slides = data.slice(0, 10);
-
-  useEffect(() => {
-    const readyTimer = setTimeout(() => setIsReady(true), 1500);
-    return () => clearTimeout(readyTimer);
-  }, []);
 
   const scrollTo = useCallback((i: number) => {
     let c = i;
@@ -53,10 +47,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   }, [slides.length, width]);
 
   useEffect(() => {
-    if (!isReady) return;
     startAuto();
     return () => { if (timer.current) clearInterval(timer.current); };
-  }, [startAuto, isReady]);
+  }, [startAuto]);
 
   const resetAuto = () => {
     if (timer.current) {
@@ -71,47 +64,37 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   return (
     <View style={{ width, height, minHeight: height }}>
-      {isReady ? (
-        <ScrollView ref={ref} horizontal pagingEnabled scrollEnabled={false} showsHorizontalScrollIndicator={false}>
-          {slides.map((m, i) => (
-            <View key={m.id} style={{ width, height }}>
-              <Image
-                source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${m.backdrop_path}` }}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                transition={200}
-                priority={i === 0 ? 'high' : 'low'}
-                accessibilityLabel={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
-                alt={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
-              />
-              <LinearGradient
-                colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
-                locations={[0, 0.4, 0.7, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-            </View>
-          ))}
-        </ScrollView>
-      ) : (
-        <View style={{ width, height }}>
-          <Image
-            source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${slides[0].backdrop_path}` }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={200}
-            priority="high"
-            accessibilityLabel="Hero banner backdrop loading"
-            alt="Hero banner backdrop loading"
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
-            locations={[0, 0.4, 0.7, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-      )}
+      <ScrollView
+        ref={ref}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => {
+          const newIdx = Math.round(e.nativeEvent.contentOffset.x / width);
+          setIdx(prev => (newIdx !== prev ? newIdx : prev));
+          resetAuto();
+        }}
+      >
+        {slides.map((m, i) => (
+          <View key={m.id} style={{ width, height }}>
+            <Image
+              source={{ uri: `${TMDB_IMAGE_SIZES.backdrop}${m.backdrop_path}` }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={200}
+              priority={i === 0 ? 'high' : 'low'}
+              accessibilityLabel={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
+              alt={`Hero banner backdrop ${'title' in m ? m.title : 'name' in m ? m.name : ''}`}
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(10,10,11,0.35)', 'rgba(10,10,11,0.80)', '#0A0A0B']}
+              locations={[0, 0.4, 0.7, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        ))}
+      </ScrollView>
 
       {/* Overlay content */}
       <View style={s.heroContent}>

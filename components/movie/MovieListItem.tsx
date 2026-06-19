@@ -62,10 +62,11 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
         activeOpacity={0.8}
         onPress={onPress}
       >
-        <SafeImage 
-          uri={movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null} 
+        <SafeImage
+          uri={movie.poster_path ? `https://image.tmdb.org/t/p/w154${movie.poster_path}` : null}
           fallbackType="movie"
-          style={StyleSheet.absoluteFill} 
+          recyclingKey={String(movie.id)}
+          style={StyleSheet.absoluteFill}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={200}

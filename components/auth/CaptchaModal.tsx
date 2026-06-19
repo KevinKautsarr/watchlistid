@@ -29,6 +29,7 @@ const IOS_CAPTCHA_TIMEOUT_MS = 8000;
 
 export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaModalProps) {
   const webViewRef = useRef<WebViewType>(null);
+  const webIframeRef = useRef<HTMLIFrameElement>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
 
   const handleVerify = (token: string) => {
@@ -93,6 +94,8 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
   React.useEffect(() => {
     if (Platform.OS === 'web') {
       const handleMessage = (event: MessageEvent) => {
+        // Only accept the token from our own captcha iframe — not arbitrary windows
+        if (event.source !== webIframeRef.current?.contentWindow) return;
         if (event.data && typeof event.data === 'string' && event.data.length > 30) {
           handleVerify(event.data);
         }
@@ -116,6 +119,7 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
           <View style={s.webContainer}>
             {Platform.OS === 'web' ? (
               <iframe
+                ref={webIframeRef}
                 srcDoc={html}
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 title="Captcha"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image, ImageProps } from 'expo-image';
 import { EyeOff } from 'lucide-react-native';
@@ -21,6 +21,10 @@ export const SafeImage: React.FC<SafeImageProps> = ({
   ...props
 }) => {
   const [error, setError] = useState(false);
+
+  // Reset the error flag when the source changes so a recycled <SafeImage>
+  // (e.g. inside a FlashList) doesn't keep showing the previous item's fallback.
+  useEffect(() => { setError(false); }, [uri]);
 
   const hasValidUri = uri && typeof uri === 'string' && uri.trim() !== '';
 

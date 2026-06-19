@@ -5,6 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "forceConsistentCasingInFileNames": true,
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./*"],
       "@/components/*": ["./components/*"],
