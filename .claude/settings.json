@@ -4,7 +4,8 @@
       "WebFetch(domain:watchlistid.vercel.app)",
       "Bash(npx expo *)",
       "Bash(echo \"=== exit: $? ===\")",
-      "Bash(echo \"--- error count: $\\(npx expo lint 2>&1)"
+      "Bash(echo \"--- error count: $\\(npx expo lint 2>&1)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); console.log\\('vercel.json: valid JSON ✓'\\)\")"
     ]
   }
 }
