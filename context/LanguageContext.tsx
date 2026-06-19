@@ -361,6 +361,7 @@ const translations = {
     shareMovieMessage: 'Check out "{title}" on WatchlistID! ⭐ {rating}/10',
     shareProfileMessage: "Check out {username}'s profile on WatchlistID! {url}",
     shareProfileTitle: "{username}'s Profile — WatchlistID",
+    linkCopied: "Link copied!",
   },
 
   id: {
@@ -720,6 +721,7 @@ const translations = {
     shareMovieMessage: 'Lihat "{title}" di WatchlistID! ⭐ {rating}/10',
     shareProfileMessage: "Lihat profil {username} di WatchlistID! {url}",
     shareProfileTitle: "Profil {username} — WatchlistID",
+    linkCopied: "Tautan disalin!",
   },
 };
 

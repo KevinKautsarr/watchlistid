@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Share } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Share, Platform } from 'react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { APP_URL } from '@/config';
-import { UserPlus, UserMinus, Edit3, Share2 } from 'lucide-react-native';
+import { UserPlus, UserMinus, Edit3, Share2, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
 
 interface ProfileActionsProps {
   isOwner: boolean;
@@ -26,15 +27,34 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
   userId,
   username
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyLink = async (link: string) => {
+    try {
+      await Clipboard.setStringAsync(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable — nothing more we can do
+    }
+  };
+
   const handleShareProfile = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const name = username || 'User';
     const url = `${APP_URL}/user/${userId || ''}`;
-    await Share.share({
-      message: t('shareProfileMessage').replace('{username}', name).replace('{url}', url),
-      url, // iOS attaches this as a rich link
-      title: t('shareProfileTitle').replace('{username}', name),
-    });
+    const message = t('shareProfileMessage').replace('{username}', name).replace('{url}', url);
+
+    // Desktop web frequently lacks the Web Share API → copy the link instead.
+    const noWebShare = Platform.OS === 'web' && (typeof navigator === 'undefined' || !(navigator as any).share);
+    if (noWebShare) { await copyLink(url); return; }
+
+    try {
+      await Share.share({ message, url, title: t('shareProfileTitle').replace('{username}', name) });
+    } catch (e: any) {
+      if (e?.name === 'AbortError') return; // user dismissed the share sheet
+      await copyLink(url);                  // share failed → fall back to clipboard
+    }
   };
 
   if (isOwner) {
@@ -48,8 +68,8 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
         </Pressable>
         <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
           <View style={styles.btnContent}>
-            <Share2 size={16} color={Colors.accent} />
-            <Text style={styles.shareText} maxFontSizeMultiplier={1.3}>{t('share')}</Text>
+            {copied ? <Check size={16} color={Colors.accent} /> : <Share2 size={16} color={Colors.accent} />}
+            <Text style={styles.shareText} maxFontSizeMultiplier={1.3}>{copied ? t('linkCopied') : t('share')}</Text>
           </View>
         </Pressable>
       </View>
@@ -85,8 +105,8 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
       </Pressable>
       <Pressable style={({ pressed }) => [styles.shareButton, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]} onPress={handleShareProfile} accessibilityRole="button" accessibilityLabel="Bagikan profil">
         <View style={styles.btnContent}>
-          <Share2 size={16} color={Colors.accent} />
-          <Text style={styles.shareText} maxFontSizeMultiplier={1.3}>{t('share')}</Text>
+          {copied ? <Check size={16} color={Colors.accent} /> : <Share2 size={16} color={Colors.accent} />}
+          <Text style={styles.shareText} maxFontSizeMultiplier={1.3}>{copied ? t('linkCopied') : t('share')}</Text>
         </View>
       </Pressable>
     </View>
