@@ -162,7 +162,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const { t } = useLanguage();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const activeTab = segments[0] === '(tabs)' ? (segments[1] || 'index') : '';
+  // Cast to string[] so segment indexing doesn't depend on generated
+  // expo-router route types (.expo/types), which are absent in fresh CI.
+  const activeTab = segments[0] === '(tabs)' ? ((segments as string[])[1] || 'index') : '';
 
   const handlePress = (name: string) => {
     if (!user && (name === 'watchlist' || name === 'profile')) {

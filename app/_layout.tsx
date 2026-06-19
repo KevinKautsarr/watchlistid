@@ -164,7 +164,9 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    const isResetPassword = (segments[1] as string) === 'reset-password';
+    // Cast to string[] so this doesn't depend on generated expo-router route
+    // types (.expo/types), which aren't present in a fresh CI checkout.
+    const isResetPassword = (segments as string[])[1] === 'reset-password';
     
     // Check if ANY part of the current route is in the protected list
     const isProtectedRoute = segments.some(s => PROTECTED_ROUTES.includes(s));
