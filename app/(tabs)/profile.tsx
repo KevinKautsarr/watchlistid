@@ -1,19 +1,13 @@
-import React, { lazy, Suspense } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import React from 'react';
+import ProfileScreen from '@/screens/ProfileScreen';
 import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 
-const ProfileScreenLazy = lazy(() => import('@/screens/ProfileScreen'));
-
+// Import directly — expo-router already code-splits the route. A nested
+// React.lazy() only adds a redundant chunk boundary prone to cross-chunk skew.
 export default function ProfileRoute() {
   return (
     <ScreenErrorBoundary screenName="Profil">
-      <Suspense fallback={
-        <View style={{ flex: 1, backgroundColor: '#0A0A0B', justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color="#C71F37" size="large" />
-        </View>
-      }>
-        <ProfileScreenLazy />
-      </Suspense>
+      <ProfileScreen />
     </ScreenErrorBoundary>
   );
 }

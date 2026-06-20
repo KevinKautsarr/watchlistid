@@ -1,16 +1,15 @@
-import React, { lazy, Suspense } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import React from 'react';
+import SearchScreen from '@/screens/SearchScreen';
+import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 
-const SearchScreenLazy = lazy(() => import('@/screens/SearchScreen'));
-
+// Import the screen directly. expo-router (asyncRoutes) already code-splits this
+// route, so an extra React.lazy() boundary only adds a second async chunk —
+// which is what produced the cross-chunk "useSearchQuery is not a function"
+// skew after a redeploy.
 export default function SearchRoute() {
   return (
-    <Suspense fallback={
-      <View style={{ flex: 1, backgroundColor: '#0A0A0B', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator color="#C71F37" size="large" />
-      </View>
-    }>
-      <SearchScreenLazy />
-    </Suspense>
+    <ScreenErrorBoundary screenName="Search">
+      <SearchScreen />
+    </ScreenErrorBoundary>
   );
 }
