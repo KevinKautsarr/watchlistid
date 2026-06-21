@@ -19,7 +19,11 @@
       "Bash(awk \"{print \\\\$5, \\\\$9}\")",
       "Read(//tmp/**)",
       "Read(//c/tmp/**)",
-      "Bash(cat)"
+      "Bash(cat)",
+      "Bash(curl -sI https://watchlistid.vercel.app/)",
+      "Bash(curl -sI https://watchlistid.vercel.app/user/test)",
+      "Bash(curl -sI \"https://watchlistid.vercel.app/_expo/static/js/web/nonexistent-zzz123.js\")",
+      "Bash(node -e \"const a=JSON.parse\\(require\\('fs'\\).readFileSync\\('app.json','utf8'\\)\\); console.log\\('app.json valid ✓'\\); console.log\\('asyncRoutes:', JSON.stringify\\(a.expo.plugins.find\\(p=>Array.isArray\\(p\\)&&p[0]==='expo-router'\\)\\)\\)\")"
     ]
   }
 }
