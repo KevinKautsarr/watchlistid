@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Share, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Platform, Image, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import { ChevronLeft, Globe, Twitter, Shield, FileText, Heart, Film, Github, ExternalLink } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { APP_URL } from '@/config';
+import { shareOrCopy } from '@/utils/share';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function AboutScreen() {
@@ -17,14 +18,12 @@ export default function AboutScreen() {
   };
 
   const handleShareApp = async () => {
-    try {
-      await Share.share({
-        message: `Join me on WatchlistID and start your cinematic journey today! 🎬 ${APP_URL}`,
-        title: 'WatchlistID',
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    const result = await shareOrCopy({
+      message: `Join me on WatchlistID and start your cinematic journey today! 🎬 ${APP_URL}`,
+      url: APP_URL,
+      title: 'WatchlistID',
+    });
+    if (result === 'copied') Alert.alert(t('linkCopied'));
   };
 
   return (

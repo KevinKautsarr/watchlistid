@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Animated, Share, Alert
+  StatusBar, Animated, Alert
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -12,6 +12,7 @@ import { ChevronLeft, Share2, Info, CheckCircle2 } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
 import { APP_URL } from '@/config';
 import { cursorPointer } from '@/utils/webStyles';
+import { shareOrCopy } from '@/utils/share';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { useAuth } from '@/context/AuthContext';
 import { useSocial } from '@/context/SocialContext';
@@ -248,21 +249,14 @@ export default function MovieDetailScreen() {
 
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      const mediaTitle = 'title' in movie ? movie.title : movie.name;
-      const ratingStr = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
-      const url = `${APP_URL}/movie/${movie.id}`;
-      const text = t('shareMovieMessage')
-        .replace('{title}', mediaTitle)
-        .replace('{rating}', ratingStr);
-      await Share.share({
-        message: `${text}\n${url}`,
-        url, // iOS attaches this as a rich link
-        title: mediaTitle,
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    const mediaTitle = 'title' in movie ? movie.title : movie.name;
+    const ratingStr = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+    const url = `${APP_URL}/movie/${movie.id}`;
+    const text = t('shareMovieMessage')
+      .replace('{title}', mediaTitle)
+      .replace('{rating}', ratingStr);
+    const result = await shareOrCopy({ message: `${text}\n${url}`, url, title: mediaTitle });
+    if (result === 'copied') Alert.alert(t('linkCopied'));
   };
 
   const featuredTrailer = videos.find(v => v.type === "Trailer");

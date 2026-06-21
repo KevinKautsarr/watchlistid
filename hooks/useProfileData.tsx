@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSocial } from '@/context/SocialContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWatchlist } from '@/context/WatchlistContext';
+import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 import { FetchState, UserProfile, Movie } from '@/types';
 import { decodeBase64ToArrayBuffer } from '@/utils/base64';
 import { exportWatchlistToCSV } from '@/utils/exportWatchlist';
@@ -26,6 +27,7 @@ export const useProfileData = (userId: string | undefined) => {
   const { signOut, deleteAccount, profile, user, refreshProfile } = useAuth();
   const { getFollowStatus, followUser, unfollowUser, userLogs } = useSocial();
   const { watchlist, getMovieStatus, isHydrated, userRatings } = useWatchlist();
+  const { showLoginPrompt } = useLoginPrompt();
 
   const targetUserId = userId || user?.id;
   const isOwner = !userId || userId === user?.id;
@@ -316,7 +318,8 @@ export const useProfileData = (userId: string | undefined) => {
   };
 
   const handleFollow = async () => {
-    if (!user || !targetUserId || isOwner || isFollowLoading) return;
+    if (isOwner || isFollowLoading || !targetUserId) return;
+    if (!user) { showLoginPrompt(); return; } // guest tapped Follow → prompt login
     setIsFollowLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {

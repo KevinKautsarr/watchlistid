@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Share, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { APP_URL } from '@/config';
 import { UserPlus, UserMinus, Edit3, Share2, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import * as Clipboard from 'expo-clipboard';
+import { shareOrCopy } from '@/utils/share';
 
 interface ProfileActionsProps {
   isOwner: boolean;
@@ -29,31 +29,15 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const copyLink = async (link: string) => {
-    try {
-      await Clipboard.setStringAsync(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard unavailable — nothing more we can do
-    }
-  };
-
   const handleShareProfile = async () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const name = username || 'User';
     const url = `${APP_URL}/user/${userId || ''}`;
     const message = t('shareProfileMessage').replace('{username}', name).replace('{url}', url);
-
-    // Desktop web frequently lacks the Web Share API → copy the link instead.
-    const noWebShare = Platform.OS === 'web' && (typeof navigator === 'undefined' || !(navigator as any).share);
-    if (noWebShare) { await copyLink(url); return; }
-
-    try {
-      await Share.share({ message, url, title: t('shareProfileTitle').replace('{username}', name) });
-    } catch (e: any) {
-      if (e?.name === 'AbortError') return; // user dismissed the share sheet
-      await copyLink(url);                  // share failed → fall back to clipboard
+    const result = await shareOrCopy({ message, url, title: t('shareProfileTitle').replace('{username}', name) });
+    if (result === 'copied') {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 

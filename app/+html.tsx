@@ -25,12 +25,17 @@ export default function Root({ children }: PropsWithChildren) {
         <meta property="og:title" content="WatchlistID — Track, Rate, and Discover Movies & TV Shows" />
         <meta property="og:description" content="WatchlistID is your ultimate movie and TV show watchlist tracker. Rate what you've watched, discover trending media, and share logs with your friends." />
         <meta property="og:site_name" content="WatchlistID" />
+        <meta property="og:image" content="https://watchlistid.vercel.app/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="WatchlistID — Track, Rate, and Discover" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content="https://watchlistid.vercel.app" />
         <meta name="twitter:title" content="WatchlistID — Track, Rate, and Discover Movies & TV Shows" />
         <meta name="twitter:description" content="WatchlistID is your ultimate movie and TV show watchlist tracker. Rate what you've watched, discover trending media, and share logs with your friends." />
+        <meta name="twitter:image" content="https://watchlistid.vercel.app/og-image.png" />
 
         {/* Performance: preconnect to 3rd party origins */}
         <link rel="preconnect" href="https://image.tmdb.org" />
