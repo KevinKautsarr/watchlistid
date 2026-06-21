@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import { supabase, typedFrom } from '@/supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { mapAuthError } from '@/utils/authErrors';
-import { APP_URL } from '@/config';
+import { getAuthRedirectUrl } from '@/utils/authRedirect';
 import { FetchState } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeClearCorruptStorage, clearStaleSupabaseSession } from '@/utils/storage';
@@ -16,26 +16,10 @@ import { safeClearCorruptStorage, clearStaleSupabaseSession } from '@/utils/stor
 // Required for OAuth flow to work on native
 WebBrowser.maybeCompleteAuthSession();
 
-// Platform-aware redirect URL:
-// - Web (production): https://watchlistid.vercel.app/auth/callback
-// - Web (local dev):  http://localhost:8081/auth/callback  (via Linking.createURL)
-// - Native:           moviewatchlist://auth/callback
-//
-// IMPORTANT: We do NOT use __DEV__ here because Expo sets __DEV__ = true even
-// in Vercel production builds (expo export), causing localhost redirects in prod.
-// Instead, we use runtime hostname detection which is always accurate.
-const PROD_WEB_URL = APP_URL;
-const PROD_WEB_HOSTNAME = 'watchlistid.vercel.app'; // must match APP_URL hostname
-
-const isWebProduction = Platform.OS === 'web'
-  && typeof window !== 'undefined'
-  && window.location?.hostname === PROD_WEB_HOSTNAME;
-
-const REDIRECT_URL = Platform.OS === 'web'
-  ? (isWebProduction
-      ? `${PROD_WEB_URL}/auth/callback`
-      : Linking.createURL('/auth/callback'))
-  : 'moviewatchlist://auth/callback';
+// Platform-aware OAuth / email callback URL. Centralized in utils/authRedirect
+// so OAuth and password-reset/confirmation links always agree — and so we use
+// runtime hostname detection instead of __DEV__ (which is true even in prod web).
+const REDIRECT_URL = getAuthRedirectUrl();
 
 /** Logged-in user's own profile — separate from the social UserProfile in types/index.ts
  *  which has stricter requirements (id required, username required) suited for
@@ -277,8 +261,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
+      options: {
         data: { username: username ?? email.split('@')[0] },
+        emailRedirectTo: REDIRECT_URL,
         captchaToken,
       },
     });

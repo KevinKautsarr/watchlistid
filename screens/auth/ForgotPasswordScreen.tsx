@@ -22,6 +22,7 @@ import * as Haptics from "expo-haptics";
 import { Mail, ArrowLeft, Send, Sparkles } from "lucide-react-native";
 
 import { supabase } from "../../supabase";
+import { getAuthRedirectUrl } from "@/utils/authRedirect";
 import {
   Colors,
   Spacing,
@@ -101,12 +102,8 @@ export default function ForgotPasswordScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
 
-    // Dynamic redirect URL that routes directly to our Unified Callback Handler
-    const resetRedirect = Platform.OS === "web"
-      ? (__DEV__
-        ? "http://localhost:8081/auth/callback"
-        : "https://watchlistid.vercel.app/auth/callback")
-      : "moviewatchlist://auth/callback";
+    // Runtime-correct callback URL (NOT __DEV__, which is true even in prod web)
+    const resetRedirect = getAuthRedirectUrl();
 
     const { error: err } = await supabase.auth.resetPasswordForEmail(
       email.trim().toLowerCase(),
