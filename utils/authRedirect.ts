@@ -17,12 +17,13 @@ const PROD_WEB_HOSTNAME = 'watchlistid.vercel.app';
  * - Web (local dev):  http://localhost:8081/auth/callback  (via Linking.createURL)
  * - Native:           moviewatchlist://auth/callback
  */
-export function getAuthRedirectUrl(): string {
+export function getAuthRedirectUrl(path: string = '/auth/callback'): string {
   if (Platform.OS !== 'web') {
+    // Native always routes through the callback deep link.
     return 'moviewatchlist://auth/callback';
   }
   const isProd =
     typeof window !== 'undefined' &&
     window.location?.hostname === PROD_WEB_HOSTNAME;
-  return isProd ? `${APP_URL}/auth/callback` : Linking.createURL('/auth/callback');
+  return isProd ? `${APP_URL}${path}` : Linking.createURL(path);
 }

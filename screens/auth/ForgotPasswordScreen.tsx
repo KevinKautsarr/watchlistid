@@ -102,8 +102,13 @@ export default function ForgotPasswordScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
 
-    // Runtime-correct callback URL (NOT __DEV__, which is true even in prod web)
-    const resetRedirect = getAuthRedirectUrl();
+    // Runtime-correct redirect (NOT __DEV__, which is true even in prod web).
+    // Web: send straight to the reset-password form route (allow-listed in Supabase)
+    // so the new-password screen always shows — no reliance on detecting
+    // `type=recovery`, which the PKCE flow can omit. Native goes via /auth/callback.
+    const resetRedirect = Platform.OS === "web"
+      ? getAuthRedirectUrl("/auth/reset-password")
+      : getAuthRedirectUrl();
 
     const { error: err } = await supabase.auth.resetPasswordForEmail(
       email.trim().toLowerCase(),

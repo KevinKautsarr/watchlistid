@@ -283,8 +283,8 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      setError(t("passwordTooShort"));
+    if (password.length < 8) {
+      setError(t("passwordMin8Err"));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -524,7 +524,7 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             onFocus={() => animateFocus(passwordBorderAnim, true)}
             onBlur={() => animateFocus(passwordBorderAnim, false)}
-            placeholder={language === "id" ? "Min. 6 karakter" : "Min. 6 characters"}
+            placeholder={language === "id" ? "Min. 8 karakter" : "Min. 8 characters"}
             placeholderTextColor="rgba(255, 255, 255, 0.3)"
             secureTextEntry={!showPass}
             maxFontSizeMultiplier={1.3}
