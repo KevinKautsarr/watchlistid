@@ -123,14 +123,18 @@ export default function HomeScreen() {
       )}
 
       {isLoading ? (
-        <View style={[s.heroSkeleton, { width: contentWidth, height: HERO_HEIGHT }]} />
+        <View style={[s.heroSkeleton, { width: contentWidth - 2 * PAD, height: HERO_HEIGHT, marginHorizontal: PAD, marginTop: 16, borderRadius: 24, overflow: 'hidden' }]} />
       ) : trending.length > 0 ? (
-        <HeroCarousel
-          data={trending}
-          width={contentWidth}
-          height={HERO_HEIGHT}
-          onPressItem={goToMovie}
-        />
+        <View style={{ paddingHorizontal: PAD, paddingTop: 16 }}>
+          <View style={{ borderRadius: 24, overflow: 'hidden' }}>
+            <HeroCarousel
+              data={trending}
+              width={contentWidth - 2 * PAD}
+              height={HERO_HEIGHT}
+              onPressItem={goToMovie}
+            />
+          </View>
+        </View>
       ) : null}
 
       <View style={[s.body, { paddingHorizontal: PAD }]}>

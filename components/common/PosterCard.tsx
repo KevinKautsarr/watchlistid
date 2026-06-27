@@ -71,7 +71,7 @@ const PosterCard: React.FC<PosterCardProps> = React.memo(({
       style={containerStyle} 
       onPress={onPress}
     >
-      <View style={styles.posterWrap}>
+      <View style={[styles.posterWrap, { height: width * 1.5, borderRadius: Radius.lg }]}>
         <SafeImage
           uri={movie.poster_path ? `${Platform.OS === 'web' ? TMDB_IMAGE_SIZES.small : TMDB_IMAGE_SIZES.medium}${movie.poster_path}` : null}
           fallbackType="movie"
@@ -113,11 +113,9 @@ const styles = StyleSheet.create({
     padding: 2,
     borderWidth: 1.5,
     borderColor: Colors.ratingGold,
-    borderRadius: Radius.md + 2,
+    borderRadius: Radius.lg + 2,
   },
   posterWrap: {
-    height: 160,
-    borderRadius: Radius.md,
     backgroundColor: Colors.surface,
     overflow: 'hidden',
     ...Shadow.sm,
