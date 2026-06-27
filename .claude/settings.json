@@ -25,7 +25,11 @@
       "Bash(curl -sI \"https://watchlistid.vercel.app/_expo/static/js/web/nonexistent-zzz123.js\")",
       "Bash(node -e \"const a=JSON.parse\\(require\\('fs'\\).readFileSync\\('app.json','utf8'\\)\\); console.log\\('app.json valid ✓'\\); console.log\\('asyncRoutes:', JSON.stringify\\(a.expo.plugins.find\\(p=>Array.isArray\\(p\\)&&p[0]==='expo-router'\\)\\)\\)\")",
       "Bash(node -e \"const v=JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); console.log\\('valid ✓'\\); console.log\\('top-level keys:', Object.keys\\(v\\).join\\(', '\\)\\); console.log\\('routes count:', v.routes.length\\); v.routes.forEach\\(\\(r,i\\)=>console.log\\('  ['+i+']', r.handle?\\('handle='+r.handle\\):\\('src='+r.src+\\(r.dest?\\(' -> '+r.dest\\):''\\)+\\(r.status?\\(' \\('+r.status+'\\)'\\):''\\)+\\(r.continue?' [continue]':''\\)\\)\\)\\);\")",
-      "Bash(node -e \"const v=JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); const bad=['rewrites','redirects','headers','cleanUrls','trailingSlash'].filter\\(k=>k in v\\); console.log\\(bad.length? \\('KONFLIK: '+bad.join\\(','\\)\\) : 'tidak ada konflik ✓'\\);\")"
+      "Bash(node -e \"const v=JSON.parse\\(require\\('fs'\\).readFileSync\\('vercel.json','utf8'\\)\\); const bad=['rewrites','redirects','headers','cleanUrls','trailingSlash'].filter\\(k=>k in v\\); console.log\\(bad.length? \\('KONFLIK: '+bad.join\\(','\\)\\) : 'tidak ada konflik ✓'\\);\")",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(npx expo lint 2>&1)",
+      "PowerShell(npm test 2>&1)",
+      "PowerShell(if \\($LASTEXITCODE -eq 0\\) { \"TSC OK\" } else { \"TSC FAILED\" })"
     ]
   }
 }

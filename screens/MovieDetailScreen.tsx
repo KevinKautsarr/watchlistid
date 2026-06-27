@@ -278,7 +278,7 @@ export default function MovieDetailScreen() {
           ageRating={ageRating} 
         />
 
-        <View style={[bp.isLarge && styles.largeContentRow]}>
+        <View style={[bp.isLarge && styles.largeContentRow, bp.isLarge && { maxWidth: bp.maxContentWidth }]}>
           
           <DetailRatings 
             movie={movie} 
@@ -307,7 +307,7 @@ export default function MovieDetailScreen() {
         </View>
 
         {/* Full-width sections on desktop for videos, cast, details, and reviews to maintain perfect symmetry */}
-        <View style={[bp.isLarge && styles.largeContentFull]}>
+        <View style={[bp.isLarge && styles.largeContentFull, bp.isLarge && { maxWidth: bp.maxContentWidth }]}>
           <DetailStory 
             overview={movie.overview || ''} 
             keywords={keywords} 
@@ -508,7 +508,7 @@ export default function MovieDetailScreen() {
           <ReviewFeed movieId={Number(actualId)} />
         </View>
 
-        <View style={[bp.isLarge && styles.largeContentFull]}>
+        <View style={[bp.isLarge && styles.largeContentFull, bp.isLarge && { maxWidth: bp.maxContentWidth }]}>
           {similar.length > 0 && (
             <View style={styles.similarSection}>
               <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>{t('moreLikeThis')}</Text>
@@ -733,8 +733,10 @@ const styles = StyleSheet.create({
   retryBtn: { marginTop: 30, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: Radius.md },
   retryBtnText: { color: Colors.white, fontWeight: FontWeight.bold },
   largeCenter: { alignItems: 'center' },
-  largeContentRow: { flexDirection: 'row', width: '100%', maxWidth: 1200, paddingHorizontal: 40 }, // Assuming 1200 as bp.maxContentWidth
-  largeContentFull: { width: '100%', maxWidth: 1200, paddingHorizontal: 40 },
+  // maxWidth is applied inline from bp.maxContentWidth so the desktop content
+  // width tracks the single source of truth in useBreakpoint().
+  largeContentRow: { flexDirection: 'row', width: '100%', paddingHorizontal: 40 },
+  largeContentFull: { width: '100%', paddingHorizontal: 40 },
   flex1: { flex: 1 },
   bottomSpacer: { height: 100 },
 });

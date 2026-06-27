@@ -217,7 +217,7 @@ const WatchlistScreen: React.FC = () => {
       <StatusBar barStyle="light-content" />
 
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View style={[styles.header, bp.isLarge && styles.centeredColumn]}>
         <View>
           <Text style={styles.headerSub} maxFontSizeMultiplier={1.3}>
             {activeTab === 'Watchlist' 
@@ -230,7 +230,7 @@ const WatchlistScreen: React.FC = () => {
       </View>
  
       {/* ── IMDb Style Tabs ── */}
-      <View style={styles.tabContainer} accessibilityRole="tablist">
+      <View style={[styles.tabContainer, bp.isLarge && styles.centeredColumn]} accessibilityRole="tablist">
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'Watchlist' && styles.tabActive, cursorPointer]} 
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab('Watchlist'); }}
@@ -279,7 +279,7 @@ const WatchlistScreen: React.FC = () => {
 
 
       {/* ── List ── */}
-      <View style={{ flex: 1 }}>
+      <View style={[{ flex: 1, width: '100%' }, bp.isLarge && styles.centeredColumn]}>
         <TypedFlashList
           data={sortedList}
           keyExtractor={(item: WatchlistItem) => item.id.toString()}
@@ -494,6 +494,9 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 100 : 80,
     paddingTop: 4,
   },
+  // Tablet/desktop: keep the library a centered, readable column instead of
+  // letting full-width list rows stretch across the whole screen.
+  centeredColumn: { width: '100%', alignSelf: 'center' },
 
   empty: {
     paddingTop: 80,

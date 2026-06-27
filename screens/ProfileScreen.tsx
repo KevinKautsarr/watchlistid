@@ -10,6 +10,7 @@ import { useSharedValue } from 'react-native-reanimated';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { useProfileData } from '@/hooks/useProfileData';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import Shimmer from '@/components/common/Shimmer';
 import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
@@ -34,6 +35,7 @@ interface ProfileScreenProps {
 export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const bp = useBreakpoint();
   const { userId: routeUserId } = useLocalSearchParams<{ userId: string }>();
   const userId = propUserId || routeUserId;
 
@@ -148,7 +150,10 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
       <FlatList
         data={listData}
         keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `item-${index}`}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={[
+          { paddingBottom: insets.bottom + 100 },
+          bp.isLarge && styles.centeredColumn,
+        ]}
         showsVerticalScrollIndicator={false}
         initialNumToRender={6}
         maxToRenderPerBatch={8}
@@ -232,7 +237,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
         renderItem={({ item }: { item: any }) => {
           if (activeTab === 'Diary' || activeTab === 'Reviews') {
             return (
-              <View style={{ paddingHorizontal: 16 }}>
+              <View style={{ paddingHorizontal: bp.isLarge ? 24 : 16 }}>
                 <DiaryCard 
                   log={item} 
                   onPressPoster={(movieId, mediaType) => router.push({ pathname: '/movie/[id]', params: { id: movieId.toString(), type: mediaType } } as any)}
@@ -242,7 +247,7 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
           }
           if (activeTab === 'Watchlist') {
             return (
-              <View style={{ paddingHorizontal: 16, marginVertical: 4 }}>
+              <View style={{ paddingHorizontal: bp.isLarge ? 24 : 16, marginVertical: 4 }}>
                 <MovieListItem
                   movie={item}
                   onPress={() => router.push({ pathname: '/movie/[id]', params: { id: item.id.toString(), type: item.mediaType || 'movie' } } as any)}
@@ -284,6 +289,9 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
+  // Tablet/desktop: center the profile column so content doesn't span the
+  // full width of large screens.
+  centeredColumn: { width: '100%', alignSelf: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   errorTitle: { color: Colors.white, fontSize: FontSize.xl, fontWeight: FontWeight.black, marginTop: 20 },

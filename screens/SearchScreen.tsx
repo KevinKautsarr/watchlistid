@@ -443,73 +443,77 @@ export default function SearchScreen() {
       {/* ── Absolute Header Container ── */}
       {activeCat && (
         <View style={[styles.fixedHeader, { paddingTop: baseTop }]}>
-          <View
-            style={[
-              styles.headerContainer,
-              { paddingHorizontal: bp.contentPadding },
-            ]}
-          >
-            <View style={styles.catHeader}>
-              <TouchableOpacity
-                style={styles.backBtn}
-                onPress={() => setActiveCat(null)}
-              >
-                <ArrowLeft size={IconSize.md} color={Colors.white} />
-              </TouchableOpacity>
-              <View>
-                <Text style={styles.catTitle}>
-                  {activeCat && CATS[activeCat] ? t(CATS[activeCat].label as any) : ""}
-                </Text>
-                <Text style={styles.catSub}>
-                  {activeCat && CATS[activeCat] ? t(CATS[activeCat].subtitle as any) : ""}
-                </Text>
+          <View style={[{ width: "100%" }, bp.isLarge && styles.centeredColumn]}>
+            <View
+              style={[
+                styles.headerContainer,
+                { paddingHorizontal: bp.contentPadding },
+              ]}
+            >
+              <View style={styles.catHeader}>
+                <TouchableOpacity
+                  style={styles.backBtn}
+                  onPress={() => setActiveCat(null)}
+                >
+                  <ArrowLeft size={IconSize.md} color={Colors.white} />
+                </TouchableOpacity>
+                <View>
+                  <Text style={styles.catTitle}>
+                    {activeCat && CATS[activeCat] ? t(CATS[activeCat].label as any) : ""}
+                  </Text>
+                  <Text style={styles.catSub}>
+                    {activeCat && CATS[activeCat] ? t(CATS[activeCat].subtitle as any) : ""}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          <Animated.View
-            style={[
-              styles.searchWrap,
-              {
-                marginHorizontal: bp.contentPadding,
-                transform: [{ scale: inputScale }],
-              },
-            ]}
-          >
-            <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
-            <TextInput
-              ref={inputRef}
-              style={styles.searchInput}
-              placeholder={t("searchIn").replace(
-                "{category}",
-                activeCat && CATS[activeCat] ? t(CATS[activeCat].label as any) : ""
-              )}
-              placeholderTextColor={Colors.text.secondary}
-              value={searchText}
-              onChangeText={setSearchText}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              returnKeyType="search"
-              maxFontSizeMultiplier={1.3}
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-            {isLoading ? (
-              <ActivityIndicator size="small" color={Colors.primary} />
-            ) : searchText.length > 0 ? (
-              <TouchableOpacity
-                style={styles.clearBtn}
-                onPress={() => setSearchText("")}
-              >
-                <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
-              </TouchableOpacity>
-            ) : null}
-          </Animated.View>
+            <Animated.View
+              style={[
+                styles.searchWrap,
+                {
+                  marginHorizontal: bp.contentPadding,
+                  transform: [{ scale: inputScale }],
+                },
+              ]}
+            >
+              <Search size={IconSize.md} color={Colors.primary} strokeWidth={2} />
+              <TextInput
+                ref={inputRef}
+                style={styles.searchInput}
+                placeholder={t("searchIn").replace(
+                  "{category}",
+                  activeCat && CATS[activeCat] ? t(CATS[activeCat].label as any) : ""
+                )}
+                placeholderTextColor={Colors.text.secondary}
+                value={searchText}
+                onChangeText={setSearchText}
+                onFocus={onFocus}
+                onBlur={onBlur}
+                returnKeyType="search"
+                maxFontSizeMultiplier={1.3}
+                autoCorrect={false}
+                autoCapitalize="none"
+              />
+              {isLoading ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : searchText.length > 0 ? (
+                <TouchableOpacity
+                  style={styles.clearBtn}
+                  onPress={() => setSearchText("")}
+                >
+                  <X size={IconSize.xs} color={Colors.white} strokeWidth={3} />
+                </TouchableOpacity>
+              ) : null}
+            </Animated.View>
+          </View>
         </View>
       )}
 
       {/* ── Scrollable list area ── */}
-      <View style={{ flex: 1 }}>
+      {/* On tablet/desktop, constrain + center the column so list rows don't
+          stretch the full width and become unreadable. */}
+      <View style={[{ flex: 1 }, bp.isLarge && styles.centeredColumn]}>
         {searchMode === "media" ? (
           <TypedFlashList
             style={{ flex: 1, opacity: isLoading ? 0.65 : 1 }}
@@ -854,6 +858,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   listContent: { paddingBottom: 100 },
+  centeredColumn: { width: "100%", alignSelf: "center" },
   resultCount: {
     fontSize: FontSize.xs,
     color: Colors.text.secondary,

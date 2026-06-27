@@ -44,6 +44,6 @@ export function useBreakpoint(): BreakpointInfo {
     columns:       breakpoint === 'desktop' ? 6 : breakpoint === 'tablet' ? 4 : 3,
     cardWidth:     breakpoint === 'desktop' ? 160 : breakpoint === 'tablet' ? 145 : 130,
     contentPadding: breakpoint === 'desktop' ? 40 : breakpoint === 'tablet' ? 28 : 20,
-    maxContentWidth: breakpoint === 'desktop' ? 1400 : 9999,
+    maxContentWidth: 9999,
   };
 }

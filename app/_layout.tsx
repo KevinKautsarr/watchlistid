@@ -4,10 +4,13 @@ import React, { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, View, ActivityIndicator, StyleSheet, Text, useWindowDimensions } from 'react-native';
+import { Platform, View, ActivityIndicator, StyleSheet, Text, Pressable, useWindowDimensions } from 'react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { cursorPointer } from '@/utils/webStyles';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sidebar from '@/components/navigation/Sidebar';
 import LoginPromptModal from '@/components/auth/LoginPromptModal';
 
@@ -138,6 +141,57 @@ function WebHead() {
 // Routes that require authentication — defined at module level so they're stable
 const PROTECTED_ROUTES: string[] = ['watchlist', 'profile', 'notifications', 'search-users'];
 
+const BackgroundAuras: React.FC = () => {
+  if (Platform.OS !== 'web') return null;
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <View
+        style={{
+          position: 'absolute',
+          top: -200,
+          right: -300,
+          width: 800,
+          height: 800,
+          borderRadius: 400,
+          backgroundColor: 'rgba(199,31,55,0.05)',
+          // @ts-ignore - filter is supported by React Native Web
+          filter: 'blur(150px)',
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          bottom: -300,
+          left: 100,
+          width: 800,
+          height: 800,
+          borderRadius: 400,
+          backgroundColor: 'rgba(100,18,32,0.03)',
+          // @ts-ignore - filter is supported by React Native Web
+          filter: 'blur(160px)',
+        }}
+      />
+    </View>
+  );
+};
+
+// Toggle button style — defined at module level for referential stability.
+// Position: absolute left:0, translateX animates it to follow the sidebar edge.
+const sidebarToggleStyle = {
+  position: 'absolute' as const,
+  left: 0,
+  top: '50%',
+  marginTop: -13,
+  width: 26,
+  height: 26,
+  borderRadius: 13,
+  borderWidth: 1,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  zIndex: 30,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+} as any;
+
 function RootLayoutNav() {
   const { session, isLoading, profileError } = useAuth();
   const segments = useSegments();
@@ -148,7 +202,43 @@ function RootLayoutNav() {
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1100;
   const isLarge   = !isMobile;
-  const collapsed = isTablet;
+
+  // Manual collapse override via the sidebar chevron. `null` = follow the
+  // breakpoint default (tablet collapses to icons, desktop stays expanded).
+  const [userCollapsed, setUserCollapsed] = React.useState<boolean | null>(() => {
+    if (Platform.OS === 'web') {
+      try {
+        const stored = window.localStorage.getItem('wl_sidebar_collapsed');
+        if (stored === '1') return true;
+        if (stored === '0') return false;
+      } catch (e) {
+        // ignore
+      }
+    }
+    return null;
+  });
+
+  React.useEffect(() => {
+    AsyncStorage.getItem('wl_sidebar_collapsed')
+      .then(v => { if (v === '1') setUserCollapsed(true); else if (v === '0') setUserCollapsed(false); })
+      .catch(() => { /* preference is non-critical */ });
+  }, []);
+
+  const collapsed = userCollapsed ?? isTablet;
+  const toggleSidebar = React.useCallback(() => {
+    setUserCollapsed(prev => {
+      const next = !(prev ?? isTablet);
+      AsyncStorage.setItem('wl_sidebar_collapsed', next ? '1' : '0').catch(() => {});
+      if (Platform.OS === 'web') {
+        try {
+          window.localStorage.setItem('wl_sidebar_collapsed', next ? '1' : '0');
+        } catch (e) {
+          // ignore
+        }
+      }
+      return next;
+    });
+  }, [isTablet]);
 
   const isAuthScreen = segments[0] === 'auth';
   const showSidebar = isLarge && !isAuthScreen;
@@ -209,7 +299,48 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#0A0A0B' }}>
-        {showSidebar && <Sidebar collapsed={collapsed} />}
+        <BackgroundAuras />
+        {/* Clip wrapper: overflow:hidden + animated width = zero-reflow sidebar clip.
+            Sidebar inside is position:absolute width:240 always — no layout change.
+            Only THIS wrapper's width animates. Very cheap — no children to reflow. */}
+        {showSidebar && (
+          <View style={[
+            { position: 'relative', flexShrink: 0 },
+            Platform.OS === 'web' ? {
+              width: collapsed ? 72 : 240,
+              overflowX: 'hidden',
+              overflowY: 'visible',
+              transition: 'width 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+            } as any : {
+              width: collapsed ? 72 : 240,
+              overflow: 'hidden',
+            },
+          ]}>
+            <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
+          </View>
+        )}
+        {/* Toggle button — rendered OUTSIDE the clip wrapper so it's never clipped.
+            Uses translateX (GPU compositor) to track the sidebar's visible right edge. */}
+        {showSidebar && Platform.OS === 'web' && (
+          <Pressable
+            onPress={toggleSidebar}
+            accessibilityRole="button"
+            style={({ hovered }) => [
+              sidebarToggleStyle,
+              {
+                transform: [{ translateX: collapsed ? 72 - 13 : 240 - 13 }],
+                transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+                backgroundColor: hovered ? '#C71F37' : '#121215',
+                borderColor: hovered ? '#C71F37' : 'rgba(255,255,255,0.06)',
+              } as any,
+              cursorPointer,
+            ]}
+          >
+            {collapsed
+              ? <ChevronRight size={16} color="#FFFFFF" strokeWidth={2.5} />
+              : <ChevronLeft  size={16} color="#FFFFFF" strokeWidth={2.5} />}
+          </Pressable>
+        )}
         <View style={{ flex: 1, overflow: 'hidden' }}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
@@ -244,6 +375,7 @@ function RootLayoutNav() {
     </ThemeProvider>
   );
 }
+
 
 export default function RootLayout() {
   return (
