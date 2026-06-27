@@ -186,6 +186,11 @@ const translations = {
     genreRomance: "Romance",
     genreAdventure: "Adventure",
     genreCrime: "Crime",
+    genreThriller: "Thriller",
+    genreFantasy: "Fantasy",
+    genreMystery: "Mystery",
+    genreFamily: "Family",
+    genreDocumentary: "Documentary",
 
     // Discover / Search
     searchPlaceholder: "Search movies, shows, people...",
@@ -546,6 +551,11 @@ const translations = {
     genreRomance: "Romantis",
     genreAdventure: "Petualangan",
     genreCrime: "Kriminal",
+    genreThriller: "Thriller",
+    genreFantasy: "Fantasi",
+    genreMystery: "Misteri",
+    genreFamily: "Keluarga",
+    genreDocumentary: "Dokumenter",
 
     // Discover / Search
     searchPlaceholder: "Cari film, serial, aktor...",

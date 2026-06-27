@@ -138,6 +138,11 @@ const FILTER_CHIPS = [
   { id: "10749", labelKey: "genreRomance" },
   { id: "12", labelKey: "genreAdventure" },
   { id: "80", labelKey: "genreCrime" },
+  { id: "53", labelKey: "genreThriller" },
+  { id: "14", labelKey: "genreFantasy" },
+  { id: "9648", labelKey: "genreMystery" },
+  { id: "10751", labelKey: "genreFamily" },
+  { id: "99", labelKey: "genreDocumentary" },
 ];
 
 export default function SearchScreen() {
@@ -279,6 +284,15 @@ export default function SearchScreen() {
     fetchCatPage,
     isHydrated,
   ]);
+
+  // When the active filter changes, jump back to the top so the freshly fetched
+  // results are visible — otherwise the list keeps its previous scroll position
+  // and switching filters can look like nothing changed.
+  useEffect(() => {
+    if (searchMode === "media") {
+      mediaListRef.current?.scrollToOffset?.({ offset: 0, animated: false });
+    }
+  }, [activeFilter, searchMode]);
 
   // Save successful search queries to history
   const saveSearchTerm = useCallback(async (term: string) => {
@@ -520,7 +534,7 @@ export default function SearchScreen() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
             data={isPeople ? personItems : items}
-            keyExtractor={(i: any) => String(i.id)}
+            keyExtractor={(i: any) => `${i.media_type ?? "m"}-${i.id}`}
             renderItem={({ item }: { item: any }) =>
               isPeople ? (
                 <PersonCard

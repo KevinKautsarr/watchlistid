@@ -308,10 +308,18 @@ export const getTopRatedTV = (page = 1) =>
   tmdbGet<PagedResponse<any>>('/tv/top_rated', { page: String(page) });
 
 export const getPopularTV = (page = 1) =>
-  tmdbGet<PagedResponse<any>>('/discover/tv', { 
-    sort_by: 'popularity.desc', 
+  tmdbGet<PagedResponse<any>>('/discover/tv', {
+    sort_by: 'popularity.desc',
     page: String(page),
     without_keywords: NSFW_KEYWORDS
+  });
+
+export const discoverTV = (genreId?: number, page = 1) =>
+  tmdbGet<PagedResponse<any>>('/discover/tv', {
+    sort_by: 'popularity.desc',
+    without_keywords: NSFW_KEYWORDS,
+    page: String(page),
+    ...(genreId ? { with_genres: String(genreId) } : {}),
   });
 
 export const getStudioMovies = (companyId: number, page = 1) =>
