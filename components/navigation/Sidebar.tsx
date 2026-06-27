@@ -385,8 +385,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               <Text style={[styles.navLabel, active && styles.navLabelActive]} numberOfLines={1} maxFontSizeMultiplier={1.3}>
                 {label}
               </Text>
-              {active && <View style={styles.activePip} />}
             </View>
+            {active && <View style={styles.activeLine} />}
           </>
         )}
       </Pressable>
@@ -616,7 +616,16 @@ const styles = StyleSheet.create({
   navItemHover:  {},
   navLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.45)', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
   navLabelActive: { color: '#FFFFFF', fontWeight: '700' },
-  activePip: { width: 4, height: 4, borderRadius: 2, backgroundColor: PRIMARY, marginLeft: 8, marginRight: 8 },
+  activeLine: {
+    position: 'absolute',
+    left: 2,
+    top: 6,
+    bottom: 6,
+    width: 3,
+    backgroundColor: PRIMARY,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
+  },
 
   // ── Icon container + box ──
   iconContainer: { width: 48, alignItems: 'center', justifyContent: 'center' },

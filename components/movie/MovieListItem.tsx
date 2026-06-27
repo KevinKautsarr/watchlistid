@@ -178,12 +178,14 @@ const MovieListItem: React.FC<MovieListItemProps> = React.memo(({
 const styles = StyleSheet.create({
   container: { 
     flexDirection: 'row', 
-    paddingHorizontal: Spacing.xl, 
-    paddingVertical: Spacing.lg, 
-    borderBottomWidth: 1, 
-    borderColor: Colors.overlay.light, 
+    padding: Spacing.md, 
+    backgroundColor: '#121215',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
     gap: Spacing.lg,
-    alignItems: 'center'
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   rankBadge: { 
     position: 'absolute', 
@@ -205,7 +207,7 @@ const styles = StyleSheet.create({
     height: 88, 
     minHeight: 88,
     borderRadius: Radius.sm, 
-    backgroundColor: Colors.surface, 
+    backgroundColor: '#0A0A0B', 
     overflow: 'hidden' 
   },
   contentCol: { 
@@ -254,7 +256,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' 
   },
   watchedBtn: { 
-    backgroundColor: Colors.surface 
+    backgroundColor: '#0A0A0B' 
   },
   unwatchedBtn: { 
     backgroundColor: 'rgba(229, 9, 20, 0.12)',
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
     flexShrink: 0, 
   },
   wlCircleActive: { 
-    backgroundColor: Colors.surface, 
+    backgroundColor: '#0A0A0B', 
     borderWidth: 0,
   },
   wlIcon: { 

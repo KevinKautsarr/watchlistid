@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { typedFrom } from '@/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { UserProfile, MovieLog } from '@/types';
@@ -9,12 +9,17 @@ interface FollowContextType {
   unfollowUser: (targetId: string) => Promise<boolean>;
   getFollowStatus: (targetId: string) => Promise<boolean>;
   getActivityFeed: () => Promise<MovieLog[]>;
+  activityFeed: MovieLog[];
+  loadingActivityFeed: boolean;
+  refreshActivityFeed: () => Promise<void>;
 }
 
 const FollowContext = createContext<FollowContextType | undefined>(undefined);
 
 export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const [activityFeed, setActivityFeed] = useState<MovieLog[]>([]);
+  const [loadingActivityFeed, setLoadingActivityFeed] = useState(false);
 
   const searchUsers = async (query: string): Promise<UserProfile[]> => {
     const trimmed = query.trim().toLowerCase();
@@ -88,41 +93,78 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return !!data && !error;
   };
 
-  const getActivityFeed = async (): Promise<MovieLog[]> => {
-    if (!user) return [];
-    const { data: following } = await typedFrom('follows').select('following_id').eq('follower_id', user.id);
-    const followingIds = following?.map(f => f.following_id) || [];
-    if (followingIds.length === 0) return [];
-
-    const { data: logs, error: logsError } = await typedFrom('movie_logs')
-      .select('id, user_id, movie_id, movie_title, poster_path, media_type, rating, review_text, watched_at, is_spoiler')
-      .in('user_id', followingIds)
-      .order('watched_at', { ascending: false })
-      .limit(30);
-
-    if (logsError || !logs || logs.length === 0) return [];
-
-    const userIds = Array.from(new Set(logs.map(l => l.user_id).filter((id): id is string => !!id)));
-    const { data: profiles, error: profilesError } = await typedFrom('profiles')
-      .select('id, username, avatar_url')
-      .in('id', userIds);
-
-    if (profilesError || !profiles) {
-      return logs.map(l => ({ ...l, user: null })) as unknown as MovieLog[];
+  const refreshActivityFeed = useCallback(async () => {
+    if (!user) {
+      setActivityFeed([]);
+      return;
     }
+    setLoadingActivityFeed(true);
+    try {
+      const { data: following } = await typedFrom('follows').select('following_id').eq('follower_id', user.id);
+      const followingIds = following?.map(f => f.following_id) || [];
+      if (followingIds.length === 0) {
+        setActivityFeed([]);
+        return;
+      }
 
-    const profileMap = new Map(profiles.map(p => [p.id, p]));
-    return logs.map(l => {
-      const uId = l.user_id;
-      return {
-        ...l,
-        user: uId ? (profileMap.get(uId) || null) : null
-      };
-    }) as unknown as MovieLog[];
-  };
+      const { data: logs, error: logsError } = await typedFrom('movie_logs')
+        .select('id, user_id, movie_id, movie_title, poster_path, media_type, rating, review_text, watched_at, is_spoiler')
+        .in('user_id', followingIds)
+        .order('watched_at', { ascending: false })
+        .limit(30);
+
+      if (logsError || !logs || logs.length === 0) {
+        setActivityFeed([]);
+        return;
+      }
+
+      const userIds = Array.from(new Set(logs.map(l => l.user_id).filter((id): id is string => !!id)));
+      const { data: profiles, error: profilesError } = await typedFrom('profiles')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError || !profiles) {
+        setActivityFeed(logs.map(l => ({ ...l, user: null })) as unknown as MovieLog[]);
+        return;
+      }
+
+      const profileMap = new Map(profiles.map(p => [p.id, p]));
+      const fullLogs = logs.map(l => {
+        const uId = l.user_id;
+        return {
+          ...l,
+          user: uId ? (profileMap.get(uId) || null) : null
+        };
+      }) as unknown as MovieLog[];
+      
+      setActivityFeed(fullLogs);
+    } catch (e) {
+      console.error('[FollowContext] Error loading activity feed:', e);
+    } finally {
+      setLoadingActivityFeed(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refreshActivityFeed();
+  }, [refreshActivityFeed]);
+
+  const getActivityFeed = useCallback(async (): Promise<MovieLog[]> => {
+    await refreshActivityFeed();
+    return activityFeed;
+  }, [refreshActivityFeed, activityFeed]);
 
   return (
-    <FollowContext.Provider value={{ searchUsers, followUser, unfollowUser, getFollowStatus, getActivityFeed }}>
+    <FollowContext.Provider value={{
+      searchUsers,
+      followUser,
+      unfollowUser,
+      getFollowStatus,
+      getActivityFeed,
+      activityFeed,
+      loadingActivityFeed,
+      refreshActivityFeed
+    }}>
       {children}
     </FollowContext.Provider>
   );

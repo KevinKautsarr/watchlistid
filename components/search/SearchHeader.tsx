@@ -114,7 +114,6 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.pill,
-            searchMode === 'media' && styles.pillActive,
             cursorPointer,
             pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
           ]}
@@ -133,11 +132,11 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
           >
             🎬 Film & TV
           </Text>
+          {searchMode === 'media' && <View style={styles.activeUnderline} />}
         </Pressable>
         <Pressable
           style={({ pressed }) => [
             styles.pill,
-            searchMode === 'users' && styles.pillActive,
             cursorPointer,
             pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
           ]}
@@ -160,6 +159,7 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
           >
             👥 {t('usersTab')}
           </Text>
+          {searchMode === 'users' && <View style={styles.activeUnderline} />}
         </Pressable>
       </View>
 
@@ -209,31 +209,35 @@ const styles = StyleSheet.create({
   tabSwitcher: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 99,
-    padding: 4,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
   },
   pill: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 99,
-    backgroundColor: 'transparent',
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  pillActive: {
-    backgroundColor: Colors.accent,
+    position: 'relative',
   },
   pillText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     color: Colors.text.secondary,
+    paddingBottom: 4,
   },
   pillTextActive: {
     color: Colors.white,
     fontWeight: FontWeight.bold,
+  },
+  activeUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: '15%',
+    right: '15%',
+    height: 3,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
 });

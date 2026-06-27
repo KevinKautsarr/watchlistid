@@ -158,10 +158,12 @@ const DiaryCard: React.FC<DiaryCardProps> = React.memo(({ log, onDelete, onPress
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#121215',
     borderRadius: Radius.lg,
     padding: Spacing.md,
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
     ...Shadow.sm,
   },
   header: {

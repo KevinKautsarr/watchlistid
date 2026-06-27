@@ -1,5 +1,3 @@
-import { FlashList } from "@shopify/flash-list";
-const TypedFlashList = FlashList as unknown as React.ComponentType<any>;
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
@@ -34,7 +32,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  FlatList
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -420,7 +419,7 @@ export default function SearchScreen() {
             <View style={styles.loadMoreContent}>
               <ChevronDown
                 size={IconSize.md}
-                color={Colors.white}
+                color={Colors.accent}
                 strokeWidth={2.5}
               />
               <Text style={styles.loadMoreTxt}>{t("loadMore")}</Text>
@@ -515,12 +514,11 @@ export default function SearchScreen() {
           stretch the full width and become unreadable. */}
       <View style={[{ flex: 1 }, bp.isLarge && styles.centeredColumn]}>
         {searchMode === "media" ? (
-          <TypedFlashList
+          <FlatList
             style={{ flex: 1, opacity: isLoading ? 0.65 : 1 }}
             ref={mediaListRef}
             onScroll={handleScroll}
             scrollEventThrottle={16}
-            estimatedItemSize={150}
             data={isPeople ? personItems : items}
             keyExtractor={(i: any) => String(i.id)}
             renderItem={({ item }: { item: any }) =>
@@ -649,12 +647,11 @@ export default function SearchScreen() {
             ]}
           />
         ) : (
-          <TypedFlashList
+          <FlatList
             style={{ flex: 1, opacity: userResults.status === "loading" ? 0.65 : 1 }}
             ref={userListRef}
             onScroll={handleScroll}
             scrollEventThrottle={16}
-            estimatedItemSize={80}
             data={userResults.data || []}
             keyExtractor={(i: UserProfile) => i.id}
             renderItem={({ item }: { item: UserProfile }) => (
@@ -866,12 +863,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   loadMore: {
-    height: 48,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.overlay.light,
+    alignSelf: "center",
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: Spacing.xl,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    // Red underline accent (matches the Home "Discover/Following" tabs) instead
+    // of a gray pill background.
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.accent,
   },
   loadMoreTxt: {
     fontSize: FontSize.md,

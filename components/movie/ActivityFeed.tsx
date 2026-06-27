@@ -12,6 +12,7 @@ import { useSocial } from '@/context/SocialContext';
 import { useLanguage } from '@/context/LanguageContext';
 import Avatar from '@/components/common/Avatar';
 import { useAuth } from '@/context/AuthContext';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { supabase, typedFrom } from '@/supabase';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -39,7 +40,17 @@ const getMediaTypeBadge = (mediaType?: string) => {
 
 const ActivityFeedItem = React.memo(({ item, t }: { item: MovieLog; t: (k: any) => string }) => {
   const router = useRouter();
+  const bp = useBreakpoint();
+  const cardWidth = bp.isDesktop ? 175 : bp.isTablet ? 150 : 130;
+  const cardHeight = cardWidth * 1.5;
   const badge = getMediaTypeBadge(item.media_type);
+
+  // Responsive font sizes & layout adjustments
+  const titleSize = bp.isMobile ? FontSize.sm : FontSize.lg;
+  const descSize = bp.isMobile ? FontSize.xs : FontSize.sm;
+  const badgeSize = bp.isMobile ? 10 : FontSize.xs;
+  const infoPadding = bp.isMobile ? Spacing.sm : Spacing.lg;
+  const infoGap = bp.isMobile ? 4 : 8;
 
   return (
     <View style={s.card}>
@@ -83,26 +94,26 @@ const ActivityFeedItem = React.memo(({ item, t }: { item: MovieLog; t: (k: any) 
               ? { uri: `${TMDB_IMAGE_SIZES.small}${item.poster_path}` }
               : undefined
           }
-          style={s.poster}
+          style={[s.poster, { width: cardWidth, height: cardHeight, borderTopLeftRadius: Radius.lg - 1, borderBottomLeftRadius: Radius.lg - 1 }]}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={200}
           priority="low"
         />
-        <View style={s.movieInfo}>
+        <View style={[s.movieInfo, { padding: infoPadding, gap: infoGap }]}>
           {/* Media type badge */}
           <View style={[s.typeBadge, { backgroundColor: `${badge.color}20`, borderColor: `${badge.color}40` }]}>
-            <Text style={[s.typeBadgeText, { color: badge.color }]}>{badge.label}</Text>
+            <Text style={[s.typeBadgeText, { color: badge.color, fontSize: badgeSize }]}>{badge.label}</Text>
           </View>
 
-          <Text style={s.watchedLabel}>{t('watchedLabel')}</Text>
-          <Text style={s.movieTitle} numberOfLines={2}>{item.movie_title}</Text>
+          <Text style={[s.watchedLabel, { fontSize: descSize }]}>{t('watchedLabel')}</Text>
+          <Text style={[s.movieTitle, { fontSize: titleSize, lineHeight: titleSize * 1.35 }]} numberOfLines={2}>{item.movie_title}</Text>
 
           {/* Rating with star icon */}
           {item.rating && (
             <View style={s.ratingBadge}>
               <Star size={11} color={Colors.ratingGold} fill={Colors.ratingGold} />
-              <Text style={s.ratingText}>{item.rating}/10</Text>
+              <Text style={[s.ratingText, { fontSize: descSize }]}>{item.rating}/10</Text>
             </View>
           )}
 
@@ -110,7 +121,7 @@ const ActivityFeedItem = React.memo(({ item, t }: { item: MovieLog; t: (k: any) 
           {item.review_text && (
             <View style={s.reviewRow}>
               <MessageSquare size={10} color={Colors.text.secondary} />
-              <Text style={s.reviewText} numberOfLines={2}>
+              <Text style={[s.reviewText, { fontSize: descSize }]} numberOfLines={2}>
                 {`"${item.review_text}"`}
               </Text>
             </View>
@@ -128,36 +139,31 @@ ActivityFeedItem.displayName = 'ActivityFeedItem';
 export default function ActivityFeed() {
   const router = useRouter();
   const { user } = useAuth();
-  const { getActivityFeed } = useSocial();
+  const { activityFeed, loadingActivityFeed, refreshActivityFeed } = useSocial();
   const { t } = useLanguage();
-  const [logs, setLogs] = useState<MovieLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [logs, setLogs] = useState<MovieLog[]>(activityFeed);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadFeed = useCallback(async () => {
-    setIsLoading(true);
-    const data = await getActivityFeed();
-    setLogs(data);
-    setIsLoading(false);
-  }, [getActivityFeed]);
+  useEffect(() => {
+    setLogs(activityFeed);
+  }, [activityFeed]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    const data = await getActivityFeed();
-    setLogs(data);
+    await refreshActivityFeed();
     setRefreshing(false);
-  }, [getActivityFeed]);
+  }, [refreshActivityFeed]);
 
   // Reload every time the Following tab comes into focus
   useFocusEffect(
     useCallback(() => {
-      loadFeed();
-    }, [loadFeed])
+      refreshActivityFeed();
+    }, [refreshActivityFeed])
   );
 
   useEffect(() => {
-    loadFeed();
-  }, [loadFeed]);
+    refreshActivityFeed();
+  }, [refreshActivityFeed]);
 
   // Realtime subscription for live updates
   useEffect(() => {
@@ -212,7 +218,7 @@ export default function ActivityFeed() {
     [t]
   );
 
-  if (isLoading) {
+  if (loadingActivityFeed && logs.length === 0) {
     return (
       <View style={s.center}>
         <ActivityIndicator size="small" color={Colors.danger} />
@@ -257,9 +263,10 @@ const s = StyleSheet.create({
     gap: Spacing.lg,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#121215',
     borderRadius: Radius.lg,
     padding: Spacing.md,
+    marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
     ...Shadow.sm,
@@ -292,8 +299,8 @@ const s = StyleSheet.create({
   },
   movieRow: {
     flexDirection: 'row',
-    backgroundColor: Colors.secondary,
-    borderRadius: Radius.md,
+    backgroundColor: '#121215',
+    borderRadius: Radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
@@ -305,7 +312,7 @@ const s = StyleSheet.create({
   movieInfo: {
     flex: 1,
     padding: Spacing.sm,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: 4,
   },
   typeBadge: {

@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
   tabLabelText: { fontSize: 13, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.4)' },
   tabLabelTextActive: { color: Colors.white },
   tabBadge: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 6, minWidth: 20, paddingVertical: 2, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  tabBadgeActive: { backgroundColor: 'rgba(199,31,55,0.2)' },
+  tabBadgeActive: { backgroundColor: 'rgba(255,255,255,0.18)' },
   tabBadgeText: { fontSize: 10, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.6)' },
-  tabBadgeTextActive: { color: Colors.primary },
+  tabBadgeTextActive: { color: Colors.white },
 });
 
 export default ProfileTabs;

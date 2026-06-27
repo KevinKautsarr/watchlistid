@@ -1,9 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform, ScrollView
+  View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform, ScrollView, FlatList
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-const TypedFlashList = FlashList as unknown as React.ComponentType<any>;
 import { Shimmer } from '@/components/common/Shimmer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -212,6 +210,53 @@ const WatchlistScreen: React.FC = () => {
     );
   }
 
+  const renderHeader = useMemo(() => {
+    return (
+      <View style={styles.sortRow}>
+        <TouchableOpacity 
+          style={[styles.sortHeaderBtn, cursorPointer]} 
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setIsAscending(!isAscending);
+          }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Sort direction: ${isAscending ? 'ascending' : 'descending'}`}
+          accessibilityHint="Toggles sort order"
+        >
+          <Text style={styles.sortByLbl}>{t('sort')}</Text>
+          {isAscending ? (
+            <ArrowUp size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
+          ) : (
+            <ArrowDown size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
+          )}
+        </TouchableOpacity>
+        
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          {SORTS.map(s => {
+            const label = s === 'Added' ? t('sortAdded') : s === 'Rating' ? t('sortRating') : s === 'Release' ? t('sortRelease') : t('sortTitle');
+            return (
+              <TouchableOpacity
+                key={s}
+                activeOpacity={0.75}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
+                style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('sort')} ${label}`}
+                accessibilityState={{ selected: activeSort === s }}
+              >
+                <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} maxFontSizeMultiplier={1.3}>
+                  {label}
+                </Text>
+                {activeSort === s && <View style={styles.sortActiveUnderline} />}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  }, [isAscending, activeSort, t]);
+
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
@@ -244,6 +289,7 @@ const WatchlistScreen: React.FC = () => {
           <View style={[styles.tabBadge, activeTab === 'Watchlist' && styles.tabBadgeActive]}>
             <Text style={styles.tabBadgeText}>{planToWatchList.length}</Text>
           </View>
+          {activeTab === 'Watchlist' && <View style={styles.activeUnderline} />}
         </TouchableOpacity>
  
         <TouchableOpacity 
@@ -259,6 +305,7 @@ const WatchlistScreen: React.FC = () => {
           <View style={[styles.tabBadge, activeTab === 'Watched' && styles.tabBadgeActive]}>
             <Text style={styles.tabBadgeText}>{watchedList.length}</Text>
           </View>
+          {activeTab === 'Watched' && <View style={styles.activeUnderline} />}
         </TouchableOpacity>
          
         <TouchableOpacity 
@@ -274,62 +321,20 @@ const WatchlistScreen: React.FC = () => {
           <View style={[styles.tabBadge, activeTab === 'Reviewed' && styles.tabBadgeActive]}>
             <Text style={styles.tabBadgeText}>{reviewedList.length}</Text>
           </View>
+          {activeTab === 'Reviewed' && <View style={styles.activeUnderline} />}
         </TouchableOpacity>
       </View>
 
 
       {/* ── List ── */}
       <View style={[{ flex: 1, width: '100%' }, bp.isLarge && styles.centeredColumn]}>
-        <TypedFlashList
+        <FlatList
           data={sortedList}
           keyExtractor={(item: WatchlistItem) => item.id.toString()}
           renderItem={renderItem}
-          estimatedItemSize={ITEM_HEIGHT}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <View style={styles.sortRow}>
-              <TouchableOpacity 
-                style={[styles.sortHeaderBtn, cursorPointer]} 
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setIsAscending(!isAscending);
-                }}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`Sort direction: ${isAscending ? 'ascending' : 'descending'}`}
-                accessibilityHint="Toggles sort order"
-              >
-                <Text style={styles.sortByLbl}>{t('sort')}</Text>
-                {isAscending ? (
-                  <ArrowUp size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
-                ) : (
-                  <ArrowDown size={IconSize.xs} color={Colors.primary} strokeWidth={3} />
-                )}
-              </TouchableOpacity>
-              
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                {SORTS.map(s => {
-                  const label = s === 'Added' ? t('sortAdded') : s === 'Rating' ? t('sortRating') : s === 'Release' ? t('sortRelease') : t('sortTitle');
-                  return (
-                    <TouchableOpacity
-                      key={s}
-                      activeOpacity={0.75}
-                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSort(s); }}
-                      style={[styles.sortChip, activeSort === s && styles.sortChipActive, cursorPointer]}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t('sort')} ${label}`}
-                      accessibilityState={{ selected: activeSort === s }}
-                    >
-                      <Text style={[styles.sortChipText, activeSort === s && styles.sortChipTextActive]} maxFontSizeMultiplier={1.3}>
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          }
+          ListHeaderComponent={renderHeader}
           ListEmptyComponent={(
             <View style={styles.empty}>
               <EmptyStateIcon
@@ -402,27 +407,25 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     marginHorizontal: Spacing.xl,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    padding: 4,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     marginBottom: Spacing.lg,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.md,
     gap: 8,
+    position: 'relative',
   },
-  tabActive: {
-    backgroundColor: Colors.overlay.light,
-  },
+  tabActive: {},
   tabText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     color: Colors.text.secondary,
+    paddingBottom: 4,
   },
   tabTextActive: {
     color: Colors.white,
@@ -437,12 +440,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabBadgeActive: {
-    backgroundColor: Colors.danger,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   tabBadgeText: {
     color: Colors.white,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
+  },
+  activeUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: '10%',
+    right: '10%',
+    height: 3,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
 
   sortRow: {
@@ -467,27 +480,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   sortChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.overlay.light5,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    position: 'relative',
   },
-  sortChipActive: {
-    backgroundColor: Colors.overlay.light20,
-    borderColor: Colors.danger,
-  },
+  sortChipActive: {},
   sortChipText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     color: Colors.text.secondary,
+    paddingBottom: 4,
   },
   sortChipTextActive: {
-    color: Colors.primary,
+    color: Colors.white,
     fontWeight: FontWeight.bold,
+  },
+  sortActiveUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 10,
+    right: 10,
+    height: 3,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
 
   listContent: {
