@@ -261,6 +261,8 @@ const translations = {
 
     // Notifications
     markAllRead: "Mark all read",
+    unread: "unread",
+    justNow: "Just now",
     allCaughtUp: "All caught up!",
     noNotifications: "You don't have any new notifications at the moment.",
 
@@ -626,6 +628,8 @@ const translations = {
 
     // Notifications
     markAllRead: "Tandai semua sudah dibaca",
+    unread: "belum dibaca",
+    justNow: "Baru saja",
     profile: "Profil",
     logs: "Log",
     allCaughtUp: "Semuanya sudah beres!",

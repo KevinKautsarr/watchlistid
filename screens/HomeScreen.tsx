@@ -57,9 +57,12 @@ const GENRES = [
     image: "/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg",
   },
   { id: 80, nameKey: "genreCrime", image: "/cfT29Im5VDvjE0RpyKOSdCKZal7.jpg" },
+  { id: 53, nameKey: "genreThriller", image: "/i5H7zusQGsysGQ8i6P361Vnr0n2.jpg" },
+  { id: 14, nameKey: "genreFantasy", image: "/oiwc338EoBgS4sEI2ixAny4KQKg.jpg" },
+  { id: 9648, nameKey: "genreMystery", image: "/4HWAQu28e2yaWrtupFPGFkdNU7V.jpg" },
+  { id: 10751, nameKey: "genreFamily", image: "/g7CHF8gTLGooTbP4GznIGwaqAGL.jpg" },
+  { id: 99, nameKey: "genreDocumentary", image: "/z2uuQasY4gQJ8VDAFki746JWeQJ.jpg" },
 ] as const;
-
-const ALL_SECTIONS = 7; // update ini jika menambah section baru
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -69,7 +72,6 @@ export default function HomeScreen() {
     useWatchlist();
   const bp = useBreakpoint();
   const { t } = useLanguage();
-  const [visibleSections, setVisibleSections] = useState(1);
   const [homeTab, setHomeTab] = useState<"discover" | "following">("discover");
   const flatListRef = useRef<FlatList>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -193,10 +195,6 @@ export default function HomeScreen() {
   const HERO_HEIGHT = bp.isDesktop ? 600 : bp.isTablet ? 500 : 480;
   const CARD = bp.isDesktop ? 175 : bp.isTablet ? 150 : 130;
   const PAD = bp.isDesktop ? 36 : bp.isTablet ? 24 : 20;
-
-  const loadMore = () => {
-    if (visibleSections < ALL_SECTIONS) setVisibleSections((prev) => prev + 1);
-  };
 
   const renderHeader = () => (
     <>
@@ -375,8 +373,7 @@ export default function HomeScreen() {
           item.type === "genres" ||
           item.type === "feed" ||
           (item.data && item.data.length > 0),
-      )
-      .slice(0, visibleSections + 2);
+      );
   }, [
     homeTab,
     user,
@@ -386,7 +383,6 @@ export default function HomeScreen() {
     topRated,
     topRatedTV,
     recentMovies,
-    visibleSections,
     t,
   ]);
 
@@ -451,10 +447,9 @@ export default function HomeScreen() {
           <GenreRow
             genres={GENRES}
             pad={PAD}
+            cardWidth={CARD}
             onPress={(id) => router.push(`/(tabs)/search?genre=${id}`)}
             t={t}
-            isDesktop={bp.isDesktop}
-            isTablet={bp.isTablet}
           />
         </View>
       );
@@ -508,36 +503,7 @@ export default function HomeScreen() {
     );
   };
 
-  const renderFooter = () => {
-    if (homeTab !== "discover") {
-      return <View style={{ height: 40 }} />;
-    }
-
-    if (visibleSections < ALL_SECTIONS) {
-      return (
-        <View style={s.footerContainer}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("loadMore")}
-            style={({ hovered, pressed }) => [
-              s.loadMoreBtn,
-              hovered && s.loadMoreBtnHovered,
-              pressed && { opacity: 0.8 },
-              cursorPointer,
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              loadMore();
-            }}
-          >
-            <Text style={s.loadMoreBtnText}>{t("loadMore")}</Text>
-          </Pressable>
-        </View>
-      );
-    }
-
-    return <View style={{ height: 60 }} />;
-  };
+  const renderFooter = () => <View style={{ height: 60 }} />;
 
   return (
     <View style={s.root}>
@@ -665,44 +631,6 @@ const s = StyleSheet.create({
   rowSection: { paddingBottom: 10 },
   skeletonRow: { paddingBottom: 4, flexDirection: "row", gap: 10 },
   listContent: { alignSelf: "center", width: "100%", paddingBottom: 100 },
-  footerContainer: {
-    alignItems: "center",
-    paddingVertical: 32,
-    paddingBottom: 60,
-  },
-  loadMoreBtn: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-    borderRadius: 24,
-    paddingHorizontal: 80,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 340,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: { elevation: 4 },
-      web: {
-        transition: "all 0.2s ease-in-out",
-      } as unknown as ViewStyle,
-    }),
-  },
-  loadMoreBtnHovered: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderColor: "rgba(255,255,255,0.25)",
-  },
-  loadMoreBtnText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: 0.2,
-  },
   scrollTopBtn: {
     position: "absolute",
     bottom: 24,

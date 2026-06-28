@@ -1022,14 +1022,17 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary,
+    // Neutral gray surface matching the sidebar (instead of the red brand color).
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 8,
     ...Platform.select({
-      ios:     { shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 10 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
       android: { elevation: 8 },
-      web:     { boxShadow: '0 4px 10px rgba(199,31,55,0.5)' } as any,
+      web:     { boxShadow: '0 4px 10px rgba(0,0,0,0.4)' } as any,
     }),
   },
 });

@@ -14,11 +14,11 @@ interface GenreRowProps {
   onPress: (id: number) => void;
   pad: number;
   t: any;
-  isDesktop: boolean;
-  isTablet: boolean;
+  /** Width of a regular Home poster — genre cards match it so widths align. */
+  cardWidth: number;
 }
 
-export const GenreRow: React.FC<GenreRowProps> = ({ genres, onPress, pad, t, isDesktop, isTablet }) => {
+export const GenreRow: React.FC<GenreRowProps> = ({ genres, onPress, pad, t, cardWidth }) => {
   return (
     <ScrollView 
       horizontal 
@@ -26,8 +26,10 @@ export const GenreRow: React.FC<GenreRowProps> = ({ genres, onPress, pad, t, isD
       contentContainerStyle={{ paddingLeft: pad, paddingRight: pad, paddingBottom: 4, gap: 10 }}
     >
       {genres.map(g => {
-        const gW = isDesktop ? 160 : isTablet ? 140 : 120;
-        const gH = Math.round(gW * 0.62);
+        // Match the regular Home poster width; height is half a poster's height
+        // (poster image is cardWidth * 1.5, so half = cardWidth * 0.75).
+        const gW = cardWidth;
+        const gH = Math.round(gW * 0.75);
         return (
           <TouchableOpacity 
             key={g.id} 
