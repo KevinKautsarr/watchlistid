@@ -2,24 +2,21 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import {
   Award,
-  ChevronUp,
   Clock,
   Flame,
   Star,
   UserPlus,
 } from "lucide-react-native";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   FlatList,
   Platform,
-  Pressable,
   RefreshControl,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -73,19 +70,6 @@ export default function HomeScreen() {
   const bp = useBreakpoint();
   const { t } = useLanguage();
   const [homeTab, setHomeTab] = useState<"discover" | "following">("discover");
-  const flatListRef = useRef<FlatList>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [scrollTopHovered, setScrollTopHovered] = useState(false);
-
-  const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    setShowScrollTop(offsetY > 300);
-  };
-
-  const scrollToTop = () => {
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  };
 
   const {
     state: homeState,
@@ -514,15 +498,12 @@ export default function HomeScreen() {
       />
 
       <FlatList
-        ref={flatListRef}
         data={sections}
         keyExtractor={(item) => item.id}
         renderItem={renderSection}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -537,24 +518,6 @@ export default function HomeScreen() {
         maxToRenderPerBatch={3}
         removeClippedSubviews={Platform.OS === "android"}
       />
-
-      {showScrollTop && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Scroll to top"
-          onHoverIn={() => setScrollTopHovered(true)}
-          onHoverOut={() => setScrollTopHovered(false)}
-          style={({ hovered, pressed }) => [
-            s.scrollTopBtn,
-            hovered && s.scrollTopBtnHovered,
-            pressed && { opacity: 0.8 },
-            cursorPointer,
-          ]}
-          onPress={scrollToTop}
-        >
-          <ChevronUp size={22} color="#FFFFFF" strokeWidth={3} />
-        </Pressable>
-      )}
     </View>
   );
 }
@@ -631,36 +594,4 @@ const s = StyleSheet.create({
   rowSection: { paddingBottom: 10 },
   skeletonRow: { paddingBottom: 4, flexDirection: "row", gap: 10 },
   listContent: { alignSelf: "center", width: "100%", paddingBottom: 100 },
-  scrollTopBtn: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#1E1E24",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 99,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.4,
-        shadowRadius: 10,
-      },
-      android: { elevation: 6 },
-      web: {
-        boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
-        transition: "all 0.2s ease-in-out",
-      } as unknown as ViewStyle,
-    }),
-  },
-  scrollTopBtnHovered: {
-    backgroundColor: "#2A2A32",
-    borderColor: "rgba(255,255,255,0.22)",
-    transform: [{ translateY: -3 }] as any,
-  },
 });

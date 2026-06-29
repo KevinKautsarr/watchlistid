@@ -304,8 +304,16 @@ export const searchTV = (query: string, page = 1) =>
     include_adult: 'false'
   });
 
+// Use /discover/tv (not /tv/top_rated) so we can apply `without_keywords` and
+// exclude ecchi/NSFW anime — the curated /tv/top_rated endpoint ignores it.
+// vote_count.gte keeps the list genuinely "top rated" (avoids tiny-sample 10/10s).
 export const getTopRatedTV = (page = 1) =>
-  tmdbGet<PagedResponse<any>>('/tv/top_rated', { page: String(page) });
+  tmdbGet<PagedResponse<any>>('/discover/tv', {
+    sort_by: 'vote_average.desc',
+    'vote_count.gte': '300',
+    without_keywords: NSFW_KEYWORDS,
+    page: String(page),
+  });
 
 export const getPopularTV = (page = 1) =>
   tmdbGet<PagedResponse<any>>('/discover/tv', {
