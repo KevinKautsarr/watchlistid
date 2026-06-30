@@ -88,7 +88,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={cancelLabel}
-              style={({ hovered, pressed }) => [
+              style={({ hovered, pressed }: { hovered?: boolean; pressed?: boolean }) => [
                 dialogStyles.btnCancel,
                 hovered && { backgroundColor: 'rgba(255,255,255,0.1)' },
                 pressed && { opacity: 0.8 },
@@ -101,7 +101,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={confirmLabel}
-              style={({ hovered, pressed }) => [
+              style={({ hovered, pressed }: { hovered?: boolean; pressed?: boolean }) => [
                 dialogStyles.btnConfirm,
                 hovered && { backgroundColor: '#B0182E' },
                 pressed && { opacity: 0.8 },
@@ -364,7 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityState={{ selected: active }}
-        style={({ hovered, pressed }) => [
+        style={({ hovered, pressed }: { hovered?: boolean; pressed?: boolean }) => [
           styles.navItem,
           collapsed && styles.navItemCollapsed,
           cursorPointer,
@@ -412,7 +412,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           {/* Brand */}
           <Pressable
             onPress={() => router.push('/(tabs)/' as any)}
-            style={({ hovered }) => [styles.brand, hovered && styles.brandHover, cursorPointer]}
+            style={({ hovered }: { hovered?: boolean }) => [styles.brand, hovered && styles.brandHover, cursorPointer]}
           >
             <View style={styles.brandIconContainer}>
               <View style={styles.brandIcon}>
@@ -464,7 +464,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                   onHoverOut={() => setHoveredKey(prev => (prev === 'logout' ? null : prev))}
                   accessibilityRole="button"
                   accessibilityLabel={t('signOut')}
-                  style={({ hovered, pressed }) => [
+                  style={({ hovered, pressed }: { hovered?: boolean; pressed?: boolean }) => [
                     styles.logoutItem,
                     collapsed && styles.logoutItemCollapsed,
                     cursorPointer,

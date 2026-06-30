@@ -325,7 +325,7 @@ function RootLayoutNav() {
           <Pressable
             onPress={toggleSidebar}
             accessibilityRole="button"
-            style={({ hovered }) => [
+            style={({ hovered }: { hovered?: boolean }) => [
               sidebarToggleStyle,
               {
                 transform: [{ translateX: collapsed ? 72 - 13 : 240 - 13 }],

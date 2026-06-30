@@ -65,11 +65,13 @@ export const usePopular = () =>
 export const useTopRated = () =>
   useAsync(() => api.getTopRatedMovies().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'movie' }))), [], 'top-rated');
 
+// Home rows use the stricter ecchi/fan-service block (getHome* variants) so no
+// ecchi is recommended on Home. Search keeps the regular getTrendingTV/getTopRatedTV.
 export const useTrendingTV = () =>
-  useAsync(() => api.getTrendingTV().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'tv' }))), [], 'trending-tv');
+  useAsync(() => api.getHomeTrendingTV().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'tv' }))), [], 'home-trending-tv');
 
 export const useTopRatedTV = () =>
-  useAsync(() => api.getTopRatedTV().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'tv' }))), [], 'top-rated-tv');
+  useAsync(() => api.getHomeTopRatedTV().then(r => (r.results || []).slice(0, 12).map(m => ({ ...m, media_type: 'tv' }))), [], 'home-top-rated-tv');
 
 export const useContentDetails = (id: number, type: 'movie' | 'tv' = 'movie') => {
   const cacheKey = `details-${type}-${id}`;

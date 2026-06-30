@@ -14,6 +14,13 @@ const MAX_PERSISTED_ENTRIES = 50; // prevent unbounded storage growth
 // ── Core fetcher with cache & deduplication ───────────────────────────────────
 const NSFW_KEYWORDS = '10423,155477,231015,190370,10222,9350,158588,2945,183952'; // hentai, erotica, ecchi, adult animation, sex, softcore, pornography, nudity, softcore porn
 
+// Stricter block used ONLY for the Home recommendation rows. Adds the real
+// anime ecchi / fan-service keyword IDs on top of NSFW so ecchi shows never get
+// recommended on Home. Search intentionally keeps the NSFW-only filter.
+// ecchi(195669), etchi(285672), harem(9194), panty shot(356895),
+// nudity(281741), sexual content(329280).
+const HOME_BLOCK_KEYWORDS = `${NSFW_KEYWORDS},195669,285672,9194,356895,281741,329280`;
+
 async function tmdbGet<T>(
   endpoint: string,
   params: Record<string, string> = {}
@@ -328,6 +335,22 @@ export const discoverTV = (genreId?: number, page = 1) =>
     without_keywords: NSFW_KEYWORDS,
     page: String(page),
     ...(genreId ? { with_genres: String(genreId) } : {}),
+  });
+
+// ── Home-only TV rows: stricter ecchi/fan-service exclusion (Search unaffected) ─
+export const getHomeTrendingTV = (page = 1) =>
+  tmdbGet<PagedResponse<any>>('/discover/tv', {
+    sort_by: 'popularity.desc',
+    without_keywords: HOME_BLOCK_KEYWORDS,
+    page: String(page),
+  });
+
+export const getHomeTopRatedTV = (page = 1) =>
+  tmdbGet<PagedResponse<any>>('/discover/tv', {
+    sort_by: 'vote_average.desc',
+    'vote_count.gte': '300',
+    without_keywords: HOME_BLOCK_KEYWORDS,
+    page: String(page),
   });
 
 export const getStudioMovies = (companyId: number, page = 1) =>
