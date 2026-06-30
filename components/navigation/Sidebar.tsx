@@ -412,7 +412,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           {/* Brand */}
           <Pressable
             onPress={() => router.push('/(tabs)/' as any)}
-            style={({ hovered }: { hovered?: boolean }) => [styles.brand, hovered && styles.brandHover, cursorPointer]}
+            style={({ hovered }: { hovered?: boolean; pressed?: boolean }) => [styles.brand, hovered && styles.brandHover, cursorPointer]}
           >
             <View style={styles.brandIconContainer}>
               <View style={styles.brandIcon}>
