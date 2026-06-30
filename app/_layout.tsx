@@ -362,7 +362,6 @@ function RootLayoutNav() {
               headerBackground: () => <GlassHeaderBackground />,
               headerStyle: { backgroundColor: 'transparent' }
             }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
           </Stack>
         </View>
       </View>

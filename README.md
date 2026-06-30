@@ -4,11 +4,12 @@
 [![Expo SDK 54](https://img.shields.io/badge/Expo_SDK-54-000000?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_Mode-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![CI](https://github.com/KevinKautsarr/watchlistid/actions/workflows/ci.yml/badge.svg)](https://github.com/KevinKautsarr/watchlistid/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 > Pelacak Film & Seri TV Sosial Premium Lintas Platform (iOS, Android, Web) yang Dibangun dengan Expo, React Native, dan Supabase.
-> 
-> 🌐 **Akses Versi Web:** [watchlistid.vercel.app](https://watchlistid.vercel.app/) (Alternatif: [watchlistid.netlify.app](https://watchlistid.netlify.app/))
+>
+> 🌐 **Akses Versi Web:** [watchlistid.vercel.app](https://watchlistid.vercel.app/)
 
 ---
 
@@ -109,31 +110,49 @@ Pastikan perangkat Anda sudah terinstal:
 
 ```text
 MovieWatchlist/
-├── app/                  # File-based routing untuk Expo Router (tabs, auth, modal detail)
-├── assets/               # Kumpulan ikon, font kustom, dan gambar statis
+├── app/                  # Routing berbasis file (Expo Router): tabs, auth, detail film & profil
+├── assets/               # Ikon aplikasi, aset brand, font, dan gambar statis
 ├── components/           # Komponen UI modular
 │   ├── auth/             # Verifikasi Captcha dan formulir autentikasi
 │   ├── common/           # Komponen global reusable (Toast, Avatar, PosterCard, SafeImage)
+│   ├── home/             # Hero carousel, baris media, dan baris genre
 │   ├── movie/            # LogModal, DiaryCard, ulasan, cast, dan detail aksi film
-│   └── profile/          # Profil edit modal, statistik profil, tab view, dan header
-├── context/              # Penyedia State Global (Auth, Language, Social, Watchlist)
+│   ├── navigation/       # Sidebar desktop dan tab bar seluler
+│   ├── profile/          # Edit profil, statistik, tab view, dan header
+│   └── search/           # Header pencarian, filter, dan kartu hasil
+├── context/              # State global (Auth, Language, Social, Watchlist, Notification)
 ├── hooks/                # React Hooks kustom (useMovieDetail, useProfileData, useSearchQuery)
+├── screens/              # Implementasi layar utama yang dirender oleh rute di app/
 ├── services/             # TMDB API client dan implementasi caching data
-├── types/                # Definisi tipe data TypeScript & pemetaan skema Supabase
-├── utils/                # Fungsi pembantu (pemformat tanggal, mapper error auth, ekspor CSV)
-├── supabase_schema.sql   # SQL blueprint untuk migrasi skema tabel Supabase
-├── package.json          # Manajemen dependensi dan naskah CLI
-└── README.md             # Dokumentasi utama proyek
+├── types/                # Definisi tipe TypeScript & pemetaan skema Supabase
+├── utils/                # Fungsi pembantu (format tanggal, mapper error auth, ekspor CSV)
+├── supabase/             # Migrasi SQL, konfigurasi CLI, dan Edge Function `tmdb-proxy`
+├── __tests__/            # Unit & component tests (Jest + Testing Library)
+├── .github/workflows/    # Continuous Integration (type-check, lint, dan test otomatis)
+└── package.json          # Manajemen dependensi dan skrip CLI
 ```
 
 ---
 
 ## 🔐 Keamanan Database (Security Blueprint)
 
-Proyek ini menerapkan keamanan ketat di level backend menggunakan PostgreSQL Row Level Security (RLS) di Supabase. Anda dapat merujuk ke file [supabase_schema.sql](file:///c:/Users/HP/Developer/MovieWatchlist/supabase_schema.sql) untuk blueprint lengkapnya:
+Proyek ini menerapkan keamanan ketat di level backend menggunakan PostgreSQL Row Level Security (RLS) di Supabase. Skema kanonik dikelola sebagai migrasi yang dapat direproduksi di [`supabase/migrations/`](supabase/migrations/) (snapshot ringkas juga tersedia di [`supabase_schema.sql`](supabase_schema.sql)):
 - Tabel `profiles`, `followers`, `movie_logs`, `reviews`, dan `watchlist` diproteksi secara individual.
 - Aksi `INSERT` / `UPDATE` / `DELETE` hanya diizinkan jika `auth.uid() = user_id`.
 - Kueri penambahan nama lengkap dan foto profil dikelola melalui Trigger Functions Supabase untuk menjamin konsistensi data.
+
+---
+
+## ✅ Pengujian & Kualitas Kode
+
+Kualitas kode dijaga oleh gerbang otomatis yang berjalan pada setiap *push* dan *pull request* melalui **GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
+
+| Perintah | Tujuan |
+|----------|--------|
+| `npx tsc --noEmit` | Pemeriksaan tipe TypeScript (mode strict, target nol error) |
+| `npm run lint` | Analisis statik dengan ESLint (konfigurasi Expo) |
+| `npm test` | Unit & component test (Jest + React Native Testing Library) |
+| `npm run test:coverage` | Laporan cakupan pengujian (*coverage report*) |
 
 ---
 
