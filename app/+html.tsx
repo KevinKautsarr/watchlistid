@@ -6,6 +6,9 @@ import type { PropsWithChildren } from 'react';
  * Adds critical performance and security meta tags.
  */
 export default function Root({ children }: PropsWithChildren) {
+  // "en" here is only the pre-hydration default for this static shell (it
+  // has no access to the user's stored language preference at build time).
+  // Once the app mounts, RootLayoutNav syncs this to the active app language.
   return (
     <html lang="en">
       <head>

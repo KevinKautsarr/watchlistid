@@ -2,6 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_BASE_URL } from '../config';
 import type { Movie, Person, Genre } from '@/types';
 
+// The Supabase anon key is a public, non-secret identifier (safe to embed in a
+// client bundle) — it's required by the tmdb-proxy Edge Function's `verify_jwt`
+// gate so the function can no longer be called anonymously via curl/scripts.
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+
 // ── In-memory cache with TTL to avoid redundant TMDB fetches ─────────────────
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 interface CacheEntry<T> { data: T; expiresAt: number }
@@ -44,7 +49,16 @@ async function tmdbGet<T>(
   if (inflight.has(cacheKey)) return inflight.get(cacheKey) as Promise<T>;
 
   const promise = (async () => {
-    const res = await fetch(`${TMDB_BASE_URL}?${queryString}`);
+    const res = await fetch(`${TMDB_BASE_URL}?${queryString}`, {
+      headers: {
+        // Required by the Edge Function's verify_jwt gate + our own explicit
+        // check — without this, Supabase rejects the request before our code
+        // even runs.
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+    });
+    if (res.status === 429) throw new Error(`TMDB proxy rate limited: ${endpoint}`);
     if (!res.ok) throw new Error(`TMDB error ${res.status}: ${endpoint}`);
     const data = await res.json() as T;
     memCache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS });

@@ -9,8 +9,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { APP_URL } from '@/config';
 import { useProfileData } from '@/hooks/useProfileData';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import Shimmer from '@/components/common/Shimmer';
 import EmptyStateIcon from '@/components/common/EmptyStateIcon';
 
@@ -70,6 +72,18 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
 
   const { fetchFavorites } = useFavorites();
   const [profileFavorites, setProfileFavorites] = React.useState<any[]>([]);
+
+  const displayName = profileData?.full_name || profileData?.username;
+  useDocumentMeta(
+    targetProfile.status === 'success' && displayName && targetUserId
+      ? {
+          title: `${displayName} (@${profileData?.username || 'user'}) — WatchlistID`,
+          description: profileData?.bio || `Lihat watchlist, diary tontonan, dan ulasan ${displayName} di WatchlistID.`,
+          image: profileData?.avatar_url || undefined,
+          url: `${APP_URL}/user/${targetUserId}`,
+        }
+      : null
+  );
 
   React.useEffect(() => {
     if (targetUserId) {

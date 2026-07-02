@@ -9,7 +9,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { ChevronLeft, Share2, Info, CheckCircle2 } from 'lucide-react-native';
 
-import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize } from '@/constants/theme';
+import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, TMDB_IMAGE_SIZES } from '@/constants/theme';
 import { APP_URL } from '@/config';
 import { cursorPointer } from '@/utils/webStyles';
 import { shareOrCopy } from '@/utils/share';
@@ -18,6 +18,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSocial } from '@/context/SocialContext';
 import { useMovieDetail } from '@/hooks/useMovieDetail';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import type { MediaItem } from '@/types';
@@ -57,7 +58,23 @@ export default function MovieDetailScreen() {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   
   const { status, data, error } = useMovieDetail(Number(actualId), type);
-  
+
+  const movieTitle = data?.movie ? ('title' in data.movie ? data.movie.title : data.movie.name) : null;
+  useDocumentMeta(
+    status === 'success' && data?.movie && movieTitle
+      ? {
+          title: `${movieTitle} — WatchlistID`,
+          description: data.movie.overview?.slice(0, 200) || `Track and rate ${movieTitle} on WatchlistID.`,
+          image: data.movie.backdrop_path
+            ? `${TMDB_IMAGE_SIZES.backdrop}${data.movie.backdrop_path}`
+            : data.movie.poster_path
+              ? `${TMDB_IMAGE_SIZES.backdrop}${data.movie.poster_path}`
+              : undefined,
+          url: `${APP_URL}/movie/${actualId}?type=${type}`,
+        }
+      : null
+  );
+
   const [showLogModal, setShowLogModal] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 

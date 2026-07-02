@@ -51,7 +51,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { WatchlistProvider } from '@/context/WatchlistContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { SocialProvider } from '@/context/SocialContext';
-import { LanguageProvider } from '@/context/LanguageContext';
+import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import OfflineGuard from '@/components/common/OfflineGuard';
@@ -111,8 +111,9 @@ function WebHead() {
 
 
 
-    // lang attribute on <html>
-    document.documentElement.lang = 'en';
+    // lang attribute on <html> is kept in sync with the active app language
+    // by a separate effect in RootLayoutNav (needs useLanguage(), which isn't
+    // available here since WebHead renders outside LanguageProvider).
 
     // Unregister any stale Service Workers that may cause cache loops
     // in normal browsers. Incognito always starts fresh, which is why
@@ -194,10 +195,20 @@ const sidebarToggleStyle = {
 
 function RootLayoutNav() {
   const { session, isLoading, profileError } = useAuth();
+  const { language } = useLanguage();
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const { width } = useWindowDimensions();
+
+  // Keep <html lang> in sync with the active app language (web only) — it was
+  // previously hardcoded to 'en' even when the user switched to Indonesian,
+  // which hurts screen readers and locale-aware SEO.
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
 
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1100;

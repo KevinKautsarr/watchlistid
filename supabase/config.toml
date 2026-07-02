@@ -9,3 +9,10 @@ major_version = 15
 [db.migrations]
 # Apply files in supabase/migrations in lexicographic (timestamp) order.
 schema_paths = []
+
+[functions.tmdb-proxy]
+# Require a valid Supabase JWT (the public anon key or a user session token)
+# in the Authorization header. The Supabase gateway enforces this BEFORE the
+# function code runs, so anonymous curl/script requests are rejected outright
+# instead of only being filtered by the (spoofable) Origin header.
+verify_jwt = true

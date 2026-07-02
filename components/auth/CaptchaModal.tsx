@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, Text, Platform, ActivityIndicator } from 'react-native';
-import { X } from 'lucide-react-native';
+import { Modal, View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
+import { X, RotateCw } from 'lucide-react-native';
 import { Colors, Radius, Spacing, Shadow, FontSize, FontWeight } from '@/constants/theme';
+import { APP_URL } from '@/config';
 
 import type { WebView as WebViewType, WebViewMessageEvent } from 'react-native-webview';
 
@@ -22,36 +23,50 @@ interface CaptchaModalProps {
 }
 
 const CLOUDFLARE_SITE_KEY = process.env.EXPO_PUBLIC_CLOUDFLARE_SITE_KEY || '1x00000000000000000000AA';
-const BASE_URL = 'https://google.com';
-// On iOS, Turnstile sometimes fails to load in restricted WKWebView/iframe.
-// We auto-skip after this many ms to avoid blocking the user.
-const IOS_CAPTCHA_TIMEOUT_MS = 8000;
+// IMPORTANT: this must be a domain registered under this site key in the
+// Cloudflare Turnstile dashboard (Settings → Turnstile → widget → Domains),
+// otherwise Turnstile silently refuses to render inside the native WebView.
+// Using an unrelated domain (e.g. google.com) was the root cause of Turnstile
+// failing on iOS WKWebView, which a previous version "fixed" by sending a fake
+// 'ios-bypass-token' — a security hole (see git history). Never reintroduce
+// a bypass; if Turnstile fails to load, show a retry UI instead.
+const BASE_URL = APP_URL;
+// How long to wait before offering a manual retry if Turnstile hasn't rendered.
+const CAPTCHA_LOAD_TIMEOUT_MS = 8000;
 
 export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaModalProps) {
   const webViewRef = useRef<WebViewType>(null);
   const webIframeRef = useRef<HTMLIFrameElement>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [showRetry, setShowRetry] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const handleVerify = (token: string) => {
     setCaptchaVerified(true);
     onVerify(token);
   };
 
-  // iOS-only fallback: Turnstile sometimes fails to render inside iOS WKWebView.
-  // Restrict the auto-bypass to iOS so web/Android never send a fake token
-  // (which would either fail Supabase verification or silently weaken the gate).
+  const handleRetry = () => {
+    setShowRetry(false);
+    setReloadKey(k => k + 1);
+  };
+
+  // If Turnstile hasn't verified within the timeout (e.g. it failed to render
+  // in a restricted WebView), offer a manual retry instead of silently
+  // bypassing verification.
   useEffect(() => {
-    if (!visible || captchaVerified || Platform.OS !== 'ios') return;
-    const timeout = setTimeout(() => {
-      console.warn('[CAPTCHA] Turnstile timeout — bypassing for iOS WKWebView compatibility');
-      onVerify('ios-bypass-token');
-    }, IOS_CAPTCHA_TIMEOUT_MS);
+    if (!visible || captchaVerified) return;
+    setShowRetry(false);
+    const timeout = setTimeout(() => setShowRetry(true), CAPTCHA_LOAD_TIMEOUT_MS);
     return () => clearTimeout(timeout);
-  }, [visible, captchaVerified, onVerify]);
+  }, [visible, captchaVerified, reloadKey]);
 
   // Reset state when modal closes
   useEffect(() => {
-    if (!visible) setCaptchaVerified(false);
+    if (!visible) {
+      setCaptchaVerified(false);
+      setShowRetry(false);
+    }
   }, [visible]);
 
   const html = `
@@ -119,6 +134,7 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
           <View style={s.webContainer}>
             {Platform.OS === 'web' ? (
               <iframe
+                key={reloadKey}
                 ref={webIframeRef}
                 srcDoc={html}
                 style={{ width: '100%', height: '100%', border: 'none' }}
@@ -126,6 +142,7 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
               />
             ) : WebView ? (
               <WebView
+                key={reloadKey}
                 ref={webViewRef}
                 originWhitelist={['*']}
                 source={{ html, baseUrl: BASE_URL }}
@@ -144,8 +161,18 @@ export default function CaptchaModal({ visible, onCancel, onVerify }: CaptchaMod
                 <Text style={{ color: '#fff' }}>WebView tidak didukung.</Text>
               </View>
             )}
+
+            {showRetry && !captchaVerified && (
+              <View style={s.retryOverlay}>
+                <Text style={s.retryText}>Verifikasi gagal dimuat.</Text>
+                <TouchableOpacity onPress={handleRetry} style={s.retryBtn} accessibilityRole="button" accessibilityLabel="Coba lagi">
+                  <RotateCw size={16} color={Colors.white} strokeWidth={2.5} />
+                  <Text style={s.retryBtnText}>Coba Lagi</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-          
+
           <Text style={s.footerText}>
             Kami menggunakan Cloudflare Turnstile untuk memastikan kamu bukan robot.
           </Text>
@@ -191,9 +218,39 @@ const s = StyleSheet.create({
     height: 300,
     width: '100%',
     backgroundColor: '#202020',
+    position: 'relative',
   },
   webview: {
     backgroundColor: 'transparent',
+  },
+  retryOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(32,32,32,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+  },
+  retryText: {
+    color: Colors.text.secondary,
+    fontSize: FontSize.sm,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+  },
+  retryBtnText: {
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.sm,
   },
   footerText: {
     padding: Spacing.lg,

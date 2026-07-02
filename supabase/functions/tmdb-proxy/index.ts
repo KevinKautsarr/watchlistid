@@ -15,6 +15,35 @@ const ALLOWED_ORIGINS = new Set([
 // used as an open proxy to arbitrary TMDB (or, via crafted input, other) paths.
 const ALLOWED_ENDPOINT = /^\/(discover|search|trending|genre|movie|tv|person)(\/|$)/;
 
+// ── Rate limiting (defense-in-depth, best-effort) ─────────────────────────────
+// Edge Functions run as short-lived, per-region isolates, so this in-memory
+// counter does NOT provide a global guarantee (cold starts reset it, and
+// concurrent regions each keep their own count). It still meaningfully blocks
+// a single hot instance from being hammered by one client. A durable limit
+// would require an external store (e.g. Upstash Redis / Supabase Postgres),
+// which is out of scope here.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 60; // per IP per window — generous for normal browsing
+const requestLog = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const timestamps = (requestLog.get(ip) ?? []).filter(t => t > windowStart);
+  timestamps.push(now);
+  requestLog.set(ip, timestamps);
+
+  // Opportunistic cleanup so the map doesn't grow unbounded across the
+  // isolate's lifetime.
+  if (requestLog.size > 5000) {
+    for (const [key, times] of requestLog) {
+      if (times.every(t => t <= windowStart)) requestLog.delete(key);
+    }
+  }
+
+  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
+}
+
 function buildCorsHeaders(origin: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -44,6 +73,25 @@ serve(async (req) => {
   // Reject browser requests from disallowed origins (native requests have no Origin)
   if (origin && !ALLOWED_ORIGINS.has(origin)) {
     return json({ error: "Origin not allowed" }, 403);
+  }
+
+  // Defense-in-depth: require the Authorization/apikey header even though the
+  // platform-level `verify_jwt = true` (supabase/config.toml) already enforces
+  // a valid Supabase JWT before this code runs. This keeps the function safe
+  // even if that config setting is ever reverted or misapplied.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const apiKeyHeader = req.headers.get("apikey") ?? "";
+  if (!authHeader.startsWith("Bearer ") && !apiKeyHeader) {
+    return json({ error: "Missing authorization" }, 401);
+  }
+
+  // Best-effort per-IP rate limit (see comment on requestLog above for caveats).
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("cf-connecting-ip") ??
+    "unknown";
+  if (isRateLimited(clientIp)) {
+    return json({ error: "Too many requests" }, 429);
   }
 
   try {
