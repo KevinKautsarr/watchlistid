@@ -1,0 +1,24 @@
+-- ========================================================
+-- WATCHLIST ID - MOVE pg_trgm OUT OF public SCHEMA
+-- ========================================================
+-- Found via `supabase db advisors --linked --type security`
+-- (extension_in_public). Best practice: extensions should not live in
+-- `public` alongside application tables — keeping them separate avoids
+-- name collisions and keeps the public schema's surface area minimal.
+--
+-- Verified safe before writing this migration:
+--   1. Supabase's default session search_path is `"$user", public,
+--      extensions` (confirmed via `show search_path`), so moving pg_trgm
+--      to the `extensions` schema (which already exists on this project)
+--      does not break resolution for ad-hoc queries.
+--   2. The only pg_trgm-dependent object is the
+--      idx_profiles_username_trgm GIN index (using gin_trgm_ops), whose
+--      operator class is resolved to an internal OID at index-creation
+--      time — not re-looked-up by name on every query — so it keeps
+--      working unaffected by the extension's schema.
+--   3. No function in this codebase calls trgm functions (e.g.
+--      similarity()) internally, so the search_path=public,pg_temp lockdown
+--      applied to our SECURITY DEFINER functions (20260703000000/000001)
+--      cannot be broken by this move.
+
+alter extension pg_trgm set schema extensions;

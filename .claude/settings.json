@@ -29,7 +29,18 @@
       "PowerShell(npx tsc --noEmit)",
       "PowerShell(npx expo lint 2>&1)",
       "PowerShell(npm test 2>&1)",
-      "PowerShell(if \\($LASTEXITCODE -eq 0\\) { \"TSC OK\" } else { \"TSC FAILED\" })"
+      "PowerShell(if \\($LASTEXITCODE -eq 0\\) { \"TSC OK\" } else { \"TSC FAILED\" })",
+      "Bash(supabase --version)",
+      "Bash(npx supabase *)",
+      "Bash(cd \"c:/Users/HP/Developer/MovieWatchlist\")",
+      "Bash(grep -n \"xwdgpsvmqzilcmcbibvp\" config.ts)",
+      "Bash(ls -la .supabase)",
+      "Bash(cat supabase/.temp/project-ref)",
+      "Bash(curl -s -o /dev/null -w 'HTTP Status: %{http_code}\\\\n' https://xwdgpsvmqzilcmcbibvp.supabase.co/functions/v1/tmdb-proxy?endpoint=/trending/all/week)",
+      "Bash(curl -s https://xwdgpsvmqzilcmcbibvp.supabase.co/functions/v1/tmdb-proxy?endpoint=/account/12345 -H 'apikey: dummy-invalid-key' -w '\\\\nHTTP Status: %{http_code}\\\\n')",
+      "Bash(python3 -c ' *)",
+      "Bash(cd \"c:/Users/HP/Developer/MovieWatchlist\" 2>/dev/null *)",
+      "Read(//c/Users/HP/AppData/Local/Temp/**)"
     ]
   }
 }
