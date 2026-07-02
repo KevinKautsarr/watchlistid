@@ -32,6 +32,7 @@ import {
   Shadow,
 } from "@/constants/theme";
 import { useLanguage } from "@/context/LanguageContext";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const LOGO_WEB = require("../../assets/images/icon.png");
 
@@ -56,6 +57,8 @@ export default function ForgotPasswordScreen() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
+  const reducedMotion = useReducedMotion();
+
   // Animated values for premium micro-interactions
   const logoScale = useRef(new Animated.Value(0.85)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -65,6 +68,14 @@ export default function ForgotPasswordScreen() {
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (reducedMotion) {
+      logoScale.setValue(1);
+      logoOpacity.setValue(1);
+      formTranslateY.setValue(0);
+      formOpacity.setValue(1);
+      return;
+    }
+
     // Entrance animations
     Animated.parallel([
       Animated.spring(logoScale, {
@@ -89,7 +100,7 @@ export default function ForgotPasswordScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [reducedMotion]);
 
   const handleReset = async () => {
     setError(null);

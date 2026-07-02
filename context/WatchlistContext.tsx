@@ -78,7 +78,7 @@ function useWatchlistProviderLogic() {
 
   const [watchedEpisodesMap, setWatchedEpisodesMap] = useState<Record<number, Record<number, number[]>>>({});
 
-  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' }>({
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'info' | 'error' }>({
     visible: false, message: '', type: 'success',
   });
 
@@ -230,7 +230,7 @@ function useWatchlistProviderLogic() {
   useEffect(() => { if (isLoaded) AsyncStorage.setItem('@recentlyViewed', JSON.stringify(recentlyViewed)).catch(console.error); }, [recentlyViewed, isLoaded]);
 
   // Mutations
-  const showToast = useCallback((message: string, type: 'success' | 'info' = 'success') => setToast({ visible: true, message, type }), []);
+  const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => setToast({ visible: true, message, type }), []);
   const hideToast = useCallback(() => setToast(prev => ({ ...prev, visible: false })), []);
 
   const addToWatchlist = useCallback((item: MediaItem) => {
@@ -247,12 +247,26 @@ function useWatchlistProviderLogic() {
 
     // Keep the state updater pure; run side effects (network + toast) outside it.
     setWatchlistMap(prev => (prev[item.id] ? prev : { ...prev, [item.id]: newItem }));
-    typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => error && console.error(error));
     showToast(t('toastAddedToWatchlist'), 'success');
+    typedFrom('watchlist').upsert(toSupabaseRow(newItem, userId)).then(({ error }) => {
+      if (!error) return;
+      console.error(error);
+      // Roll back the optimistic insert — the server never persisted it.
+      setWatchlistMap(prev => {
+        if (prev[item.id] !== newItem) return prev; // something else changed it since — leave it alone
+        const copy = { ...prev };
+        delete copy[item.id];
+        return copy;
+      });
+      showToast(t('genericError'), 'error');
+    });
   }, [userId, watchlistMap, showToast, t]);
 
   const removeFromWatchlist = useCallback((id: number) => {
     if (!userId) return;
+    const removedItem = watchlistMap[id];
+    if (!removedItem) return;
+
     setWatchlistMap(prev => {
       if (!prev[id]) return prev;
       const copy = { ...prev };
@@ -260,8 +274,14 @@ function useWatchlistProviderLogic() {
       return copy;
     });
     showToast(t('toastRemovedFromWatchlist'), 'info');
-    typedFrom('watchlist').delete().eq('user_id', userId).eq('movie_id', id).then(({ error }) => error && console.error(error));
-  }, [userId, showToast, t]);
+    typedFrom('watchlist').delete().eq('user_id', userId).eq('movie_id', id).then(({ error }) => {
+      if (!error) return;
+      console.error(error);
+      // Roll back the optimistic removal — the server never deleted it.
+      setWatchlistMap(prev => (prev[id] ? prev : { ...prev, [id]: removedItem }));
+      showToast(t('genericError'), 'error');
+    });
+  }, [userId, watchlistMap, showToast, t]);
 
   const toggleWatched = useCallback((id: number) => {
     if (!userId) return;

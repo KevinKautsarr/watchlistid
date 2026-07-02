@@ -233,7 +233,7 @@ const s = StyleSheet.create({
   tabText: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.62)',
   },
   activeTabText: {
     color: Colors.white,
@@ -294,7 +294,7 @@ const s = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   fullName: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.62)',
     fontSize: 13,
     marginTop: 2,
   },
@@ -336,7 +336,7 @@ const s = StyleSheet.create({
     gap: 16,
   },
   emptyText: {
-    color: 'rgba(255,255,255,0.3)',
+    color: 'rgba(255,255,255,0.62)',
     fontSize: FontSize.sm,
   },
   closeBtn: {

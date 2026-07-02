@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Platform, Image, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Platform, Image } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import { ChevronLeft, Globe, Twitter, Shield, FileText, Heart, Film, Github, ExternalLink } from 'lucide-react-native';
@@ -8,10 +8,13 @@ import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme
 import { APP_URL } from '@/config';
 import { shareOrCopy } from '@/utils/share';
 import { useLanguage } from '@/context/LanguageContext';
+import Toast from '@/components/common/Toast';
 
 export default function AboutScreen() {
   const router = useRouter();
   const { t } = useLanguage();
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({ visible: false, message: '', type: 'success' });
+  const hideToast = () => setToast(prev => ({ ...prev, visible: false }));
 
   const handleOpenLink = (url: string) => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
@@ -23,7 +26,7 @@ export default function AboutScreen() {
       url: APP_URL,
       title: 'WatchlistID',
     });
-    if (result === 'copied') Alert.alert(t('linkCopied'));
+    if (result === 'copied') setToast({ visible: true, message: t('linkCopied'), type: 'success' });
   };
 
   return (
@@ -114,6 +117,8 @@ export default function AboutScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} onHide={hideToast} />
     </View>
   );
 }
@@ -172,8 +177,8 @@ const s = StyleSheet.create({
     })
   },
   appName: { fontSize: 28, fontWeight: FontWeight.black, color: Colors.white, marginBottom: 4 },
-  version: { fontSize: 13, color: 'rgba(255,255,255,0.3)', fontWeight: FontWeight.bold, letterSpacing: 0.5, marginBottom: 12 },
-  tagline: { fontSize: 15, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
+  version: { fontSize: 13, color: 'rgba(255,255,255,0.4)', fontWeight: FontWeight.bold, letterSpacing: 0.5, marginBottom: 12 },
+  tagline: { fontSize: 15, color: 'rgba(255,255,255,0.62)', textAlign: 'center' },
 
   section: { marginBottom: 32 },
   description: { fontSize: 15, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 24 },
@@ -210,7 +215,7 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.05)'
   },
   legalItem: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
-  legalLabel: { fontSize: 15, color: 'rgba(255,255,255,0.5)', fontWeight: FontWeight.medium },
+  legalLabel: { fontSize: 15, color: 'rgba(255,255,255,0.62)', fontWeight: FontWeight.medium },
   legalDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginHorizontal: 16 },
 
   footer: { alignItems: 'center' },

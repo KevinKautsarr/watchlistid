@@ -43,6 +43,7 @@ import {
 } from "@/constants/theme";
 import CaptchaModal from "@/components/auth/CaptchaModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { typedFrom } from "@/supabase";
 
 const LOGO_WEB = require("../../assets/images/icon.png");
@@ -135,6 +136,8 @@ export default function RegisterScreen() {
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const reducedMotion = useReducedMotion();
+
   // Animated values for high-end micro-interactions
   const logoScale = useRef(new Animated.Value(0.85)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -147,6 +150,14 @@ export default function RegisterScreen() {
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (reducedMotion) {
+      logoScale.setValue(1);
+      logoOpacity.setValue(1);
+      formTranslateY.setValue(0);
+      formOpacity.setValue(1);
+      return;
+    }
+
     // Entrance animations
     Animated.parallel([
       Animated.spring(logoScale, {
@@ -171,7 +182,7 @@ export default function RegisterScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [reducedMotion]);
 
   const handleUsernameChange = (raw: string) => {
     const cleaned = raw.replace(/\s/g, "");

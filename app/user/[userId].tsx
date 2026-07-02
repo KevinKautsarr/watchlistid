@@ -51,7 +51,7 @@ export default function UserProfileRoute() {
   // must render for recipients who aren't signed in. Follow actions still
   // prompt for login from within the profile.
   return (
-    <ScreenErrorBoundary screenName="User Profile">
+    <ScreenErrorBoundary screenNameKey="screenNameUserProfile">
       <ProfileScreen userId={userId} />
     </ScreenErrorBoundary>
   );

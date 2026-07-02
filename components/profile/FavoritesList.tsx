@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
   emptyText: {
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.62)',
     fontSize: FontSize.sm,
     lineHeight: 20,
     fontStyle: 'italic',

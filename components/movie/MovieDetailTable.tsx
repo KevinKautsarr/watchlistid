@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.62)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

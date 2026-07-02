@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform, ScrollView, FlatList
 } from 'react-native';
@@ -13,12 +13,15 @@ import { useWatchlist } from '@/context/WatchlistContext';
 import { WATCHLIST_STATUS, WatchlistItem } from '@/types/watchlist';
 import MovieListItem from '@/components/movie/MovieListItem';
 import LogModal from '@/components/movie/LogModal';
+import Toast from '@/components/common/Toast';
 import { Movie } from '@/types';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { cursorPointer } from '@/utils/webStyles';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSocial } from '@/context/SocialContext';
 import EmptyStateIcon from '@/components/common/EmptyStateIcon';
+
+const UNDO_WINDOW_MS = 5000;
 
 const SORTS = ['Added', 'Rating', 'Release', 'Title'];
 
@@ -40,6 +43,21 @@ const WatchlistScreen: React.FC = () => {
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [existingLog, setExistingLog] = useState<any>(undefined);
+
+  // Undo-window delete: the id is hidden from the list immediately (optimistic),
+  // but the real removeFromWatchlist/deleteLog call is deferred until the
+  // undo window elapses, so tapping "Undo" in time can cancel it outright
+  // instead of having to re-insert already-deleted data.
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<number>>(new Set());
+  const deleteTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const [undoToast, setUndoToast] = useState<{ visible: boolean; id: number | null }>({ visible: false, id: null });
+
+  useEffect(() => {
+    return () => {
+      // Flush any pending deletes on unmount so they aren't silently lost.
+      deleteTimers.current.forEach(timer => clearTimeout(timer));
+    };
+  }, []);
 
   const handleOpenLogModal = useCallback((item: WatchlistItem) => {
     const movieObj: Movie = {
@@ -73,16 +91,43 @@ const WatchlistScreen: React.FC = () => {
     toggleWatched(id);
   }, [toggleWatched]);
 
-  const handleRemove = useCallback(async (id: number) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  // Commits a pending delete for real (called once the undo window elapses,
+  // or immediately if the user navigates away/deletes something else first).
+  const commitDelete = useCallback(async (id: number) => {
+    deleteTimers.current.delete(id);
     removeFromWatchlist(id);
-    
-    // If there's a log entry for this movie/show, delete it to align library tabs with profile stats
     const log = userLogs.find(l => l.movie_id === id);
     if (log) {
       await deleteLog(log.id);
     }
   }, [removeFromWatchlist, userLogs, deleteLog]);
+
+  const handleRemove = useCallback((id: number) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+    // Hide immediately (optimistic) without touching global state yet.
+    setPendingDeleteIds(prev => new Set(prev).add(id));
+    setUndoToast({ visible: true, id });
+
+    const timer = setTimeout(() => commitDelete(id), UNDO_WINDOW_MS);
+    deleteTimers.current.set(id, timer);
+  }, [commitDelete]);
+
+  const handleUndoRemove = useCallback(() => {
+    const id = undoToast.id;
+    if (id == null) return;
+
+    const timer = deleteTimers.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      deleteTimers.current.delete(id);
+    }
+    setPendingDeleteIds(prev => {
+      const copy = new Set(prev);
+      copy.delete(id);
+      return copy;
+    });
+  }, [undoToast.id]);
 
   // Stable Set of watchlist IDs — avoids rebuilding a Map on every log iteration
   const watchlistIds = useMemo(() => new Set(watchlist.map(w => w.id)), [watchlist]);
@@ -128,9 +173,17 @@ const WatchlistScreen: React.FC = () => {
     return result;
   }, [watchlist, userLogs, watchlistIds]);
 
-  const planToWatchList = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'plan_to_watch'), [mergedList, getMovieStatus]);
-  const watchedList     = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'watched'), [mergedList, getMovieStatus]);
-  const reviewedList    = useMemo(() => mergedList.filter(m => getMovieStatus(m.id) === 'reviewed'), [mergedList, getMovieStatus]);
+  // Hide items that are mid-undo-window (see handleRemove) — they're
+  // optimistically gone from the UI even though the real removal hasn't
+  // happened yet.
+  const visibleList = useMemo(
+    () => (pendingDeleteIds.size === 0 ? mergedList : mergedList.filter(m => !pendingDeleteIds.has(m.id))),
+    [mergedList, pendingDeleteIds]
+  );
+
+  const planToWatchList = useMemo(() => visibleList.filter(m => getMovieStatus(m.id) === 'plan_to_watch'), [visibleList, getMovieStatus]);
+  const watchedList     = useMemo(() => visibleList.filter(m => getMovieStatus(m.id) === 'watched'), [visibleList, getMovieStatus]);
+  const reviewedList    = useMemo(() => visibleList.filter(m => getMovieStatus(m.id) === 'reviewed'), [visibleList, getMovieStatus]);
 
   // Filter based on Tab
   const filteredList = useMemo(() => {
@@ -375,6 +428,16 @@ const WatchlistScreen: React.FC = () => {
           setExistingLog(undefined);
         }}
         existingLog={existingLog}
+      />
+
+      <Toast
+        visible={undoToast.visible}
+        message={t('toastRemovedFromWatchlist')}
+        type="info"
+        actionLabel={t('undo')}
+        onAction={handleUndoRemove}
+        duration={UNDO_WINDOW_MS}
+        onHide={() => setUndoToast(prev => ({ ...prev, visible: false }))}
       />
     </View>
   );

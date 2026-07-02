@@ -10,6 +10,7 @@ import { useSocial } from '@/context/SocialContext';
 import { exportWatchlistToCSV } from '@/utils/exportWatchlist';
 import LanguageSheet from '@/components/settings/LanguageSheet';
 import ChangePasswordModal from '@/components/common/ChangePasswordModal';
+import Toast from '@/components/common/Toast';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/theme';
 import { cursorPointer } from '@/utils/webStyles';
@@ -221,7 +222,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { watchlist } = useWatchlist();
   const { userLogs } = useSocial();
   const { t } = useLanguage();
-  
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({ visible: false, message: '', type: 'success' });
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => setToast({ visible: true, message, type });
+  const hideToast = () => setToast(prev => ({ ...prev, visible: false }));
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [showLangSheet, setShowLangSheet] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -323,12 +327,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
     ? `Data watchlist (${watchlist.length} item) dan daftar tontonan (${exportLogsCount} item) akan diekspor dalam format spreadsheet CSV (perkiraan ukuran ~${estimatedKb} KB). Kamu bisa membukanya di Microsoft Excel atau Google Sheets.`
     : `Watchlist data (${watchlist.length} items) and watched list (${exportLogsCount} items) will be exported in CSV spreadsheet format (estimated size ~${estimatedKb} KB). You can open it in Microsoft Excel or Google Sheets.`;
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setShowExportConfirm(false);
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     const allLogs = userLogs.map(log => ({
       id: log.id,
       user_id: user?.id || '',
@@ -343,12 +347,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       created_at: log.created_at,
     }));
 
-    exportWatchlistToCSV(
-      watchlist,
-      allLogs,
-      profile?.data?.username ?? 'user',
-      { title: t('exportFailedTitle'), message: t('exportFailedMsg') },
-    );
+    try {
+      await exportWatchlistToCSV(watchlist, allLogs, profile?.data?.username ?? 'user');
+    } catch (err: any) {
+      showToast(err?.message || t('exportFailedMsg'), 'error');
+    }
   };
 
   const renderNavItem = (entry: NavEntry) => {
@@ -376,7 +379,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               <View style={[styles.iconBox, active && styles.iconBoxActive, (hovered || pressed) && !active && styles.iconBoxHover]}>
                 <Icon
                   size={18}
-                  color={active ? '#FFFFFF' : 'rgba(255,255,255,0.45)'}
+                  color={active ? '#FFFFFF' : 'rgba(255,255,255,0.62)'}
                   strokeWidth={active ? 2.5 : 2}
                 />
               </View>
@@ -537,6 +540,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
         onCancel={() => setShowExportConfirm(false)}
         onConfirm={handleExport}
       />
+
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} onHide={hideToast} />
     </>
   );
 };
@@ -614,7 +619,7 @@ const styles = StyleSheet.create({
   navItemCollapsed: { width: 48, justifyContent: 'center', alignItems: 'center' },
   navItemActive: {},
   navItemHover:  {},
-  navLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.45)', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
+  navLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.62)', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
   navLabelActive: { color: '#FFFFFF', fontWeight: '700' },
   activeLine: {
     position: 'absolute',

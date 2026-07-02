@@ -1,17 +1,24 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Text, StyleSheet, View, Platform } from 'react-native';
+import { Animated, Text, StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
 import { CheckCircle2, Info, AlertTriangle } from 'lucide-react-native';
 import { Colors, Radius, Spacing, FontSize, FontWeight, Shadow } from '@/constants/theme';
 import { nativeDriver } from '@/utils/animation';
+import { cursorPointer } from '@/utils/webStyles';
 
 interface ToastProps {
   visible: boolean;
   message: string;
   type?: 'success' | 'info' | 'error';
   onHide: () => void;
+  /** Optional action button label (e.g. "Undo"). Requires onAction. */
+  actionLabel?: string;
+  onAction?: () => void;
+  /** Auto-hide delay in ms. Defaults to 2000, or 5000 when actionLabel is set
+   * (undo needs more time to react to than a plain confirmation). */
+  duration?: number;
 }
 
-const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHide }) => {
+const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHide, actionLabel, onAction, duration }) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
 
@@ -31,10 +38,9 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
         }),
       ]).start();
 
-      // Auto hide after 2 seconds
       const timer = setTimeout(() => {
         hide();
-      }, 2000);
+      }, duration ?? (actionLabel ? 5000 : 2000));
 
       return () => clearTimeout(timer);
     }
@@ -61,7 +67,9 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
   const iconColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : Colors.primary;
 
   return (
-    <View style={[styles.root, { pointerEvents: 'none' }]}>
+    // pointerEvents is 'box-none' here (not 'none') so the action button below
+    // remains tappable — only the transparent root area passes touches through.
+    <View style={[styles.root, { pointerEvents: 'box-none' }]}>
       <Animated.View style={[
         styles.container,
         { opacity, transform: [{ translateY }] }
@@ -70,6 +78,16 @@ const Toast: React.FC<ToastProps> = ({ visible, message, type = 'success', onHid
           <Icon size={20} color={iconColor} strokeWidth={2.5} />
         </View>
         <Text style={styles.text} maxFontSizeMultiplier={1.3}>{message}</Text>
+        {actionLabel && onAction && (
+          <TouchableOpacity
+            onPress={() => { onAction(); hide(); }}
+            style={[styles.actionBtn, cursorPointer]}
+            accessibilityRole="button"
+            accessibilityLabel={actionLabel}
+          >
+            <Text style={styles.actionText} maxFontSizeMultiplier={1.3}>{actionLabel}</Text>
+          </TouchableOpacity>
+        )}
       </Animated.View>
     </View>
   );
@@ -107,6 +125,18 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
+    flexShrink: 1,
+  },
+  actionBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginLeft: 2,
+  },
+  actionText: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
   },
 });
 

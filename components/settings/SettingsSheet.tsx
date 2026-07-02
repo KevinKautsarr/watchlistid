@@ -122,9 +122,9 @@ const SettingsSheet: React.FC<SettingsSheetProps> = ({
                 }}
               >
                 <View style={[s.iconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                  <Trash2 size={20} color="rgba(255,255,255,0.4)" strokeWidth={2} />
+                  <Trash2 size={20} color="rgba(255,255,255,0.62)" strokeWidth={2} />
                 </View>
-                <Text style={[s.menuLabel, { color: 'rgba(255,255,255,0.4)' }]}>Hapus Akun</Text>
+                <Text style={[s.menuLabel, { color: 'rgba(255,255,255,0.62)' }]}>Hapus Akun</Text>
               </TouchableOpacity>
 
               {isMobile && (

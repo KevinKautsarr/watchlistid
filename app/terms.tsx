@@ -88,7 +88,7 @@ const s = StyleSheet.create({
   intro: { alignItems: 'center', marginBottom: 40 },
   iconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(199,31,55,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   introTitle: { fontSize: 24, fontWeight: FontWeight.black, color: Colors.white, marginBottom: 8 },
-  introSub: { fontSize: 15, color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 22 },
+  introSub: { fontSize: 15, color: 'rgba(255,255,255,0.62)', textAlign: 'center', lineHeight: 22 },
   section: { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: Radius.xl, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white },

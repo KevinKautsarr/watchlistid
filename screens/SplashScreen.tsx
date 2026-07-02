@@ -12,8 +12,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSize, FontWeight } from '@/constants/theme';
 import { nativeDriver } from '@/utils/animation';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const SplashScreen: React.FC = () => {
+  const reducedMotion = useReducedMotion();
+
   // Nilai Animasi Terpisah untuk efek bertahap
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoTranslateY = useRef(new Animated.Value(20)).current;
@@ -22,6 +25,16 @@ const SplashScreen: React.FC = () => {
   const loaderOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Reduced motion: skip straight to the end state instead of animating.
+    if (reducedMotion) {
+      logoOpacity.setValue(1);
+      logoTranslateY.setValue(0);
+      textOpacity.setValue(1);
+      taglineOpacity.setValue(1);
+      loaderOpacity.setValue(1);
+      return;
+    }
+
     // Animasi sekuensial bergaya sinematik
     Animated.sequence([
       // 1. Ikon muncul dan naik perlahan
@@ -59,7 +72,7 @@ const SplashScreen: React.FC = () => {
         ...nativeDriver,
       }),
     ]).start();
-  }, []);
+  }, [reducedMotion]);
 
   return (
     <View style={styles.container}>
@@ -136,7 +149,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: FontSize.sm,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.62)',
     letterSpacing: 3,
     textAlign: 'center',
     marginTop: Spacing.md,

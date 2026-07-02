@@ -1,4 +1,4 @@
-import { Platform, Share, Alert } from 'react-native';
+import { Platform, Share } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { WatchlistItem } from '@/types/watchlist';
@@ -8,12 +8,16 @@ import { MovieLog } from '@/types';
  * Exports the user's watchlist and diary logs as a CSV file.
  * On web: triggers a file download via an anchor element.
  * On native: saves to a temporary file and triggers the native sharing sheet.
+ *
+ * This is a plain utility function (no React context), so it cannot show a
+ * Toast itself — on failure it re-throws, and the caller is responsible for
+ * catching the error and surfacing it via Toast (or another UI) instead of
+ * a native Alert.
  */
 export async function exportWatchlistToCSV(
   watchlist: WatchlistItem[],
   logs: MovieLog[],
   username: string = 'user',
-  errorLabels?: { title: string; message: string },
 ): Promise<void> {
   try {
     // ── Watchlist CSV ─────────────────────────────────────────────────────
@@ -86,10 +90,8 @@ export async function exportWatchlistToCSV(
       }
     }
   } catch (err: any) {
-    Alert.alert(
-      errorLabels?.title ?? 'Export Failed',
-      err?.message ?? errorLabels?.message ?? 'An error occurred while exporting your data.',
-    );
+    console.error('[exportWatchlistToCSV] failed:', err);
+    throw err;
   }
 }
 

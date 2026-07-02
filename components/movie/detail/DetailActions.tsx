@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   
   btnText: { fontSize: FontSize.base, fontWeight: FontWeight.bold, color: Colors.white },
   btnSecondaryText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.white },
-  btnDisabledText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.4)' },
+  btnDisabledText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: 'rgba(255,255,255,0.5)' },
   
   badgeGold: { height: 44, borderRadius: Radius.md, backgroundColor: `${Colors.ratingGold}1F`, borderWidth: 1, borderColor: `${Colors.ratingGold}4D`, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   badgeGoldText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.ratingGold },

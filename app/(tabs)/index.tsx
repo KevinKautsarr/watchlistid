@@ -4,7 +4,7 @@ import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 
 export default function HomeRoute() {
   return (
-    <ScreenErrorBoundary screenName="Home">
+    <ScreenErrorBoundary screenNameKey="screenNameHome">
       <HomeScreen />
     </ScreenErrorBoundary>
   );

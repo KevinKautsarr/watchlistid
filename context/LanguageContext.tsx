@@ -351,8 +351,21 @@ const translations = {
     failedTitle: "Failed",
     successTitle: "Success",
     genericError: "Something went wrong. Please try again.",
+
+    // Screen-level error boundary
+    screenErrorTitle: "Something went wrong",
+    screenErrorMessage: "An error occurred while loading this {screen}. Try reloading or contact support if the problem continues.",
+    screenFallbackName: "page",
+    screenNameHome: "Home",
+    screenNameProfile: "Profile",
+    screenNameSearch: "Search",
+    screenNameWatchlist: "Watchlist",
+    screenNameMovieDetail: "Movie Detail",
+    screenNameUserProfile: "User Profile",
     toastAddedToWatchlist: "Added to Watchlist",
     toastRemovedFromWatchlist: "Removed from Watchlist",
+    undo: "Undo",
+    toastRestored: "Restored",
     toastLoginToLog: "You must be logged in to log a movie.",
     toastLogSaved: "Movie log saved successfully!",
     toastLogSaveFailed: "An error occurred while saving your log.",
@@ -721,8 +734,21 @@ const translations = {
     failedTitle: "Gagal",
     successTitle: "Berhasil",
     genericError: "Terjadi kesalahan. Silakan coba lagi.",
+
+    // Screen-level error boundary
+    screenErrorTitle: "Waduh, ada kendala!",
+    screenErrorMessage: "Terjadi kesalahan saat memuat {screen} ini. Coba muat ulang atau hubungi tim support jika kendala berlanjut.",
+    screenFallbackName: "halaman",
+    screenNameHome: "Beranda",
+    screenNameProfile: "Profil",
+    screenNameSearch: "Pencarian",
+    screenNameWatchlist: "Watchlist",
+    screenNameMovieDetail: "Detail Film",
+    screenNameUserProfile: "Profil Pengguna",
     toastAddedToWatchlist: "Ditambahkan ke Watchlist",
     toastRemovedFromWatchlist: "Dihapus dari Watchlist",
+    undo: "Urungkan",
+    toastRestored: "Dipulihkan",
     toastLoginToLog: "Kamu harus masuk untuk mencatat film.",
     toastLogSaved: "Catatan film berhasil disimpan!",
     toastLogSaveFailed: "Terjadi kesalahan saat menyimpan catatanmu.",
@@ -747,13 +773,15 @@ const translations = {
 
 type TranslationKey = keyof typeof translations.en;
 
-interface LanguageContextType {
+export interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => Promise<void>;
   t: (key: TranslationKey) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(
+// Exported (not just the hook) so class components that can't use hooks —
+// e.g. ScreenErrorBoundary — can read it via `static contextType`.
+export const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined,
 );
 

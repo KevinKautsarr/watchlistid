@@ -32,6 +32,7 @@ import {
 } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const LOGO_WEB = require("../../assets/images/icon.png");
 
@@ -60,6 +61,8 @@ export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showCaptcha, setShowCaptcha] = useState(false);
 
+  const reducedMotion = useReducedMotion();
+
   // Animated values for high-end micro-interactions
   const logoScale = useRef(new Animated.Value(0.85)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -70,6 +73,14 @@ export default function LoginScreen() {
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (reducedMotion) {
+      logoScale.setValue(1);
+      logoOpacity.setValue(1);
+      formTranslateY.setValue(0);
+      formOpacity.setValue(1);
+      return;
+    }
+
     // Entrance animations
     Animated.parallel([
       Animated.spring(logoScale, {
@@ -94,7 +105,7 @@ export default function LoginScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [reducedMotion]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {

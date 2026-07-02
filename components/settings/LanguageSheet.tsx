@@ -196,7 +196,7 @@ const s = StyleSheet.create({
   },
   subLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.55)',
   },
   checkWrap: {
     width: 28,

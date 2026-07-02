@@ -53,6 +53,9 @@ export const useProfileData = (userId: string | undefined) => {
   const [showCropModal, setShowCropModal] = useState(false);
   const [showSettingsSheet, setShowSettingsSheet] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({ visible: false, message: '', type: 'success' });
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => setToast({ visible: true, message, type });
+  const hideToast = () => setToast(prev => ({ ...prev, visible: false }));
 
   // Social list states (Followers & Following list view)
   const [socialModalVisible, setSocialModalVisible] = useState(false);
@@ -298,46 +301,52 @@ export const useProfileData = (userId: string | undefined) => {
   const handleSocialFollowToggle = async (userIdToToggle: string) => {
     if (!user) return;
     const isCurrentlyFollowing = socialUsers.find(u => u.id === userIdToToggle)?.is_following;
-    
-    let success = false;
-    if (isCurrentlyFollowing) {
-      success = await unfollowUser(userIdToToggle);
-    } else {
-      success = await followUser(userIdToToggle);
-    }
+
+    // Optimistic: flip the UI immediately, roll back only if the server call fails.
+    setSocialUsers(prev => prev.map(u =>
+      u.id === userIdToToggle ? { ...u, is_following: !isCurrentlyFollowing } : u
+    ));
+
+    const success = isCurrentlyFollowing
+      ? await unfollowUser(userIdToToggle)
+      : await followUser(userIdToToggle);
 
     if (success) {
-      setSocialUsers(prev => prev.map(u => {
-        if (u.id === userIdToToggle) {
-          return { ...u, is_following: !isCurrentlyFollowing };
-        }
-        return u;
-      }));
       fetchSocialStats();
+    } else {
+      setSocialUsers(prev => prev.map(u =>
+        u.id === userIdToToggle ? { ...u, is_following: isCurrentlyFollowing } : u
+      ));
+      showToast(t('genericError'), 'error');
     }
   };
 
   const handleFollow = async () => {
     if (isOwner || isFollowLoading || !targetUserId) return;
     if (!user) { showLoginPrompt(); return; } // guest tapped Follow → prompt login
-    setIsFollowLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const wasFollowing = isFollowing;
+
+    // Optimistic: flip the button + counter immediately. isFollowLoading still
+    // guards against double-taps mid-request, but the UI no longer waits on
+    // the round-trip to react.
+    setIsFollowLoading(true);
+    setIsFollowing(!wasFollowing);
+    setFollowers(prev => wasFollowing ? Math.max(0, prev - 1) : prev + 1);
+
     try {
-      if (isFollowing) {
-        const success = await unfollowUser(targetUserId);
-        if (success) {
-          setIsFollowing(false);
-          setFollowers(prev => Math.max(0, prev - 1));
-        }
-      } else {
-        const success = await followUser(targetUserId);
-        if (success) {
-          setIsFollowing(true);
-          setFollowers(prev => prev + 1);
-        }
-      }
+      const success = wasFollowing
+        ? await unfollowUser(targetUserId)
+        : await followUser(targetUserId);
+
+      if (!success) throw new Error('Follow action failed');
     } catch (err) {
       console.error('Follow error:', err);
+      // Roll back on failure.
+      setIsFollowing(wasFollowing);
+      setFollowers(prev => wasFollowing ? prev + 1 : Math.max(0, prev - 1));
+      showToast(t('genericError'), 'error');
     } finally {
       setIsFollowLoading(false);
     }
@@ -633,10 +642,10 @@ export const useProfileData = (userId: string | undefined) => {
     if (!err) router.replace('/auth/login');
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setShowExportConfirm(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     const allLogs = isOwner 
       ? mergedList.filter(m => {
           const status = getMovieStatus(m.id);
@@ -659,12 +668,11 @@ export const useProfileData = (userId: string | undefined) => {
         })
       : [];
 
-    exportWatchlistToCSV(
-      watchlist,
-      allLogs,
-      profile.data?.username ?? 'user',
-      { title: t('exportFailedTitle'), message: t('exportFailedMsg') },
-    );
+    try {
+      await exportWatchlistToCSV(watchlist, allLogs, profile.data?.username ?? 'user');
+    } catch (err: any) {
+      showToast(err?.message || t('exportFailedMsg'), 'error');
+    }
   };
 
   const handleRefresh = useCallback(async () => {
@@ -754,6 +762,7 @@ export const useProfileData = (userId: string | undefined) => {
     showCropModal, setShowCropModal,
     showSettingsSheet, setShowSettingsSheet,
     uploadProgress,
+    toast, hideToast,
     handleFollow,
     handlePickImage,
     handleSaveProfile,

@@ -381,7 +381,7 @@ const s = StyleSheet.create({
   filters: { flexDirection: 'row', gap: 4 },
   fBtn:    { paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)' },
   fBtnOn:  { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  fBtnTxt: { color: 'rgba(255,255,255,0.45)', fontSize: FontSize.xs, fontWeight: FontWeight.bold },
+  fBtnTxt: { color: 'rgba(255,255,255,0.62)', fontSize: FontSize.xs, fontWeight: FontWeight.bold },
   fBtnTxtOn: { color: Colors.white },
 
   monthLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: FontWeight.semibold },
@@ -460,7 +460,7 @@ const s = StyleSheet.create({
   modalDate:   { color: Colors.white, fontSize: FontSize.md, fontWeight: FontWeight.black, flex: 1, letterSpacing: -0.2 },
   closeBtn:    { padding: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   emptyDay:    { paddingVertical: Spacing.xl, alignItems: 'center' },
-  emptyDayText:{ color: 'rgba(255,255,255,0.4)', fontSize: FontSize.sm, fontStyle: 'italic' },
+  emptyDayText:{ color: 'rgba(255,255,255,0.62)', fontSize: FontSize.sm, fontStyle: 'italic' },
 
   logCountText: { color: Colors.primary, fontSize: FontSize.xs, fontWeight: FontWeight.bold, marginBottom: Spacing.md, letterSpacing: 0.8, textTransform: 'uppercase' },
   logItem:  {

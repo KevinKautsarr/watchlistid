@@ -6,7 +6,7 @@ import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 // React.lazy() only adds a redundant chunk boundary prone to cross-chunk skew.
 export default function ProfileRoute() {
   return (
-    <ScreenErrorBoundary screenName="Profil">
+    <ScreenErrorBoundary screenNameKey="screenNameProfile">
       <ProfileScreen />
     </ScreenErrorBoundary>
   );

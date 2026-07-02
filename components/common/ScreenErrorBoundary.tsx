@@ -2,10 +2,16 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
+import { LanguageContext, LanguageContextType } from '@/context/LanguageContext';
 
 interface Props {
   children: ReactNode;
-  screenName?: string;
+  /**
+   * Translation key naming this screen (e.g. "screenNameHome"). Falls back to
+   * a generic "page"/"halaman" translation when omitted — never hardcode a
+   * raw screen name string here, or it won't respect the active language.
+   */
+  screenNameKey?: string;
 }
 
 interface State {
@@ -14,6 +20,20 @@ interface State {
 }
 
 export default class ScreenErrorBoundary extends Component<Props, State> {
+  // Class components can't use hooks, so we read the language context
+  // directly. LanguageContext is exported (not just useLanguage()) for
+  // exactly this case. Every current call site renders inside
+  // LanguageProvider (see app/_layout.tsx), so context is never undefined
+  // in practice — the fallback strings below only guard the type.
+  //
+  // No `declare context: ...` field here — some Babel configs (this
+  // project's Metro/react-native-web pipeline) don't support the
+  // `declare` class-field modifier without extra plugin config, and
+  // Component's context generic doesn't reliably type `this.context`
+  // either. `this.context` is cast at the one call site in render()
+  // instead (see below).
+  static contextType = LanguageContext;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -24,7 +44,7 @@ export default class ScreenErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error(`ErrorBoundary caught an error in screen [${this.props.screenName || 'Unknown'}]:`, error, errorInfo);
+    console.error(`ErrorBoundary caught an error in screen [${this.props.screenNameKey || 'Unknown'}]:`, error, errorInfo);
   }
 
   handleRetry = () => {
@@ -33,21 +53,22 @@ export default class ScreenErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const t = (this.context as LanguageContextType | undefined)?.t;
+      const screenName = (this.props.screenNameKey && t?.(this.props.screenNameKey as any)) || t?.('screenFallbackName') || 'page';
+      const message = (t?.('screenErrorMessage') || 'An error occurred while loading this {screen}.').replace('{screen}', screenName);
+
       return (
         <View style={s.container}>
           <View style={s.iconBox}>
             <AlertTriangle size={48} color={Colors.primary} />
           </View>
-          
-          <Text style={s.title}>Waduh, ada kendala!</Text>
-          <Text style={s.message}>
-            Terjadi kesalahan saat memuat {this.props.screenName || 'halaman'} ini. 
-            Coba muat ulang atau hubungi tim support jika kendala berlanjut.
-          </Text>
+
+          <Text style={s.title}>{t?.('screenErrorTitle') || 'Something went wrong'}</Text>
+          <Text style={s.message}>{message}</Text>
 
           <TouchableOpacity style={s.retryBtn} onPress={this.handleRetry}>
             <RefreshCw size={20} color={Colors.white} />
-            <Text style={s.retryText}>Coba Lagi</Text>
+            <Text style={s.retryText}>{t?.('tryAgain') || 'Try Again'}</Text>
           </TouchableOpacity>
 
           <View style={s.debugBox}>

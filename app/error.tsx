@@ -96,6 +96,6 @@ const s = StyleSheet.create({
   signOutBtnText: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.62)',
   },
 });

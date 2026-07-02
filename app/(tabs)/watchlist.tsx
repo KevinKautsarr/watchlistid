@@ -4,7 +4,7 @@ import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 
 export default function WatchlistRoute() {
   return (
-    <ScreenErrorBoundary screenName="Watchlist">
+    <ScreenErrorBoundary screenNameKey="screenNameWatchlist">
       <WatchlistScreen />
     </ScreenErrorBoundary>
   );

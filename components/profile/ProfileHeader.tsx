@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   usernameHandle: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.62)',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     marginTop: 4,

@@ -8,7 +8,7 @@ import ScreenErrorBoundary from '@/components/common/ScreenErrorBoundary';
 // skew after a redeploy.
 export default function SearchRoute() {
   return (
-    <ScreenErrorBoundary screenName="Search">
+    <ScreenErrorBoundary screenNameKey="screenNameSearch">
       <SearchScreen />
     </ScreenErrorBoundary>
   );

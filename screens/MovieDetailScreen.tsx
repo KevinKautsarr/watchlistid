@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  StatusBar, Animated, Alert
+  StatusBar, Animated
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -27,6 +27,7 @@ import CastCard from '@/components/movie/CastCard';
 import MovieDetailTable from '@/components/movie/MovieDetailTable';
 import PosterCard from '@/components/common/PosterCard';
 import LogModal from '@/components/movie/LogModal';
+import Toast from '@/components/common/Toast';
 import ReviewFeed from '@/components/movie/ReviewFeed';
 import { MovieDetailSkeleton } from '@/components/common/DetailSkeleton';
 import Shimmer from '@/components/common/Shimmer';
@@ -76,6 +77,9 @@ export default function MovieDetailScreen() {
   );
 
   const [showLogModal, setShowLogModal] = useState(false);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({ visible: false, message: '', type: 'success' });
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => setToast({ visible: true, message, type });
+  const hideToast = () => setToast(prev => ({ ...prev, visible: false }));
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // TV Show states — season & episode selector
@@ -235,11 +239,11 @@ export default function MovieDetailScreen() {
           await addToWatchlist({ ...movie, media_type: type, status: 'completed' } as any);
         }
       } else {
-        Alert.alert(t('failedTitle'), t('markWatchedFailed'));
+        showToast(t('markWatchedFailed'), 'error');
       }
     } catch (err: any) {
       console.error('[DetailScreen] mark watched failed:', err);
-      Alert.alert(t('errorTitle'), err.message || t('genericError'));
+      showToast(err.message || t('genericError'), 'error');
     }
   };
 
@@ -273,7 +277,7 @@ export default function MovieDetailScreen() {
       .replace('{title}', mediaTitle)
       .replace('{rating}', ratingStr);
     const result = await shareOrCopy({ message: `${text}\n${url}`, url, title: mediaTitle });
-    if (result === 'copied') Alert.alert(t('linkCopied'));
+    if (result === 'copied') showToast(t('linkCopied'), 'success');
   };
 
   const featuredTrailer = videos.find(v => v.type === "Trailer");
@@ -562,12 +566,14 @@ export default function MovieDetailScreen() {
         <Share2 size={IconSize.sm} color={Colors.white} strokeWidth={2} />
       </TouchableOpacity>
 
-      <LogModal 
-        visible={showLogModal} 
-        movie={{ ...movie, media_type: type } as any} 
-        onClose={() => setShowLogModal(false)} 
+      <LogModal
+        visible={showLogModal}
+        movie={{ ...movie, media_type: type } as any}
+        onClose={() => setShowLogModal(false)}
         existingLog={userLogs.find(l => l.movie_id === movie.id)}
       />
+
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} onHide={hideToast} />
     </SafeAreaView>
   );
 }
@@ -661,7 +667,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   episodeDate: {
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.62)',
     fontSize: FontSize.xs,
     paddingTop: 2,
   },
@@ -740,7 +746,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   episodeTitleWatched: {
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.5)',
     textDecorationLine: 'line-through',
   },
 

@@ -7,6 +7,7 @@ import LanguageSheet from '@/components/settings/LanguageSheet';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import ChangePasswordModal from '@/components/common/ChangePasswordModal';
 import SocialListSheet from '@/components/settings/SocialListSheet';
+import Toast from '@/components/common/Toast';
 import { useProfileData } from '@/hooks/useProfileData';
 
 interface ProfileModalsProps {
@@ -59,6 +60,8 @@ export const ProfileModals: React.FC<ProfileModalsProps> = ({ profileState }) =>
     existingLog,
     setSelectedMovie,
     setExistingLog,
+    toast,
+    hideToast,
   } = profileState;
 
   return (
@@ -187,6 +190,8 @@ export const ProfileModals: React.FC<ProfileModalsProps> = ({ profileState }) =>
         }}
         existingLog={existingLog}
       />
+
+      <Toast visible={toast.visible} message={toast.message} type={toast.type} onHide={hideToast} />
     </>
   );
 };

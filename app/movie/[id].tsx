@@ -4,7 +4,7 @@ import MovieDetailScreen from '@/screens/MovieDetailScreen';
 
 export default function MovieDetailRoute() {
   return (
-    <ScreenErrorBoundary screenName="Detail Film">
+    <ScreenErrorBoundary screenNameKey="screenNameMovieDetail">
       <MovieDetailScreen />
     </ScreenErrorBoundary>
   );
