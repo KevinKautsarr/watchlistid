@@ -19,7 +19,8 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { cursorPointer } from '@/utils/webStyles';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSocial } from '@/context/SocialContext';
-import EmptyStateIcon from '@/components/common/EmptyStateIcon';
+import EmptyStateCTA from '@/components/common/EmptyStateCTA';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 const UNDO_WINDOW_MS = 5000;
 
@@ -39,6 +40,7 @@ const WatchlistScreen: React.FC = () => {
   const [isAscending, setIsAscending] = useState(false);
   const bp = useBreakpoint();
   const { t } = useLanguage();
+  const { listRef, onScroll } = useScrollRestoration(`watchlist-${activeTab}`);
 
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
@@ -382,6 +384,9 @@ const WatchlistScreen: React.FC = () => {
       {/* ── List ── */}
       <View style={[{ flex: 1, width: '100%' }, bp.isLarge && styles.centeredColumn]}>
         <FlatList
+          ref={listRef}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           data={sortedList}
           keyExtractor={(item: WatchlistItem) => item.id.toString()}
           renderItem={renderItem}
@@ -389,33 +394,32 @@ const WatchlistScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={renderHeader}
           ListEmptyComponent={(
-            <View style={styles.empty}>
-              <EmptyStateIcon
-                name={
-                  activeTab === 'Watchlist'
-                    ? 'watchlist'
-                    : activeTab === 'Watched'
-                      ? 'diary'
-                      : 'reviews'
-                }
-                size={120}
-                style={{ marginBottom: Spacing.xl }}
-              />
-              <Text style={styles.emptyTitle} maxFontSizeMultiplier={1.3}>
-                {activeTab === 'Watchlist'
+            <EmptyStateCTA
+              icon={activeTab === 'Watchlist' ? 'watchlist' : activeTab === 'Watched' ? 'diary' : 'reviews'}
+              size={120}
+              title={
+                activeTab === 'Watchlist'
                   ? t('watchlistEmptyTitle')
                   : activeTab === 'Watched'
                     ? t('emptyWatchedTitle')
-                    : t('emptyReviewsTitle')}
-              </Text>
-              <Text style={styles.emptySub} maxFontSizeMultiplier={1.3}>
-                {activeTab === 'Watchlist'
+                    : t('emptyReviewsTitle')
+              }
+              subtitle={
+                activeTab === 'Watchlist'
                   ? t('watchlistEmptySub')
                   : activeTab === 'Watched'
                     ? t('emptyWatchedSub')
-                    : t('emptyReviewsSub')}
-              </Text>
-            </View>
+                    : t('emptyReviewsSub')
+              }
+              actionLabel={activeTab === 'Watchlist' ? t('ctaExplorePopular') : t('ctaLogFirstMovie')}
+              onAction={() => {
+                if (activeTab === 'Watchlist') {
+                  router.push('/(tabs)/search');
+                } else {
+                  setActiveTab('Watchlist');
+                }
+              }}
+            />
           )}
         />
       </View>
@@ -580,33 +584,6 @@ const styles = StyleSheet.create({
   // Tablet/desktop: keep the library a centered, readable column instead of
   // letting full-width list rows stretch across the whole screen.
   centeredColumn: { width: '100%', alignSelf: 'center' },
-
-  empty: {
-    paddingTop: 80,
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyIconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(63,114,175,0.10)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.text.primary,
-    marginBottom: Spacing.sm,
-  },
-  emptySub: {
-    fontSize: FontSize.base,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
 });
 
 export default WatchlistScreen;

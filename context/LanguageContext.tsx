@@ -310,6 +310,10 @@ const translations = {
     emptyWatchedSub: "Mark movies you have watched in the watchlist tab.",
     emptyReviewsTitle: "No reviews written yet.",
     emptyReviewsSub: "Write reviews for movies you have watched.",
+    ctaExplorePopular: "Explore Popular Movies",
+    ctaLogFirstMovie: "Log Your First Movie",
+    ctaWritReview: "Browse Watched Movies",
+    ctaTrySearchGenres: "Or browse a popular genre:",
     signOutConfirmMessage:
       "You will be signed out of your account. You can log back in at any time.",
     deleteAccountConfirmTitle: "Delete Account?",
@@ -693,6 +697,10 @@ const translations = {
     emptyWatchedSub: "Tandai film yang sudah kamu tonton di daftar watchlist.",
     emptyReviewsTitle: "Belum ada ulasan ditulis.",
     emptyReviewsSub: "Tulis ulasan pada film yang sudah ditonton.",
+    ctaExplorePopular: "Jelajahi Film Populer",
+    ctaLogFirstMovie: "Catat Film Pertamamu",
+    ctaWritReview: "Lihat Film yang Ditonton",
+    ctaTrySearchGenres: "Atau jelajahi genre populer:",
     signOutConfirmMessage:
       "Kamu akan keluar dari akunmu. Kamu bisa login kembali kapan saja.",
     deleteAccountConfirmTitle: "Hapus Akun?",

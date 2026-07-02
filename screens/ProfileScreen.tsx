@@ -15,6 +15,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import Shimmer from '@/components/common/Shimmer';
 import EmptyStateIcon from '@/components/common/EmptyStateIcon';
+import EmptyStateCTA from '@/components/common/EmptyStateCTA';
 
 // Components
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -274,25 +275,35 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
           return null;
         }}
         ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <EmptyStateIcon
-              name={
-                activeTab === 'Diary'
-                  ? 'diary'
-                  : activeTab === 'Reviews'
-                    ? 'reviews'
-                    : 'watchlist'
-              }
+          isOwner ? (
+            <EmptyStateCTA
+              icon={activeTab === 'Diary' ? 'diary' : activeTab === 'Reviews' ? 'reviews' : 'watchlist'}
               size={96}
-            />
-            <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
-              {isOwner ? (
+              title={
                 activeTab === 'Diary' ? t('emptyWatchedTitle') : activeTab === 'Reviews' ? t('emptyReviewsTitle') : t('noWatchlistYet')
-              ) : (
-                activeTab === 'Diary' ? t('noLogsYetOthers') : activeTab === 'Reviews' ? t('noReviewsYetOthers') : t('noWatchlistYetOthers')
-              )}
-            </Text>
-          </View>
+              }
+              actionLabel={
+                activeTab === 'Diary' ? t('ctaLogFirstMovie') : activeTab === 'Reviews' ? t('ctaWritReview') : t('ctaExplorePopular')
+              }
+              onAction={() => {
+                if (activeTab === 'Reviews') {
+                  setActiveTab('Diary');
+                } else {
+                  router.push('/(tabs)/search');
+                }
+              }}
+            />
+          ) : (
+            <View style={styles.emptyWrap}>
+              <EmptyStateIcon
+                name={activeTab === 'Diary' ? 'diary' : activeTab === 'Reviews' ? 'reviews' : 'watchlist'}
+                size={96}
+              />
+              <Text style={styles.emptyText} maxFontSizeMultiplier={1.3}>
+                {activeTab === 'Diary' ? t('noLogsYetOthers') : activeTab === 'Reviews' ? t('noReviewsYetOthers') : t('noWatchlistYetOthers')}
+              </Text>
+            </View>
+          )
         }
       />
 

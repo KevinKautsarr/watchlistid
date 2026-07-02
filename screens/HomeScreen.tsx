@@ -32,6 +32,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useWatchlist } from "@/context/WatchlistContext";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLoginPrompt } from "@/hooks/useLoginPrompt";
 import { MediaItem } from "@/types";
@@ -70,6 +71,7 @@ export default function HomeScreen() {
   const bp = useBreakpoint();
   const { t } = useLanguage();
   const [homeTab, setHomeTab] = useState<"discover" | "following">("discover");
+  const { listRef, onScroll } = useScrollRestoration(`home-${homeTab}`);
 
   const {
     state: homeState,
@@ -498,6 +500,9 @@ export default function HomeScreen() {
       />
 
       <FlatList
+        ref={listRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         data={sections}
         keyExtractor={(item) => item.id}
         renderItem={renderSection}

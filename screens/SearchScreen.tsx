@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
   ArrowLeft,
   Award,
@@ -55,6 +55,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useSocial } from "@/context/SocialContext";
 import { useWatchlist } from "@/context/WatchlistContext";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useScrollOffsetTracking } from "@/hooks/useScrollRestoration";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { useLoginPrompt } from "@/hooks/useLoginPrompt";
 import { nativeDriver } from "@/utils/animation";
@@ -145,6 +146,15 @@ const FILTER_CHIPS = [
   { id: "99", labelKey: "genreDocumentary" },
 ];
 
+// Shown as tappable suggestions on a "no results for your search" empty
+// state, so a dead-end search still has somewhere to go.
+const POPULAR_GENRE_SUGGESTIONS = [
+  { id: "28", labelKey: "genreAction" },
+  { id: "35", labelKey: "genreComedy" },
+  { id: "18", labelKey: "genreDrama" },
+  { id: "878", labelKey: "genreSciFi" },
+];
+
 export default function SearchScreen() {
   const router = useRouter();
   const bp = useBreakpoint();
@@ -199,6 +209,7 @@ export default function SearchScreen() {
   const userListRef = useRef<any>(null);
   const fabAnim = useRef(new Animated.Value(0)).current;
   const [showFab, setShowFab] = useState(false);
+  const { saveOffset, restoreOffset } = useScrollOffsetTracking("search-media");
 
   const handleScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -213,8 +224,9 @@ export default function SearchScreen() {
           bounciness: 6,
         }).start();
       }
+      saveOffset(e);
     },
-    [showFab, fabAnim],
+    [showFab, fabAnim, saveOffset],
   );
 
   const scrollToTop = () => {
@@ -227,6 +239,17 @@ export default function SearchScreen() {
   };
 
   const items = itemsState.data || [];
+
+  // Restore scroll position when returning to Search (e.g. from a movie
+  // detail page opened from the results list) — but only when there are
+  // already-loaded results to scroll into.
+  useFocusEffect(
+    useCallback(() => {
+      if (items.length > 0) {
+        return restoreOffset(mediaListRef);
+      }
+    }, [items.length, restoreOffset])
+  );
   const personItems = personState.data || [];
   const isLoading =
     itemsState.status === "loading" || personState.status === "loading";
@@ -646,6 +669,16 @@ export default function SearchScreen() {
                 <SearchEmptyState
                   title={showDefault ? t("searchPlaceholder") : t("noResults")}
                   subtitle={!showDefault ? t("tryAnother") : undefined}
+                  genreSuggestions={
+                    !showDefault
+                      ? POPULAR_GENRE_SUGGESTIONS.map(g => ({ id: g.id, label: t(g.labelKey as any) }))
+                      : undefined
+                  }
+                  genreSuggestionsLabel={!showDefault ? t("ctaTrySearchGenres") : undefined}
+                  onSelectGenre={(genreId) => {
+                    setSearchText("");
+                    setActiveFilter(genreId);
+                  }}
                 />
               ) : (
                 <ActivityIndicator
