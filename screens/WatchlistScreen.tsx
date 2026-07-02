@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform, ScrollView, FlatList
+  Animated,
+  View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform, ScrollView, FlatList,
+  NativeSyntheticEvent, NativeScrollEvent,
 } from 'react-native';
 import { Shimmer } from '@/components/common/Shimmer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 import { ArrowUpDown, Film, Check, Trash2, ArrowUp, ArrowDown } from 'lucide-react-native';
+import LiquidGlassFab from '@/components/common/LiquidGlassFab';
 import { Colors, Spacing, Radius, FontSize, FontWeight, IconSize, Shadow } from '@/constants/theme';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { WATCHLIST_STATUS, WatchlistItem } from '@/types/watchlist';
@@ -40,7 +43,34 @@ const WatchlistScreen: React.FC = () => {
   const [isAscending, setIsAscending] = useState(false);
   const bp = useBreakpoint();
   const { t } = useLanguage();
-  const { listRef, onScroll } = useScrollRestoration(`watchlist-${activeTab}`);
+  const { listRef, onScroll: onScrollRestoration } = useScrollRestoration(`watchlist-${activeTab}`);
+
+  // ── Scroll-to-top FAB ──
+  const fabAnim = useRef(new Animated.Value(0)).current;
+  const [showFab, setShowFab] = useState(false);
+
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      const shouldShow = y > 250;
+      if (shouldShow !== showFab) {
+        setShowFab(shouldShow);
+        Animated.spring(fabAnim, {
+          toValue: shouldShow ? 1 : 0,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 6,
+        }).start();
+      }
+      onScrollRestoration(e);
+    },
+    [showFab, fabAnim, onScrollRestoration],
+  );
+
+  const scrollToTop = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [listRef]);
 
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
@@ -442,6 +472,12 @@ const WatchlistScreen: React.FC = () => {
         onAction={handleUndoRemove}
         duration={UNDO_WINDOW_MS}
         onHide={() => setUndoToast(prev => ({ ...prev, visible: false }))}
+      />
+
+      <LiquidGlassFab
+        animValue={fabAnim}
+        visible={showFab}
+        onPress={scrollToTop}
       />
     </View>
   );

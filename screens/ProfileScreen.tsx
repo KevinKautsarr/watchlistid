@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
+  Animated,
   View, Text, TouchableOpacity, StyleSheet,
-  StatusBar, ActivityIndicator, FlatList, RefreshControl
+  StatusBar, ActivityIndicator, FlatList, RefreshControl,
+  NativeSyntheticEvent, NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SearchX } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSharedValue } from 'react-native-reanimated';
+import LiquidGlassFab from '@/components/common/LiquidGlassFab';
 
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { APP_URL } from '@/config';
@@ -99,6 +102,32 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
   const activeIndexVal = useSharedValue(0);
   const activeIndexDecimal = useSharedValue(0);
 
+  // ── Scroll-to-top FAB ──
+  const flatListRef = useRef<FlatList>(null);
+  const fabAnim = useRef(new Animated.Value(0)).current;
+  const [showFab, setShowFab] = useState(false);
+
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      const shouldShow = y > 250;
+      if (shouldShow !== showFab) {
+        setShowFab(shouldShow);
+        Animated.spring(fabAnim, {
+          toValue: shouldShow ? 1 : 0,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 6,
+        }).start();
+      }
+    },
+    [showFab, fabAnim],
+  );
+
+  const scrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
+
   const handleTabPress = (name: string) => {
     setActiveTab(name as ContentTab);
     const tabIdx = name === 'Reviews' ? 0 : name === 'Diary' ? 1 : 2;
@@ -163,6 +192,9 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
       <StatusBar barStyle="light-content" />
       
       <FlatList
+        ref={flatListRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         data={listData}
         keyExtractor={(item: any, index: number) => item?.id?.toString() ?? `item-${index}`}
         contentContainerStyle={[
@@ -305,6 +337,12 @@ export default function ProfileScreen({ userId: propUserId }: ProfileScreenProps
             </View>
           )
         }
+      />
+
+      <LiquidGlassFab
+        animValue={fabAnim}
+        visible={showFab}
+        onPress={scrollToTop}
       />
 
       <ProfileModals profileState={profileState} />

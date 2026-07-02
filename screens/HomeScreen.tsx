@@ -1,15 +1,12 @@
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import { Award, Clock, Flame, Star, UserPlus } from "lucide-react-native";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import {
-  Award,
-  Clock,
-  Flame,
-  Star,
-  UserPlus,
-} from "lucide-react-native";
-import React, { useMemo, useState } from "react";
-import {
+  Animated,
   FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
   Platform,
   RefreshControl,
   StatusBar,
@@ -37,6 +34,7 @@ import { useHomeData } from "@/hooks/useHomeData";
 import { useLoginPrompt } from "@/hooks/useLoginPrompt";
 import { MediaItem } from "@/types";
 import { cursorPointer } from "@/utils/webStyles";
+import LiquidGlassFab from "@/components/common/LiquidGlassFab";
 
 const GENRES = [
   { id: 28, nameKey: "genreAction", image: "/ff2ti5DkA9UYLzyqhQfI2kZqEuh.jpg" },
@@ -71,7 +69,34 @@ export default function HomeScreen() {
   const bp = useBreakpoint();
   const { t } = useLanguage();
   const [homeTab, setHomeTab] = useState<"discover" | "following">("discover");
-  const { listRef, onScroll } = useScrollRestoration(`home-${homeTab}`);
+  const { listRef, onScroll: onScrollRestoration } = useScrollRestoration(`home-${homeTab}`);
+
+  // ── Scroll-to-top FAB ──
+  const fabAnim = useRef(new Animated.Value(0)).current;
+  const [showFab, setShowFab] = useState(false);
+
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const y = e.nativeEvent.contentOffset.y;
+      const shouldShow = y > 250;
+      if (shouldShow !== showFab) {
+        setShowFab(shouldShow);
+        Animated.spring(fabAnim, {
+          toValue: shouldShow ? 1 : 0,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 6,
+        }).start();
+      }
+      onScrollRestoration(e);
+    },
+    [showFab, fabAnim, onScrollRestoration],
+  );
+
+  const scrollToTop = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [listRef]);
 
   const {
     state: homeState,
@@ -522,6 +547,12 @@ export default function HomeScreen() {
         windowSize={5}
         maxToRenderPerBatch={3}
         removeClippedSubviews={Platform.OS === "android"}
+      />
+
+      <LiquidGlassFab
+        animValue={fabAnim}
+        visible={showFab}
+        onPress={scrollToTop}
       />
     </View>
   );

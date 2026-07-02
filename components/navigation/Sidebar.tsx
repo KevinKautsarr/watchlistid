@@ -369,6 +369,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
         accessibilityState={{ selected: active }}
         style={({ hovered, pressed }: { hovered?: boolean; pressed?: boolean }) => [
           styles.navItem,
+          active && styles.navItemActive,
+          (hovered || pressed) && !active && styles.navItemHover,
           collapsed && styles.navItemCollapsed,
           cursorPointer,
         ]}
@@ -470,6 +472,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                   style={({ hovered, pressed }: { hovered?: boolean; pressed?: boolean }) => [
                     styles.logoutItem,
                     collapsed && styles.logoutItemCollapsed,
+                    (hovered || pressed) && styles.logoutItemHover,
                     cursorPointer,
                   ]}
                 >
@@ -477,11 +480,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                     <>
                       <View style={styles.iconContainer}>
                         <View style={[styles.iconBox, styles.iconBoxLogout, (hovered || pressed) && styles.iconBoxLogoutHover]}>
-                          <LogOut size={16} color="#C71F37" strokeWidth={2} />
+                          <LogOut size={16} color={(hovered || pressed) ? '#E01E37' : 'rgba(199,31,55,0.65)'} strokeWidth={2} />
                         </View>
                       </View>
                       <View style={[styles.labelWrapper, collapsed ? styles.labelWrapperCollapsed : styles.labelWrapperExpanded]}>
-                        <Text style={styles.logoutLabel} maxFontSizeMultiplier={1.3} numberOfLines={1}>{t('signOut')}</Text>
+                        <Text
+                          style={[
+                            styles.logoutLabel,
+                            (hovered || pressed) && { color: '#E01E37' },
+                          ]}
+                          maxFontSizeMultiplier={1.3}
+                          numberOfLines={1}
+                        >
+                          {t('signOut')}
+                        </Text>
                       </View>
                     </>
                   )}
@@ -587,7 +599,7 @@ const styles = StyleSheet.create({
 
   // ── Nav ScrollView ──
   nav: { flex: 1, paddingHorizontal: NAV_PX, paddingTop: 6 },
-  navSection: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.25)', letterSpacing: 2, paddingHorizontal: 4, paddingBottom: 6, paddingTop: 2 },
+  navSection: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.40)', letterSpacing: 2, paddingHorizontal: 4, paddingBottom: 6, paddingTop: 2 },
   sectionGap: { height: 12 },
   sectionHeaderWrapper: {
     overflow: 'hidden',
@@ -615,12 +627,20 @@ const styles = StyleSheet.create({
   },
 
   // ── Nav item row ──
-  navItem: { flexDirection: 'row', alignItems: 'center', height: 44, position: 'relative' },
+  navItem: {
+    flexDirection: 'row', alignItems: 'center', height: 44, position: 'relative',
+    borderRadius: 10,
+    ...Platform.select({ web: { transitionProperty: 'background-color', transitionDuration: '0.15s', transitionTimingFunction: 'ease-in-out' } as any }),
+  },
   navItemCollapsed: { width: 48, justifyContent: 'center', alignItems: 'center' },
-  navItemActive: {},
-  navItemHover:  {},
-  navLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.62)', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
+  // Full-row highlight for active state — abu-abu netral
+  navItemActive: {
+    backgroundColor: 'rgba(255,255,255,0.07)',
+  },
+  navItemHover:  { backgroundColor: 'rgba(255,255,255,0.04)' },
+  navLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.58)', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
   navLabelActive: { color: '#FFFFFF', fontWeight: '700' },
+  // Garis merah vertikal di kiri seperti semula
   activeLine: {
     position: 'absolute',
     left: 2,
@@ -640,10 +660,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     ...Platform.select({ web: { transitionProperty: 'background-color, border-color', transitionDuration: '0.15s', transitionTimingFunction: 'ease-in-out' } as any }),
   },
-  iconBoxActive: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  // Transparent so it doesn’t stack on top of the row highlight — uniform color
+  iconBoxActive: { backgroundColor: 'transparent' },
   iconBoxHover:  { backgroundColor: 'rgba(255,255,255,0.04)' },
   iconBoxLogout: { backgroundColor: 'transparent' },
-  iconBoxLogoutHover: { backgroundColor: 'rgba(199,31,55,0.08)' },
+  iconBoxLogoutHover: { backgroundColor: 'rgba(199,31,55,0.12)' },
 
   // ── Label wrapper (absolutely anchored beside icon area) ──
   labelWrapper: {
@@ -664,12 +685,18 @@ const styles = StyleSheet.create({
 
   // ── Footer / logout ──
   sidebarFooter: { paddingHorizontal: 16, paddingBottom: 16, paddingTop: 4 },
-  footerText: { fontSize: 10, color: 'rgba(255,255,255,0.18)', marginTop: 10, textAlign: 'center' },
+  footerText: { fontSize: 10, color: 'rgba(255,255,255,0.22)', marginTop: 6, textAlign: 'center' },
   footerLogout: { paddingHorizontal: NAV_PX, marginBottom: 12 },
-  logoutItem: { flexDirection: 'row', alignItems: 'center', height: 44, position: 'relative' },
+  logoutItem: {
+    flexDirection: 'row', alignItems: 'center', height: 44, position: 'relative',
+    borderRadius: 10,
+    ...Platform.select({ web: { transitionProperty: 'background-color', transitionDuration: '0.15s', transitionTimingFunction: 'ease-in-out' } as any }),
+  },
   logoutItemCollapsed: { width: 48, justifyContent: 'center', alignItems: 'center' },
-  logoutItemHover: {},
-  logoutLabel: { fontSize: 14, fontWeight: '600', color: '#C71F37', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
+  // Hover state applied inline in renderNavItem via hovered prop
+  logoutItemHover: { backgroundColor: 'rgba(199,31,55,0.08)' },
+  // Dimmed by default — only turns red on hover (applied inline)
+  logoutLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(199,31,55,0.65)', flex: 1, ...Platform.select({ web: { whiteSpace: 'nowrap' } as any }) },
 });
 
 export default Sidebar;

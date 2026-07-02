@@ -41,6 +41,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Avatar from "@/components/common/Avatar";
 import MovieListItem from "@/components/movie/MovieListItem";
 import { Shimmer } from "@/components/common/Shimmer";
+import LiquidGlassFab from "@/components/common/LiquidGlassFab";
 import {
   Colors,
   FontSize,
@@ -798,40 +799,11 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {/* ── Scroll-to-top FAB ── */}
-      <Animated.View
-        style={[
-          styles.fab,
-          {
-            opacity: fabAnim,
-            transform: [
-              {
-                scale: fabAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.6, 1],
-                }),
-              },
-              {
-                translateY: fabAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [20, 0],
-                }),
-              },
-            ],
-            pointerEvents: showFab ? "auto" : "none",
-          } as any,
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.fabBtn}
-          onPress={scrollToTop}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Scroll to top"
-        >
-          <ChevronUp size={22} color="#FFFFFF" strokeWidth={2.5} />
-        </TouchableOpacity>
-      </Animated.View>
+      <LiquidGlassFab
+        animValue={fabAnim}
+        visible={showFab}
+        onPress={scrollToTop}
+      />
     </View>
   );
 }
@@ -1042,30 +1014,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     textAlign: "center",
     marginTop: 4,
-  },
-
-  // Scroll-to-top FAB
-  fab: {
-    position: "absolute",
-    bottom: 100,
-    right: 20,
-    zIndex: 99,
-  },
-  fabBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    // Neutral gray surface matching the sidebar (instead of the red brand color).
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 8,
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
-      android: { elevation: 8 },
-      web:     { boxShadow: '0 4px 10px rgba(0,0,0,0.4)' } as any,
-    }),
   },
 });
